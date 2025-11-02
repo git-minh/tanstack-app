@@ -1,0 +1,298 @@
+version: 2.1
+
+# Orbs for common functionality
+orbs:
+  node: circleci/node@5.1.0
+
+# Reusable executors
+executors:
+  node-executor:
+    docker:
+      - image: cimg/node:18.20
+    working_directory: ~/project
+    resource_class: medium
+
+# Reusable commands
+commands:
+  restore-pnpm-cache:
+    description: "Restore pnpm store cache"
+    steps:
+      - restore_cache:
+          name: Restore pnpm store cache
+          keys:
+            - pnpm-store-v1-{{ checksum "pnpm-lock.yaml" }}
+            - pnpm-store-v1-
+
+  save-pnpm-cache:
+    description: "Save pnpm store cache"
+    steps:
+      - save_cache:
+          name: Save pnpm store cache
+          key: pnpm-store-v1-{{ checksum "pnpm-lock.yaml" }}
+          paths:
+            - ~/.local/share/pnpm/store
+
+  restore-node-modules-cache:
+    description: "Restore node_modules cache"
+    steps:
+      - restore_cache:
+          name: Restore node_modules cache
+          keys:
+            - node-modules-v1-{{ checksum "pnpm-lock.yaml" }}
+            - node-modules-v1-
+
+  save-node-modules-cache:
+    description: "Save node_modules cache"
+    steps:
+      - save_cache:
+          name: Save node_modules cache
+          key: node-modules-v1-{{ checksum "pnpm-lock.yaml" }}
+          paths:
+            - node_modules
+            - apps/*/node_modules
+            - packages/*/node_modules
+
+  restore-turbo-cache:
+    description: "Restore Turborepo cache"
+    steps:
+      - restore_cache:
+          name: Restore Turborepo cache
+          keys:
+            - turbo-v1-{{ .Branch }}-{{ .Revision }}
+            - turbo-v1-{{ .Branch }}-
+            - turbo-v1-
+
+  save-turbo-cache:
+    description: "Save Turborepo cache"
+    steps:
+      - save_cache:
+          name: Save Turborepo cache
+          key: turbo-v1-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - .turbo
+            - apps/*/.turbo
+            - packages/*/.turbo
+
+# Jobs
+jobs:
+  install:
+    executor: node-executor
+    steps:
+      - checkout
+
+      # Install pnpm
+      - run:
+          name: Install pnpm
+          command: |
+            sudo corepack enable
+            corepack prepare pnpm@10.16.1 --activate
+            pnpm --version
+
+      # Restore caches
+      - restore-pnpm-cache
+      - restore-node-modules-cache
+
+      # Install dependencies
+      - run:
+          name: Install dependencies
+          command: pnpm install --frozen-lockfile
+
+      # Save caches
+      - save-pnpm-cache
+      - save-node-modules-cache
+
+      # Persist workspace for subsequent jobs
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - .
+
+  validate:
+    executor: node-executor
+    steps:
+      - attach_workspace:
+          at: ~/project
+
+      # Install pnpm
+      - run:
+          name: Install pnpm
+          command: |
+            sudo corepack enable
+            corepack prepare pnpm@10.16.1 --activate
+
+      # Restore Turborepo cache
+      - restore-turbo-cache
+
+      # Run type checking
+      - run:
+          name: Type checking
+          command: pnpm check-types
+
+      # Save Turborepo cache
+      - save-turbo-cache
+
+  test:
+    executor: node-executor
+    steps:
+      - attach_workspace:
+          at: ~/project
+
+      # Install pnpm
+      - run:
+          name: Install pnpm
+          command: |
+            sudo corepack enable
+            corepack prepare pnpm@10.16.1 --activate
+
+      # Run tests
+      - run:
+          name: Run tests
+          command: pnpm test
+
+      # Store test results
+      - store_test_results:
+          path: apps/web/test-results
+
+  build:
+    executor: node-executor
+    steps:
+      - attach_workspace:
+          at: ~/project
+
+      # Install pnpm
+      - run:
+          name: Install pnpm
+          command: |
+            sudo corepack enable
+            corepack prepare pnpm@10.16.1 --activate
+
+      # Restore Turborepo cache
+      - restore-turbo-cache
+
+      # Build all packages
+      - run:
+          name: Build all packages
+          command: pnpm build
+
+      # Save Turborepo cache
+      - save-turbo-cache
+
+      # Persist build artifacts
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - .
+
+  deploy-backend:
+    executor: node-executor
+    steps:
+      - attach_workspace:
+          at: ~/project
+
+      # Install pnpm
+      - run:
+          name: Install pnpm
+          command: |
+            sudo corepack enable
+            corepack prepare pnpm@10.16.1 --activate
+
+      # Install Convex CLI
+      - run:
+          name: Install Convex CLI
+          command: npm install -g convex
+
+      # Deploy to Convex
+      - run:
+          name: Deploy backend to Convex
+          command: |
+            cd packages/backend
+            npx convex deploy --cmd-url-env-var-name VITE_CONVEX_URL
+          environment:
+            CONVEX_DEPLOY_KEY: $CONVEX_DEPLOY_KEY
+
+      # Store deployment info
+      - store_artifacts:
+          path: packages/backend/convex/_generated
+          destination: convex-generated
+
+  deploy-frontend:
+    executor: node-executor
+    steps:
+      - attach_workspace:
+          at: ~/project
+
+      # Install pnpm
+      - run:
+          name: Install pnpm
+          command: |
+            sudo corepack enable
+            corepack prepare pnpm@10.16.1 --activate
+
+      # Deploy to Cloudflare Workers
+      - run:
+          name: Deploy frontend to Cloudflare
+          command: |
+            cd apps/web
+            pnpm deploy
+          environment:
+            CLOUDFLARE_API_TOKEN: $CLOUDFLARE_API_TOKEN
+            VITE_CONVEX_URL: $VITE_CONVEX_URL
+
+      # Store deployment artifacts
+      - store_artifacts:
+          path: apps/web/.output
+          destination: cloudflare-output
+
+# Workflows
+workflows:
+  version: 2
+
+  # Main CI/CD pipeline
+  build-test-deploy:
+    jobs:
+      - install:
+          filters:
+            branches:
+              only:
+                - main
+
+      - validate:
+          requires:
+            - install
+          filters:
+            branches:
+              only:
+                - main
+
+      - test:
+          requires:
+            - install
+          filters:
+            branches:
+              only:
+                - main
+
+      - build:
+          requires:
+            - validate
+            - test
+          filters:
+            branches:
+              only:
+                - main
+
+      - deploy-backend:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - main
+
+      - deploy-frontend:
+          requires:
+            - deploy-backend
+          filters:
+            branches:
+              only:
+                - main
