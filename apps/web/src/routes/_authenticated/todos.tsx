@@ -14,11 +14,19 @@ export const Route = createFileRoute("/_authenticated/todos")({
 
 function TodosRoute() {
 	return (
-		<div className="mx-auto w-full max-w-md">
+		<div className="space-y-6">
+			<div>
+				<h1 className="text-3xl font-bold tracking-tight">Todos</h1>
+				<p className="text-muted-foreground">
+					Manage your tasks efficiently
+				</p>
+			</div>
 			<Card>
 				<CardHeader>
-					<CardTitle>Todo List (Convex)</CardTitle>
-					<CardDescription>Manage your tasks efficiently</CardDescription>
+					<CardTitle>Todo List</CardTitle>
+					<CardDescription>
+						Powered by Convex real-time database
+					</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<TodoList />

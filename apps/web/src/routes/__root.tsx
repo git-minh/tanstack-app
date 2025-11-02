@@ -93,7 +93,11 @@ function RootDocument() {
 						enableSystem
 						disableTransitionOnChange
 					>
-						{isFetching ? <Loader /> : <Outlet />}
+						{/* Subtle loading indicator that doesn't cause layout shift */}
+						{isFetching && (
+							<div className="fixed top-0 left-0 right-0 h-1 z-50 bg-gradient-to-r from-primary/50 via-primary to-primary/50 animate-pulse" />
+						)}
+						<Outlet />
 						<Toaster richColors />
 						<TanStackRouterDevtools position="bottom-left" />
 					</ThemeProvider>

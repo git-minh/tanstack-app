@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import Loader from "@/components/loader";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 export const Route = createFileRoute("/_authenticated")({
 	beforeLoad: async ({ context, location }) => {
@@ -15,14 +15,15 @@ export const Route = createFileRoute("/_authenticated")({
 			});
 		}
 	},
-	pendingComponent: Loader,
 	component: AuthenticatedLayout,
 });
 
 function AuthenticatedLayout() {
 	return (
-		<DashboardLayout>
-			<Outlet />
-		</DashboardLayout>
+		<SidebarProvider defaultOpen={true}>
+			<DashboardLayout>
+				<Outlet />
+			</DashboardLayout>
+		</SidebarProvider>
 	);
 }
