@@ -1,7 +1,14 @@
 {
   "name": "@tanstack/backend",
   "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    "./convex/_generated/*": "./convex/_generated/*",
+    "./convex/*": "./convex/*"
+  },
   "scripts": {
+    "build": "echo 'Convex backend - no build needed'",
+    "check-types": "tsc --noEmit",
     "dev": "convex dev",
     "dev:setup": "convex dev --configure --until-success"
   },
