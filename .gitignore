@@ -51,3 +51,7 @@ temp
 
 # Generated artifacts
 apps/web/src/routeTree.gen.ts
+
+# CircleCI environment variables guide (contains secrets)
+.circleci/ADD_ENV_VARS.md
+.circleci/ENVIRONMENT_VARIABLES.md
