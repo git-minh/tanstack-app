@@ -9,7 +9,6 @@ import {
 	useRouteContext,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import Header from "../components/header";
 import appCss from "../index.css?url";
 import type { QueryClient } from "@tanstack/react-query";
 import type { ConvexQueryClient } from "@convex-dev/react-query";
@@ -87,10 +86,7 @@ function RootDocument() {
 					<HeadContent />
 				</head>
 				<body>
-					<div className="grid h-svh grid-rows-[auto_1fr]">
-						<Header />
-						{isFetching ? <Loader /> : <Outlet />}
-					</div>
+					{isFetching ? <Loader /> : <Outlet />}
 					<Toaster richColors />
 					<TanStackRouterDevtools position="bottom-left" />
 					<Scripts />
