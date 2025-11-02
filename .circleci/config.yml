@@ -201,7 +201,7 @@ jobs:
           name: Deploy backend to Convex
           command: |
             cd packages/backend
-            npx convex deploy --cmd-url-env-var-name VITE_CONVEX_URL
+            npx convex deploy --yes --cmd-url-env-var-name VITE_CONVEX_URL
           environment:
             CONVEX_DEPLOY_KEY: $CONVEX_DEPLOY_KEY
 
