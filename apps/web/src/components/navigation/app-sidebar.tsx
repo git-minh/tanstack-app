@@ -24,6 +24,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useQuery } from "convex/react";
 import { api } from "@tanstack/backend/convex/_generated/api";
 
@@ -91,6 +92,12 @@ export function AppSidebar() {
 			<SidebarFooter>
 				<SidebarMenu>
 					<SidebarMenuItem>
+						<SidebarMenuButton>
+							<ThemeToggle />
+							<span>Theme</span>
+						</SidebarMenuButton>
+					</SidebarMenuItem>
+					<SidebarMenuItem>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<SidebarMenuButton>
@@ -116,6 +123,7 @@ export function AppSidebar() {
 													onSuccess: () => {
 														navigate({
 															to: "/login",
+															search: { redirect: "/dashboard" },
 														});
 													},
 												},

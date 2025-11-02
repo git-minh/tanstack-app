@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "next-themes";
 
 import {
 	HeadContent,
@@ -81,14 +82,21 @@ function RootDocument() {
 			client={context.convexClient}
 			authClient={authClient}
 		>
-			<html lang="en" className="dark">
+			<html lang="en" suppressHydrationWarning>
 				<head>
 					<HeadContent />
 				</head>
 				<body>
-					{isFetching ? <Loader /> : <Outlet />}
-					<Toaster richColors />
-					<TanStackRouterDevtools position="bottom-left" />
+					<ThemeProvider
+						attribute="class"
+						defaultTheme="light"
+						enableSystem
+						disableTransitionOnChange
+					>
+						{isFetching ? <Loader /> : <Outlet />}
+						<Toaster richColors />
+						<TanStackRouterDevtools position="bottom-left" />
+					</ThemeProvider>
 					<Scripts />
 				</body>
 			</html>
