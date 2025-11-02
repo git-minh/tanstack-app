@@ -196,11 +196,6 @@ jobs:
             sudo corepack enable
             corepack prepare pnpm@10.16.1 --activate
 
-      # Install Convex CLI
-      - run:
-          name: Install Convex CLI
-          command: npm install -g convex
-
       # Deploy to Convex
       - run:
           name: Deploy backend to Convex
