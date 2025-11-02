@@ -47,6 +47,7 @@ apps/web/          # Frontend - TanStack Start + React
   src/routes/      # File-based routing (auto-generates routeTree.gen.ts)
   src/components/  # UI components (shadcn/ui)
   src/lib/         # auth-client.ts, auth-server.ts, utils.ts
+  src/router.tsx   # Router setup with context providers
 
 packages/backend/  # Backend - Convex
   convex/          # Schema, queries, mutations, actions
@@ -70,27 +71,56 @@ context.convexQueryClient // Use for data fetching
 ```
 
 #### 2. Authentication Flow
-**Client-side** (`@/lib/auth-client`):
+
+**IMPORTANT**: There are two authentication methods in the codebase:
+
+**Method 1: Standard Convex Auth (RECOMMENDED)**
+```typescript
+// Use this pattern - it's more reliable
+const identity = await ctx.auth.getUserIdentity();
+if (!identity) {
+  throw new Error("Unauthorized");
+}
+const userId = identity.subject; // User ID for queries
+```
+
+**Method 2: Better-Auth Component (USE WITH CAUTION)**
+```typescript
+// authComponent.getAuthUser() throws errors instead of returning null
+// Only use if you need Better-Auth user object specifically
+const user = await authComponent.getAuthUser(ctx);
+// Returns user object with _id, email, name, etc.
+```
+
+**Client-side** (`@/lib/auth-client.ts`):
 - `authClient` with `convexClient()` plugin
 
-**Server-side** (`@/lib/auth-server`):
+**Server-side** (`@/lib/auth-server.ts`):
 - `fetchQuery`, `fetchMutation`, `fetchAction` for server functions
-
-**Backend** (`packages/backend/convex/auth.ts`):
-- `authComponent.getAuthUser(ctx)` - Get authenticated user in queries/mutations
-- `getCurrentUser` query - Exposed query for fetching current user
 
 **Session handling** (`apps/web/src/routes/__root.tsx`):
 - `beforeLoad` hook fetches session and sets auth token on Convex client
+- Returns `{ userId, token }` to route context
+
+**Protected routes**:
+- Use `beforeLoad` hook to check `context.userId`
+- Redirect unauthenticated users to `/login` with redirect parameter
 
 #### 3. Data Fetching Pattern
+
 Convex integrates with React Query:
 ```typescript
-// Convex queries use React Query under the hood
-const todos = useSuspenseQuery(api.todos.list);
+// In routes - use React Query with Convex
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { convexQuery } from "@convex-dev/react-query";
+import { api } from "@tanstack/backend/convex/_generated/api";
 
-// Server functions for auth-protected operations
-const data = await fetchQuery(api.someQuery, args);
+const todos = useSuspenseQuery(convexQuery(api.todos.getAll, {}));
+
+// For mutations - use Convex directly
+import { useMutation } from "convex/react";
+const createTodo = useMutation(api.todos.create);
+await createTodo({ text: "New todo" });
 ```
 
 ### Adding Features
@@ -99,11 +129,31 @@ const data = await fetchQuery(api.someQuery, args);
 1. Create `apps/web/src/routes/your-route.tsx`
 2. Export component as default
 3. Route tree auto-generates - do NOT edit `routeTree.gen.ts`
+4. For protected routes, add `beforeLoad` hook:
+   ```typescript
+   export const Route = createFileRoute('/protected')({
+     beforeLoad: async ({ context }) => {
+       if (!context.userId) {
+         throw redirect({ to: '/login', search: { redirect: '/protected' } });
+       }
+     },
+     component: RouteComponent,
+   });
+   ```
 
 #### New Backend Function
 1. Create file in `packages/backend/convex/yourFunction.ts`
 2. Import from `_generated/server`: `query`, `mutation`, `action`
-3. For auth: `authComponent.getAuthUser(ctx)` returns user or null
+3. For auth, use `ctx.auth.getUserIdentity()` (recommended):
+   ```typescript
+   export const myQuery = query({
+     handler: async (ctx) => {
+       const identity = await ctx.auth.getUserIdentity();
+       if (!identity) throw new Error("Unauthorized");
+       // Use identity.subject as userId
+     }
+   });
+   ```
 4. Types auto-generate in `_generated/api.d.ts`
 
 #### New UI Component
@@ -142,14 +192,20 @@ See `docs/ENVIRONMENT.md` for complete reference.
 
 ### Common Patterns
 
-**Authenticated Query** (backend):
+**Authenticated Query** (backend - RECOMMENDED PATTERN):
 ```typescript
 // packages/backend/convex/yourFile.ts
 export const myQuery = query({
   handler: async (ctx) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) throw new Error("Unauthorized");
-    // ... query logic
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const userId = identity.subject;
+    // Use userId for queries
+    return await ctx.db
+      .query("yourTable")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
   }
 });
 ```
@@ -171,8 +227,22 @@ const serverFn = createServerFn({ method: 'GET' }).handler(async () => {
 export const Route = createFileRoute('/protected')({
   beforeLoad: async ({ context }) => {
     if (!context.userId) {
-      throw redirect({ to: '/' });
+      throw redirect({
+        to: '/login',
+        search: { redirect: '/protected' }
+      });
     }
   },
+  component: RouteComponent,
 });
+```
+
+**Auth Forms Integration**:
+```typescript
+// Pass redirectTo prop to auth forms
+<SignInForm redirectTo={redirectPath} />
+<SignUpForm redirectTo={redirectPath} />
+
+// Forms use navigate with redirectTo in onSuccess
+navigate({ to: redirectTo || "/dashboard" });
 ```
