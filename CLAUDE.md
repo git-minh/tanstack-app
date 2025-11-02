@@ -72,7 +72,7 @@ apps/web/                    # Frontend - TanStack Start + React
     hooks/                  # Custom React hooks
       use-mobile.ts
     router.tsx              # Router setup with context providers
-    index.css               # Global styles
+    index.css               # Global styles (Tailwind CSS v4 with custom design tokens)
 
 packages/backend/           # Backend - Convex
   convex/                   # Schema, queries, mutations, actions
@@ -134,6 +134,11 @@ const user = await authComponent.getAuthUser(ctx);
 - Automatically redirects unauthenticated users to `/login` with redirect parameter
 - No need to add `beforeLoad` to individual route files within `_authenticated/`
 
+**Error handling**:
+- 404 pages: Styled component at `apps/web/src/components/error-pages/not-found.tsx`
+- Authentication redirects: Unauthenticated users accessing protected routes are redirected to `/login?redirect=/original-path`
+- Default not found component in router.tsx points to the styled 404 page
+
 #### 3. Layout System & Route Groups
 
 **Layout Components** (`apps/web/src/components/layouts/`):
@@ -156,6 +161,7 @@ const user = await authComponent.getAuthUser(ctx);
 - Responsive: icon mode (desktop), offcanvas mode (mobile)
 - User menu integrated in sidebar footer
 - Navigation items defined in `navigationItems` array
+- Theme toggle component for light/dark mode switching
 
 #### 4. Data Fetching Pattern
 
@@ -232,7 +238,7 @@ await createTodo({ text: "New todo" });
 1. For shadcn/ui components: `npx shadcn@latest add <component-name>`
 2. Components install to `apps/web/src/components/ui/`
 3. Use `@/components/ui/*` imports (NOT relative paths)
-4. All components support dark mode (hardcoded `dark` class on root)
+4. All components support light/dark mode with ThemeProvider
 
 #### New Feature Component
 1. Create in `apps/web/src/components/features/<feature-name>/`
@@ -403,3 +409,17 @@ import { TodoList } from "../../features/todos";   // Don't use relative paths
 import { api } from "@tanstack/backend/convex/_generated/api";
 import type { Id } from "@tanstack/backend/convex/_generated/dataModel";
 ```
+
+### Theme System
+
+**Design Tokens**: App uses custom CSS design tokens in `apps/web/src/index.css`
+- Light theme by default with professional theme toggle
+- OKLCH color space with minimalist black-on-white aesthetic
+- Geist font family throughout
+- Custom shadow system (2xs to 2xl)
+- shadcn/ui components integrated with the design system
+
+**Theme Toggle**: Located in sidebar footer
+- Uses next-themes for professional theme management
+- Smooth transitions between light/dark modes
+- Preserves user preference in localStorage

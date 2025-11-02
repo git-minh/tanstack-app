@@ -5,6 +5,7 @@ import { ConvexQueryClient } from "@convex-dev/react-query";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { routeTree } from "./routeTree.gen";
 import Loader from "./components/loader";
+import { NotFound } from "./components/error-pages/not-found";
 import "./index.css";
 
 export function getRouter() {
@@ -33,7 +34,7 @@ export function getRouter() {
 			routeTree,
 			defaultPreload: "intent",
 			defaultPendingComponent: () => <Loader />,
-			defaultNotFoundComponent: () => <div>Not Found</div>,
+			defaultNotFoundComponent: NotFound,
 			context: { queryClient, convexClient: convex, convexQueryClient },
 			Wrap: ({ children }) => (
 				<ConvexProvider client={convexQueryClient.convexClient}>
