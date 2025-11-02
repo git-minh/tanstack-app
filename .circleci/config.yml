@@ -254,7 +254,7 @@ workflows:
           filters:
             branches:
               only:
-                - main
+                - master
 
       - validate:
           requires:
@@ -262,7 +262,7 @@ workflows:
           filters:
             branches:
               only:
-                - main
+                - master
 
       - test:
           requires:
@@ -270,7 +270,7 @@ workflows:
           filters:
             branches:
               only:
-                - main
+                - master
 
       - build:
           requires:
@@ -279,7 +279,7 @@ workflows:
           filters:
             branches:
               only:
-                - main
+                - master
 
       - deploy-backend:
           requires:
@@ -287,7 +287,7 @@ workflows:
           filters:
             branches:
               only:
-                - main
+                - master
 
       - deploy-frontend:
           requires:
@@ -295,4 +295,4 @@ workflows:
           filters:
             branches:
               only:
-                - main
+                - master

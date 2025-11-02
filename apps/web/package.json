@@ -51,6 +51,7 @@
     "@cloudflare/vite-plugin": "^1.13.8",
     "@tanstack/react-router-devtools": "^1.132.31",
     "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^14.5.2",
     "@types/react": "~19.1.10",
