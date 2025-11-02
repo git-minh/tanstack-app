@@ -51,4 +51,3 @@ temp
 
 # Generated artifacts
 apps/web/src/routeTree.gen.ts
-packages/backend/convex/_generated/
