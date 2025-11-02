@@ -1,0 +1,9 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"outDir": "./dist",
+		"rootDir": "./convex"
+	},
+	"include": ["convex/**/*"],
+	"exclude": ["convex/_generated"]
+}
