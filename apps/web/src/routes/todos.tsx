@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
 
@@ -19,6 +19,16 @@ import { api } from "@tanstack/backend/convex/_generated/api";
 import type { Id } from "@tanstack/backend/convex/_generated/dataModel";
 
 export const Route = createFileRoute("/todos")({
+	beforeLoad: async ({ context }) => {
+		if (!context.userId) {
+			throw redirect({
+				to: "/login",
+				search: {
+					redirect: "/todos",
+				},
+			});
+		}
+	},
 	component: TodosRoute,
 });
 

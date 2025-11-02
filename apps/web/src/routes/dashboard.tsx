@@ -1,43 +1,30 @@
-import SignInForm from "@/components/sign-in-form";
-import SignUpForm from "@/components/sign-up-form";
 import UserMenu from "@/components/user-menu";
 import { api } from "@tanstack/backend/convex/_generated/api";
-import { createFileRoute } from "@tanstack/react-router";
-import {
-	Authenticated,
-	AuthLoading,
-	Unauthenticated,
-	useQuery,
-} from "convex/react";
-import { useState } from "react";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useQuery } from "convex/react";
 
 export const Route = createFileRoute("/dashboard")({
+	beforeLoad: async ({ context }) => {
+		if (!context.userId) {
+			throw redirect({
+				to: "/login",
+				search: {
+					redirect: "/dashboard",
+				},
+			});
+		}
+	},
 	component: RouteComponent,
 });
 
 function RouteComponent() {
-	const [showSignIn, setShowSignIn] = useState(false);
 	const privateData = useQuery(api.privateData.get);
 
 	return (
-		<>
-			<Authenticated>
-				<div>
-					<h1>Dashboard</h1>
-					<p>privateData: {privateData?.message}</p>
-					<UserMenu />
-				</div>
-			</Authenticated>
-			<Unauthenticated>
-				{showSignIn ? (
-					<SignInForm onSwitchToSignUp={() => setShowSignIn(false)} />
-				) : (
-					<SignUpForm onSwitchToSignIn={() => setShowSignIn(true)} />
-				)}
-			</Unauthenticated>
-			<AuthLoading>
-				<div>Loading...</div>
-			</AuthLoading>
-		</>
+		<div>
+			<h1>Dashboard</h1>
+			<p>privateData: {privateData?.message}</p>
+			<UserMenu />
+		</div>
 	);
 }

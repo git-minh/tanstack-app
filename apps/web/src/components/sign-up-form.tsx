@@ -9,8 +9,10 @@ import { Label } from "./ui/label";
 
 export default function SignUpForm({
 	onSwitchToSignIn,
+	redirectTo,
 }: {
 	onSwitchToSignIn: () => void;
+	redirectTo?: string;
 }) {
 	const navigate = useNavigate({
 		from: "/",
@@ -32,7 +34,7 @@ export default function SignUpForm({
 				{
 					onSuccess: () => {
 						navigate({
-							to: "/dashboard",
+							to: redirectTo || "/dashboard",
 						});
 						toast.success("Sign up successful");
 					},
