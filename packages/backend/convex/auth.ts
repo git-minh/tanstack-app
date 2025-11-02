@@ -34,7 +34,17 @@ export { createAuth };
 export const getCurrentUser = query({
 	args: {},
 	returns: v.any(),
-	handler: async function (ctx, args) {
-		return authComponent.getAuthUser(ctx);
+	handler: async function (ctx) {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			return null;
+		}
+		// Use the Better Auth component to get the full user object
+		try {
+			return await authComponent.getAuthUser(ctx);
+		} catch (error) {
+			// If getAuthUser throws (unauthenticated), return null
+			return null;
+		}
 	},
 });
