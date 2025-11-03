@@ -7,7 +7,7 @@ import { query } from "./_generated/server";
 export const getStats = query({
 	handler: async (ctx) => {
 		const identity = await ctx.auth.getUserIdentity();
-		if (!identity) throw new Error("Unauthorized");
+		if (!identity) throw new Error("Unauthorized: Must be logged in to view dashboard stats");
 
 		const userId = identity.subject;
 
@@ -37,7 +37,7 @@ export const getStats = query({
 export const getChartData = query({
 	handler: async (ctx) => {
 		const identity = await ctx.auth.getUserIdentity();
-		if (!identity) throw new Error("Unauthorized");
+		if (!identity) throw new Error("Unauthorized: Must be logged in to view dashboard chart data");
 
 		const userId = identity.subject;
 
@@ -94,7 +94,7 @@ export const getChartData = query({
 export const getRecentActivity = query({
 	handler: async (ctx) => {
 		const identity = await ctx.auth.getUserIdentity();
-		if (!identity) throw new Error("Unauthorized");
+		if (!identity) throw new Error("Unauthorized: Must be logged in to view recent activity");
 
 		const userId = identity.subject;
 

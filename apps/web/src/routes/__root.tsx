@@ -68,6 +68,8 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 	beforeLoad: async (ctx) => {
 		const { userId, token } = await fetchAuth();
 		if (token) {
+			// Set auth token for server-side queries (SSR)
+			// Client-side auth is handled automatically by ConvexBetterAuthProvider
 			ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
 		}
 		return { userId, token };
