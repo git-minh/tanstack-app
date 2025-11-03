@@ -566,3 +566,71 @@ export function getSidebarData(user: User): SidebarData {
 **Missing Components**: Ensure these shadcn/ui components are installed:
 - `npx shadcn@latest add avatar` - For user profile pictures
 - `npx shadcn@latest add alert-dialog` - For sign-out confirmation
+
+### Tasks Page Implementation (Phase 3A Complete)
+
+The tasks page (`apps/web/src/routes/_authenticated/tasks.tsx`) demonstrates production-ready patterns:
+
+**Core Features Implemented:**
+- **Task Management**: Full CRUD operations with TanStack Table
+- **Advanced Data**: Tasks support title, status, priority, label, description, and due dates
+- **Statistics Dashboard**: Real-time stats (total, by status, overdue count)
+- **Advanced Filtering**: Multi-select filters for status, priority, label + date range
+- **Bulk Operations**: Multi-select delete with row selection
+- **Professional UI**: Form dialogs, loading skeletons, empty states
+
+**Data Schema** (`packages/backend/convex/schema.ts:10-20`):
+```typescript
+tasks: defineTable({
+  title: v.string(),
+  status: v.string(),           // backlog, todo, "in progress", done, canceled
+  label: v.string(),           // bug, feature, documentation
+  priority: v.string(),        // low, medium, high, critical
+  userId: v.string(),
+  description: v.optional(v.string()),
+  dueDate: v.optional(v.number()),
+}).index("by_userId", ["userId"])
+  .index("by_dueDate", ["dueDate"])
+```
+
+**Key Components:**
+- `components/features/tasks/index.tsx` - Main tasks container with React Query integration
+- `components/features/tasks/components/tasks-table.tsx` - TanStack Table with sorting, filtering, pagination
+- `components/features/tasks/components/tasks-columns.tsx` - Column definitions with status/priority icons, due date formatting
+- `components/features/tasks/components/task-form-dialog.tsx` - Form dialog with Zod validation
+- `components/features/tasks/components/tasks-stats.tsx` - Statistics dashboard cards
+- `components/features/tasks/components/tasks-toolbar.tsx` - Advanced filtering controls
+
+**Authentication Pattern (Recommended):**
+```typescript
+// Backend - packages/backend/convex/tasks.ts
+export const getAll = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+    return await ctx.db
+      .query("tasks")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .order("desc")
+      .collect();
+  },
+});
+```
+
+**Frontend Data Fetching Pattern:**
+```typescript
+// apps/web/src/features/tasks/index.tsx
+const { data: tasks } = useSuspenseQuery(convexQuery(api.tasks.getAll, {}));
+const createTask = useMutation(api.tasks.create);
+const updateTask = useMutation(api.tasks.update);
+```
+
+**UI Polish Features:**
+- Loading skeletons (`TasksSkeleton`) during initial data fetch
+- Empty states (`TasksEmptyState`) with call-to-action
+- Due date formatting with relative time ("in 2 days")
+- Overdue task highlighting (red text for past due dates)
+- Form validation with Zod schemas
+- Toast notifications for user feedback
+
+This implementation serves as the reference pattern for building production-ready features in this codebase.
