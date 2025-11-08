@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { convexQuery } from "@convex-dev/react-query";
+import { api } from "@tanstack/backend/convex/_generated/api";
 import {
 	Dialog,
 	DialogContent,
@@ -49,6 +52,11 @@ export function TaskFormDialog({
 }: TaskFormDialogProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
+	// Get active projects for selector
+	const { data: projects } = useSuspenseQuery(
+		convexQuery(api.projects.getActive, {})
+	);
+
 	const {
 		register,
 		handleSubmit,
@@ -66,6 +74,7 @@ export function TaskFormDialog({
 			description: task?.description || "",
 			dueDate: task?.dueDate,
 			parentTaskId: parentTaskId || task?.parentTaskId || undefined,
+			projectId: (task as any)?.projectId || undefined,
 		},
 	});
 
@@ -80,6 +89,7 @@ export function TaskFormDialog({
 				description: task?.description || "",
 				dueDate: task?.dueDate,
 				parentTaskId: parentTaskId || task?.parentTaskId || undefined,
+				projectId: (task as any)?.projectId || undefined,
 			});
 		}
 	}, [open, task, parentTaskId, reset]);
@@ -209,6 +219,34 @@ export function TaskFormDialog({
 								</p>
 							</div>
 						)}
+
+						<div className="grid gap-2">
+							<Label htmlFor="projectId">Project (Optional)</Label>
+							<Select
+								value={watch("projectId") || "__none__"}
+								onValueChange={(value) => setValue("projectId", value === "__none__" ? undefined : value)}
+							>
+								<SelectTrigger id="projectId">
+									<SelectValue placeholder="No project" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="__none__">No Project</SelectItem>
+									{projects?.map((project) => (
+										<SelectItem key={project._id} value={project._id}>
+											<div className="flex items-center">
+												{project.color && (
+													<div 
+														className="mr-2 w-3 h-3 rounded-full border" 
+														style={{ backgroundColor: project.color }}
+													/>
+												)}
+												{project.name}
+											</div>
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
 
 						<div className="grid gap-2">
 							<Label htmlFor="description">Description</Label>

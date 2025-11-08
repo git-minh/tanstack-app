@@ -34,6 +34,7 @@ export const create = mutation({
 		description: v.optional(v.string()),
 		dueDate: v.optional(v.number()),
 		parentTaskId: v.optional(v.id("tasks")),
+		projectId: v.optional(v.id("projects")),
 	},
 	handler: async (ctx, args) => {
 		const identity = await ctx.auth.getUserIdentity();
@@ -61,6 +62,7 @@ export const create = mutation({
 			dueDate: args.dueDate,
 			displayId,
 			parentTaskId: args.parentTaskId,
+			projectId: args.projectId,
 			level,
 			sortPath,
 		});
@@ -77,6 +79,7 @@ export const update = mutation({
 		priority: v.string(),
 		description: v.optional(v.string()),
 		dueDate: v.optional(v.number()),
+		projectId: v.optional(v.id("projects")),
 	},
 	handler: async (ctx, args) => {
 		const identity = await ctx.auth.getUserIdentity();
@@ -100,6 +103,7 @@ export const update = mutation({
 			priority: args.priority,
 			description: args.description,
 			dueDate: args.dueDate,
+			projectId: args.projectId,
 		});
 
 		// STATUS INHERITANCE: If task is marked as done, update all descendants
@@ -460,5 +464,127 @@ export const updateManyStatus = mutation({
 		}
 
 		return { success: true, updated: args.ids.length };
+	},
+});
+
+/**
+ * Bulk update task priority
+ */
+export const updateManyPriority = mutation({
+	args: {
+		ids: v.array(v.id("tasks")),
+		priority: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			throw new Error("Unauthorized: Must be logged in to update tasks");
+		}
+		// Verify all tasks belong to the current user and update them
+		for (const id of args.ids) {
+			const task = await ctx.db.get(id);
+			if (!task) {
+				throw new Error(`Task ${id} not found`);
+			}
+			if (task.userId !== identity.subject) {
+				throw new Error(`Unauthorized: Cannot update task ${id}`);
+			}
+			await ctx.db.patch(id, { priority: args.priority });
+		}
+		return { success: true, updated: args.ids.length };
+	},
+});
+
+/**
+ * Reorder task - move to new position or new parent
+ */
+export const reorderTask = mutation({
+	args: {
+		taskId: v.id("tasks"),
+		overTaskId: v.id("tasks"),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			throw new Error("Unauthorized: Must be logged in to reorder tasks");
+		}
+
+		// Get both tasks
+		const task = await ctx.db.get(args.taskId);
+		const overTask = await ctx.db.get(args.overTaskId);
+
+		if (!task || !overTask) {
+			throw new Error("Task not found");
+		}
+
+		// Verify ownership
+		if (task.userId !== identity.subject || overTask.userId !== identity.subject) {
+			throw new Error("Unauthorized: Cannot reorder another user's tasks");
+		}
+
+		// Prevent moving a parent into its own child (circular dependency)
+		if (await isDescendant(ctx, args.overTaskId, args.taskId)) {
+			throw new Error("Cannot move a task into its own subtask");
+		}
+
+		// If dropping on same parent, just reorder
+		// If dropping on different task, make it a sibling or child based on hierarchy
+		const newParentId = overTask.parentTaskId || undefined;
+		
+		// Recalculate sortPath and level
+		const { level, sortPath } = await calculateSortPath(
+			ctx,
+			identity.subject,
+			newParentId
+		);
+
+		// Update the task
+		await ctx.db.patch(args.taskId, {
+			parentTaskId: newParentId,
+			level,
+			sortPath,
+		});
+
+		return { success: true };
+	},
+});
+
+/**
+ * Helper: Check if targetId is a descendant of sourceId
+ */
+async function isDescendant(
+	ctx: any,
+	targetId: string,
+	sourceId: string
+): Promise<boolean> {
+	const target = await ctx.db.get(targetId);
+	if (!target) return false;
+	
+	if (target.parentTaskId === sourceId) return true;
+	if (!target.parentTaskId) return false;
+	
+	return isDescendant(ctx, target.parentTaskId, sourceId);
+}
+
+/**
+ * Get tasks by project ID
+ */
+export const getByProject = query({
+	args: { projectId: v.id("projects") },
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			throw new Error("Unauthorized: Must be logged in to view tasks");
+		}
+
+		const tasks = await ctx.db
+			.query("tasks")
+			.withIndex("by_userId_and_projectId", (q) => 
+				q.eq("userId", identity.subject).eq("projectId", args.projectId)
+			)
+			.collect();
+
+		// Build hierarchy for project tasks
+		return buildTaskHierarchy(tasks);
 	},
 });

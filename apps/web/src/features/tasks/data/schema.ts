@@ -34,6 +34,10 @@ export const taskFormSchema = z.object({
 		.string()
 		.optional()
 		.transform((val) => (val === "" || val === "__none__" ? undefined : val)),
+	projectId: z
+		.string()
+		.optional()
+		.transform((val) => (val === "" ? undefined : val)),
 });
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;

@@ -19,6 +19,7 @@ import {
 	FileText,
 	Calendar,
 	ArrowRight,
+	FolderKanban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -92,6 +93,14 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
 					navigate({ to: "/contacts" });
 				}
 				break;
+			case "project":
+				// Navigate to specific project by display ID
+				if (displayId) {
+					navigate({ to: `/projects/${displayId}` });
+				} else {
+					navigate({ to: "/projects" });
+				}
+				break;
 			case "todo":
 				navigate({ to: "/todos" });
 				break;
@@ -104,6 +113,8 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
 				return <CheckSquare className="h-4 w-4" />;
 			case "contact":
 				return <Users className="h-4 w-4" />;
+			case "project":
+				return <FolderKanban className="h-4 w-4" />;
 			case "todo":
 				return <ListTodo className="h-4 w-4" />;
 			default:
@@ -149,6 +160,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
 		searchResults &&
 		(searchResults.tasks.length > 0 ||
 			searchResults.contacts.length > 0 ||
+			searchResults.projects.length > 0 ||
 			searchResults.todos.length > 0);
 
 	return (
@@ -178,7 +190,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
 							<Search className="mr-2 h-4 w-4 text-muted-foreground" />
 							<Input
 								ref={inputRef}
-								placeholder="Search tasks, contacts, and todos..."
+								placeholder="Search tasks, contacts, todos, and projects..."
 								value={query}
 								onChange={(e) => setQuery(e.target.value)}
 								className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -255,6 +267,66 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
 																	)}
 																</span>
 															)}
+														</div>
+													</div>
+												</div>
+												<ArrowRight className="h-4 w-4 text-muted-foreground" />
+											</button>
+										))}
+									</div>
+								)}
+
+								{/* Projects */}
+								{searchResults.projects.length > 0 && (
+									<div className="mb-4">
+										<div className="mb-2 px-2 text-xs font-semibold text-muted-foreground">
+											PROJECTS
+										</div>
+										{searchResults.projects.map((project: any) => (
+											<button
+												key={project._id}
+												className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-accent"
+												onClick={() =>
+													handleSelect("project", project._id, project.displayId)
+												}
+											>
+												<div className="flex items-center space-x-2">
+													{getIcon("project")}
+													<div>
+														<div className="flex items-center space-x-2">
+															<span className="font-medium">
+																{project.name}
+															</span>
+															<Badge
+																variant="outline"
+																className="text-xs"
+															>
+																{project.displayId}
+															</Badge>
+														</div>
+														<div className="flex items-center space-x-2 text-xs text-muted-foreground">
+															{project.color && (
+																<div
+																	className="w-2 h-2 rounded-full"
+																	style={{ backgroundColor: project.color }}
+																/>
+															)}
+															<Badge
+																className={cn(
+																	"text-xs",
+																	getStatusColor(project.status)
+																)}
+															>
+																{project.status}
+															</Badge>
+															<Badge
+																className={cn(
+																	"text-xs",
+																	getPriorityColor(project.priority)
+																)}
+															>
+																{project.priority}
+															</Badge>
 														</div>
 													</div>
 												</div>
