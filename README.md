@@ -2,6 +2,17 @@
 
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/git-minh/tanstack-app?utm_source=oss&utm_medium=github&utm_campaign=git-minh%2Ftanstack-app&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TanStack](https://img.shields.io/badge/TanStack-Start-FF4154?logo=tanstack&logoColor=white)](https://tanstack.com/start)
+[![Convex](https://img.shields.io/badge/Convex-Backend-F46C1C?logo=convex&logoColor=white)](https://convex.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![pnpm](https://img.shields.io/badge/pnpm-10.16.1-F69220?logo=pnpm&logoColor=white)](https://pnpm.io/)
+[![Vitest](https://img.shields.io/badge/Vitest-Testing-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Turborepo](https://img.shields.io/badge/Turborepo-Monorepo-EF4444?logo=turborepo&logoColor=white)](https://turbo.build/)
+[![CircleCI](https://img.shields.io/badge/CircleCI-CI/CD-343434?logo=circleci&logoColor=white)](https://circleci.com/)
+[![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
+
 A modern, full-stack TypeScript application built with React, TanStack Start, and Convex. Features hierarchical data management, real-time updates, and a production-ready authentication system.
 
 Built with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack) - a modern TypeScript stack combining the best tools for full-stack development.
