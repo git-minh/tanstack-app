@@ -567,70 +567,242 @@ export function getSidebarData(user: User): SidebarData {
 - `npx shadcn@latest add avatar` - For user profile pictures
 - `npx shadcn@latest add alert-dialog` - For sign-out confirmation
 
-### Tasks Page Implementation (Phase 3A Complete)
+### Global Search Integration
 
-The tasks page (`apps/web/src/routes/_authenticated/tasks.tsx`) demonstrates production-ready patterns:
+The app includes a global search component (`apps/web/src/components/global-search.tsx`) accessible via Cmd/Ctrl + K.
 
-**Core Features Implemented:**
-- **Task Management**: Full CRUD operations with TanStack Table
-- **Advanced Data**: Tasks support title, status, priority, label, description, and due dates
-- **Statistics Dashboard**: Real-time stats (total, by status, overdue count)
-- **Advanced Filtering**: Multi-select filters for status, priority, label + date range
-- **Bulk Operations**: Multi-select delete with row selection
-- **Professional UI**: Form dialogs, loading skeletons, empty states
+**Backend Requirements:**
+- Implement `api.search.searchAll` query that searches across multiple tables
+- Return results with `type` field for categorization (e.g., "task", "project", "contact")
+- Include `displayId` for readable URLs (e.g., "TSK-001", "PRJ-042")
 
-**Data Schema** (`packages/backend/convex/schema.ts:10-20`):
+**Search Query Pattern** (`packages/backend/convex/search.ts`):
 ```typescript
-tasks: defineTable({
-  title: v.string(),
-  status: v.string(),           // backlog, todo, "in progress", done, canceled
-  label: v.string(),           // bug, feature, documentation
-  priority: v.string(),        // low, medium, high, critical
-  userId: v.string(),
-  description: v.optional(v.string()),
-  dueDate: v.optional(v.number()),
-}).index("by_userId", ["userId"])
-  .index("by_dueDate", ["dueDate"])
-```
+export const searchAll = query({
+  args: { query: v.string() },
+  handler: async (ctx, { query }) => {
+    const identity = await requireAuth(ctx);
+    const searchTerm = query.toLowerCase();
 
-**Key Components:**
-- `components/features/tasks/index.tsx` - Main tasks container with React Query integration
-- `components/features/tasks/components/tasks-table.tsx` - TanStack Table with sorting, filtering, pagination
-- `components/features/tasks/components/tasks-columns.tsx` - Column definitions with status/priority icons, due date formatting
-- `components/features/tasks/components/task-form-dialog.tsx` - Form dialog with Zod validation
-- `components/features/tasks/components/tasks-stats.tsx` - Statistics dashboard cards
-- `components/features/tasks/components/tasks-toolbar.tsx` - Advanced filtering controls
-
-**Authentication Pattern (Recommended):**
-```typescript
-// Backend - packages/backend/convex/tasks.ts
-export const getAll = query({
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
-    return await ctx.db
+    // Search tasks
+    const tasks = await ctx.db
       .query("tasks")
       .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
-      .order("desc")
+      .filter((q) => q.or(
+        q.contains(q.field("title"), searchTerm),
+        q.contains(q.field("displayId"), searchTerm)
+      ))
+      .collect();
+
+    // Search projects
+    const projects = await ctx.db
+      .query("projects")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .filter((q) => q.contains(q.field("name"), searchTerm))
+      .collect();
+
+    return {
+      tasks: tasks.map(t => ({ ...t, type: "task" as const })),
+      projects: projects.map(p => ({ ...p, type: "project" as const })),
+    };
+  },
+});
+```
+
+**Adding Search to New Features:**
+1. Add search logic to `convex/search.ts`
+2. Include `displayId` in your schema for readable URLs
+3. Map results with `type` field for categorization
+4. Global search will automatically show results grouped by type
+
+### Display IDs and Counters
+
+The app uses human-readable IDs for entities (e.g., `TSK-000042`, `PRJ-000015`).
+
+**Counter System** (`packages/backend/convex/counters.ts`):
+- Atomic counter increments using internal mutations
+- Global counters table with `by_name` index
+- Format: `{PREFIX}-{6-digit-number}` (e.g., "TD-000001")
+
+**Usage in Mutations:**
+```typescript
+import { generateDisplayId } from "./counters";
+
+export const create = mutation({
+  handler: async (ctx, args) => {
+    const identity = await requireAuth(ctx);
+
+    // Generate unique display ID atomically
+    const displayId = await generateDisplayId(ctx, "tasks");
+
+    const taskId = await ctx.db.insert("tasks", {
+      ...args,
+      userId: identity.subject,
+      displayId, // "TD-000042"
+    });
+
+    return taskId;
+  },
+});
+```
+
+**Adding to New Entity Types:**
+1. Update `generateDisplayId` function to add prefix mapping:
+   ```typescript
+   const prefixes = {
+     tasks: "TD",
+     contacts: "CT",
+     projects: "PR",
+     yourEntity: "YE", // Add your prefix
+   };
+   ```
+2. Add `displayId: v.string()` to your schema
+3. Call `generateDisplayId(ctx, "yourEntity")` in create mutation
+4. Use in URLs: `/your-entity/${displayId}`
+
+### Hierarchical Data Patterns
+
+This codebase implements hierarchical structures for both tasks and projects. The pattern is reusable for any parent-child data model.
+
+**Core Concepts:**
+- `level` - Numeric depth in hierarchy (0 = root)
+- `sortPath` - Dot-separated path for ordering (e.g., "001.002.003")
+- `subRows` - Array property for recursive tree structure
+- Recursive queries with `by_parentId` indexes
+
+**Hierarchy Utilities** (`packages/backend/convex/hierarchy.ts`):
+```typescript
+// Calculate level and sortPath for nested items
+export async function calculateSortPath(
+  ctx: MutationCtx | QueryCtx,
+  userId: string,
+  parentId?: Id<"items">
+): Promise<{ level: number; sortPath: string }> {
+  // Returns { level: 0-N, sortPath: "001" or "001.002" }
+}
+
+// Build tree structure from flat array
+export function buildHierarchy<T>(items: T[]): T[] {
+  // Returns array with subRows populated recursively
+}
+```
+
+**Backend Schema Pattern:**
+```typescript
+items: defineTable({
+  // ... other fields
+  userId: v.string(),
+  parentItemId: v.optional(v.id("items")),
+  level: v.number(),           // 0, 1, 2, etc.
+  sortPath: v.string(),        // "001", "001.002", etc.
+})
+  .index("by_userId", ["userId"])
+  .index("by_userId_and_level", ["userId", "level"])
+  .index("by_parentItemId", ["parentItemId"])
+```
+
+**Frontend Type Pattern:**
+```typescript
+export interface Item {
+  _id: Id<"items">;
+  // ... other fields
+  parentItemId?: Id<"items">;
+  level: number;
+  sortPath: string;
+  subRows?: Item[];  // Recursive tree structure
+}
+```
+
+**Recursive Search in Hierarchy:**
+```typescript
+// Type-safe recursive search through tree
+const findItem = (items: Item[]): Item | undefined => {
+  for (const item of items) {
+    if (item._id === targetId) return item;
+    if (item.subRows) {
+      const found = findItem(item.subRows);
+      if (found) return found;
+    }
+  }
+  return undefined;
+};
+```
+
+### Reference Implementations
+
+#### Tasks Page (Production-Ready Pattern)
+Location: `apps/web/src/routes/_authenticated/tasks.tsx`
+
+**Features:**
+- Full CRUD with TanStack Table
+- Advanced filtering (status, priority, label, date range)
+- Bulk operations with row selection
+- Real-time statistics dashboard
+- Loading skeletons and empty states
+- Parent-child task relationships (subtasks)
+
+**Key Components:**
+- `features/tasks/index.tsx` - Container with React Query
+- `features/tasks/components/tasks-table.tsx` - Table with sorting/filtering/pagination
+- `features/tasks/components/task-form-dialog.tsx` - Form with Zod validation
+- `features/tasks/components/tasks-stats.tsx` - Statistics cards
+
+#### Projects Page (Hierarchical Data Pattern)
+Location: `apps/web/src/routes/_authenticated/projects.tsx`
+
+**Features:**
+- Hierarchical projects with unlimited nesting (subprojects)
+- Tree view with expand/collapse
+- Navigation via `displayId` (e.g., `/projects/PRJ-001`)
+- Recursive status updates (affect all descendants)
+- Bulk operations that respect hierarchy
+- Route-based edit dialog (`?editProjectId=...`)
+
+**Key Components:**
+- `features/projects/index.tsx` - Container with hierarchical data
+- `features/projects/components/projects-table.tsx` - Tree table with subRows
+- `features/projects/components/project-form-dialog.tsx` - Parent selector dropdown
+- Backend: `convex/projects.ts` + `convex/hierarchy.ts`
+
+**Backend Authentication Pattern:**
+```typescript
+// Shared auth helper (recommended pattern)
+async function requireAuth(ctx: QueryCtx | MutationCtx) {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) {
+    throw new Error("Unauthorized: Must be logged in");
+  }
+  return identity;
+}
+
+// Use in queries/mutations
+export const myQuery = query({
+  handler: async (ctx) => {
+    const identity = await requireAuth(ctx);
+    return await ctx.db
+      .query("items")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
       .collect();
   },
 });
 ```
 
-**Frontend Data Fetching Pattern:**
+**Frontend Data Fetching:**
 ```typescript
-// apps/web/src/features/tasks/index.tsx
-const { data: tasks } = useSuspenseQuery(convexQuery(api.tasks.getAll, {}));
-const createTask = useMutation(api.tasks.create);
-const updateTask = useMutation(api.tasks.update);
+// React Query + Convex for queries
+const { data: items } = useSuspenseQuery(convexQuery(api.items.getAll, {}));
+
+// Convex directly for mutations
+const createItem = useMutation(api.items.create);
+const updateItem = useMutation(api.items.update);
+
+// Multiple queries in parallel
+const { data: hierarchical } = useSuspenseQuery(
+  convexQuery(api.items.getHierarchy, {})
+);
+const { data: roots } = useSuspenseQuery(
+  convexQuery(api.items.getRootItems, {})
+);
 ```
 
-**UI Polish Features:**
-- Loading skeletons (`TasksSkeleton`) during initial data fetch
-- Empty states (`TasksEmptyState`) with call-to-action
-- Due date formatting with relative time ("in 2 days")
-- Overdue task highlighting (red text for past due dates)
-- Form validation with Zod schemas
-- Toast notifications for user feedback
-
-This implementation serves as the reference pattern for building production-ready features in this codebase.
+These implementations serve as reference patterns for building production-ready features in this codebase.
