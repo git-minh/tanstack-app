@@ -12,9 +12,15 @@ export const taskSchema = z.object({
 	userId: z.string(),
 	description: z.string().optional(),
 	dueDate: z.number().optional(),
+	displayId: z.string(),
+	parentTaskId: z.string().optional(),
+	level: z.number(),
+	sortPath: z.string(),
 });
 
-export type Task = z.infer<typeof taskSchema>;
+export type Task = z.infer<typeof taskSchema> & {
+	subRows?: Task[];
+};
 
 // Form schema for create/update operations
 export const taskFormSchema = z.object({
@@ -24,6 +30,10 @@ export const taskFormSchema = z.object({
 	priority: z.string(),
 	description: z.string().optional(),
 	dueDate: z.number().optional(),
+	parentTaskId: z
+		.string()
+		.optional()
+		.transform((val) => (val === "" || val === "__none__" ? undefined : val)),
 });
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;

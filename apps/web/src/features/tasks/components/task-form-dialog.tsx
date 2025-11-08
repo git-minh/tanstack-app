@@ -34,6 +34,8 @@ interface TaskFormDialogProps {
 	task?: Task;
 	onSubmit: (values: TaskFormValues) => Promise<void>;
 	mode: "create" | "edit";
+	rootTasks?: Task[];
+	parentTaskId?: string;
 }
 
 export function TaskFormDialog({
@@ -42,6 +44,8 @@ export function TaskFormDialog({
 	task,
 	onSubmit,
 	mode,
+	rootTasks,
+	parentTaskId,
 }: TaskFormDialogProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -61,6 +65,7 @@ export function TaskFormDialog({
 			label: task?.label || "feature",
 			description: task?.description || "",
 			dueDate: task?.dueDate,
+			parentTaskId: parentTaskId || task?.parentTaskId || undefined,
 		},
 	});
 
@@ -74,9 +79,10 @@ export function TaskFormDialog({
 				label: task?.label || "feature",
 				description: task?.description || "",
 				dueDate: task?.dueDate,
+				parentTaskId: parentTaskId || task?.parentTaskId || undefined,
 			});
 		}
-	}, [open, task, reset]);
+	}, [open, task, parentTaskId, reset]);
 
 	const onFormSubmit = async (values: TaskFormValues) => {
 		setIsSubmitting(true);
@@ -176,6 +182,33 @@ export function TaskFormDialog({
 								</SelectContent>
 							</Select>
 						</div>
+
+						{mode === "create" && rootTasks && (
+							<div className="grid gap-2">
+								<Label htmlFor="parentTaskId">Parent Task (Optional)</Label>
+								<Select
+									value={watch("parentTaskId") || "__none__"}
+									onValueChange={(value) =>
+										setValue("parentTaskId", value === "__none__" ? undefined : value)
+									}
+								>
+									<SelectTrigger id="parentTaskId">
+										<SelectValue placeholder="No parent (root task)" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="__none__">No parent (root task)</SelectItem>
+										{rootTasks.map((rootTask) => (
+											<SelectItem key={rootTask._id} value={rootTask._id}>
+												{rootTask.displayId} - {rootTask.title}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								<p className="text-xs text-muted-foreground">
+									Select a parent task to create a subtask
+								</p>
+							</div>
+						)}
 
 						<div className="grid gap-2">
 							<Label htmlFor="description">Description</Label>
