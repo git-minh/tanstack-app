@@ -2,7 +2,7 @@ import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { QueryClient } from "@tanstack/react-query";
 import { routerWithQueryClient } from "@tanstack/react-router-with-query";
 import { ConvexQueryClient } from "@convex-dev/react-query";
-import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { ConvexReactClient } from "convex/react";
 import { routeTree } from "./routeTree.gen";
 import Loader from "./components/loader";
 import { NotFound } from "./components/error-pages/not-found";
@@ -15,6 +15,8 @@ export function getRouter() {
 	}
 	const convex = new ConvexReactClient(CONVEX_URL, {
 		unsavedChangesWarning: false,
+		// Pause queries until user is authenticated to prevent "Unauthorized" errors
+		expectAuth: true,
 	});
 
 	const convexQueryClient = new ConvexQueryClient(convex);
@@ -36,11 +38,8 @@ export function getRouter() {
 			defaultPendingComponent: () => <Loader />,
 			defaultNotFoundComponent: NotFound,
 			context: { queryClient, convexClient: convex, convexQueryClient },
-			Wrap: ({ children }) => (
-				<ConvexProvider client={convexQueryClient.convexClient}>
-					{children}
-				</ConvexProvider>
-			),
+			// ConvexBetterAuthProvider in __root.tsx handles both Convex and auth
+			// No need for ConvexProvider wrapper here
 		}),
 		queryClient,
 	);

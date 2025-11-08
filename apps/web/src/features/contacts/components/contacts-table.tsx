@@ -1,16 +1,14 @@
 import { useState } from "react";
 import {
 	type ColumnDef,
-	type ColumnFiltersState,
 	type SortingState,
+	type ColumnFiltersState,
 	type VisibilityState,
-	type ExpandedState,
 	flexRender,
 	getCoreRowModel,
+	getSortedRowModel,
 	getFilteredRowModel,
 	getPaginationRowModel,
-	getSortedRowModel,
-	getExpandedRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
 import {
@@ -22,35 +20,31 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { type Task } from "../data/schema";
-import { TasksToolbar } from "./tasks-toolbar";
-import { TasksEmptyState } from "./tasks-empty-state";
-import { cn } from "@/lib/utils";
+import { type Contact } from "../data/schema";
+import { ContactsToolbar } from "./contacts-toolbar";
+import { ContactsEmptyState } from "./contacts-empty-state";
 
-interface TasksTableProps {
-	data: Task[];
-	columns: ColumnDef<Task>[];
-	onDeleteTask: (id: string) => void;
+interface ContactsTableProps {
+	data: Contact[];
+	columns: ColumnDef<Contact>[];
+	onDeleteContact: (id: string) => void;
 	onDeleteMany: (ids: string[]) => void;
-	onEditTask: (task: Task) => void;
-	onCreateTask: () => void;
-	onCreateSubtask?: (parentTaskId: string) => void;
+	onEditContact: (contact: Contact) => void;
+	onCreateContact: () => void;
 }
 
-export function TasksTable({
+export function ContactsTable({
 	data,
 	columns,
-	onDeleteTask,
+	onDeleteContact,
 	onDeleteMany,
-	onEditTask,
-	onCreateTask,
-	onCreateSubtask,
-}: TasksTableProps) {
+	onEditContact,
+	onCreateContact,
+}: ContactsTableProps) {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 	const [rowSelection, setRowSelection] = useState({});
-	const [expanded, setExpanded] = useState<ExpandedState>({});
 
 	const table = useReactTable({
 		data,
@@ -59,24 +53,19 @@ export function TasksTable({
 		getPaginationRowModel: getPaginationRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
-		getExpandedRowModel: getExpandedRowModel(),
-		getSubRows: (row) => row.subRows,
 		onSortingChange: setSorting,
 		onColumnFiltersChange: setColumnFilters,
 		onColumnVisibilityChange: setColumnVisibility,
 		onRowSelectionChange: setRowSelection,
-		onExpandedChange: setExpanded,
 		state: {
 			sorting,
 			columnFilters,
 			columnVisibility,
 			rowSelection,
-			expanded,
 		},
 		meta: {
-			deleteTask: onDeleteTask,
-			editTask: onEditTask,
-			createSubtask: onCreateSubtask,
+			deleteContact: onDeleteContact,
+			editContact: onEditContact,
 		},
 	});
 
@@ -85,13 +74,13 @@ export function TasksTable({
 
 	// Show empty state if no data
 	if (data.length === 0 && !isFiltered) {
-		return <TasksEmptyState onCreateTask={onCreateTask} />;
+		return <ContactsEmptyState onCreateContact={onCreateContact} />;
 	}
 
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
-				<TasksToolbar table={table} />
+				<ContactsToolbar table={table} />
 			</div>
 			{selectedRows.length > 0 && (
 				<div className="flex items-center justify-end">
@@ -121,7 +110,7 @@ export function TasksTable({
 											: flexRender(
 													header.column.columnDef.header,
 													header.getContext()
-											  )}
+												)}
 									</TableHead>
 								))}
 							</TableRow>
@@ -129,37 +118,28 @@ export function TasksTable({
 					</TableHeader>
 					<TableBody>
 						{table.getRowModel().rows?.length ? (
-							table.getRowModel().rows.map((row) => {
-								const level = row.original.level || 0;
-								const isParent = row.original.subRows && row.original.subRows.length > 0;
-								
-								return (
-									<TableRow
-										key={row.id}
-										data-state={row.getIsSelected() && "selected"}
-										className={cn(
-											"border-b transition-colors",
-											level === 0 && "bg-accent/5 hover:bg-accent/10 border-l-4 border-l-primary/20",
-											level === 1 && "bg-muted/20 hover:bg-muted/30 border-l-2 border-l-muted-foreground/30",
-											level >= 2 && "bg-background hover:bg-muted/20 border-l border-l-border",
-											isParent && level === 0 && "font-medium"
-										)}
-									>
-										{row.getVisibleCells().map((cell) => (
-											<TableCell key={cell.id}>
-												{flexRender(
-													cell.column.columnDef.cell,
-													cell.getContext()
-												)}
-											</TableCell>
-										))}
-									</TableRow>
-								);
-							})
+							table.getRowModel().rows.map((row) => (
+								<TableRow
+									key={row.id}
+									data-state={row.getIsSelected() && "selected"}
+								>
+									{row.getVisibleCells().map((cell) => (
+										<TableCell key={cell.id}>
+											{flexRender(
+												cell.column.columnDef.cell,
+												cell.getContext()
+											)}
+										</TableCell>
+									))}
+								</TableRow>
+							))
 						) : (
 							<TableRow>
 								<TableCell colSpan={columns.length} className="p-0">
-									<TasksEmptyState onCreateTask={onCreateTask} isFiltered={isFiltered} />
+									<ContactsEmptyState
+										onCreateContact={onCreateContact}
+										isFiltered={isFiltered}
+									/>
 								</TableCell>
 							</TableRow>
 						)}
@@ -168,11 +148,11 @@ export function TasksTable({
 			</div>
 
 			<div className="flex items-center justify-between space-x-2 py-4">
-				<div className="text-sm text-muted-foreground">
+				<div className="flex-1 text-sm text-muted-foreground">
 					{selectedRows.length} of {table.getFilteredRowModel().rows.length}{" "}
 					row(s) selected.
 				</div>
-				<div className="flex space-x-2">
+				<div className="space-x-2">
 					<Button
 						variant="outline"
 						size="sm"

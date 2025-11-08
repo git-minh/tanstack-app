@@ -1,4 +1,4 @@
-import { LayoutDashboard, ListTodo, CheckSquare } from 'lucide-react'
+import { LayoutDashboard, ListTodo, CheckSquare, Users } from 'lucide-react'
 import { type SidebarData } from '../types'
 
 /**
@@ -29,6 +29,11 @@ export function getSidebarData(user: {
             title: 'Tasks',
             url: '/tasks',
             icon: CheckSquare,
+          },
+          {
+            title: 'Contacts',
+            url: '/contacts',
+            icon: Users,
           },
           {
             title: 'Todos',

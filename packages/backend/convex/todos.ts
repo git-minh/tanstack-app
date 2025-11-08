@@ -88,3 +88,129 @@ export const deleteTodo = mutation({
 		return { success: true };
 	},
 });
+
+/**
+ * Update todo text
+ */
+export const updateText = mutation({
+	args: {
+		id: v.id("todos"),
+		text: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			throw new Error("Unauthorized: Must be logged in to update todos");
+		}
+		// Verify the todo belongs to the current user
+		const todo = await ctx.db.get(args.id);
+		if (!todo) {
+			throw new Error("Todo not found");
+		}
+		if (todo.userId !== identity.subject) {
+			throw new Error("Unauthorized: Cannot update another user's todo");
+		}
+		await ctx.db.patch(args.id, { text: args.text });
+		return await ctx.db.get(args.id);
+	},
+});
+
+/**
+ * Delete all completed todos
+ */
+export const deleteCompleted = mutation({
+	handler: async (ctx) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			throw new Error("Unauthorized: Must be logged in to delete todos");
+		}
+		// Get all completed todos for the user
+		const completedTodos = await ctx.db
+			.query("todos")
+			.withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+			.collect();
+
+		const todosToDelete = completedTodos.filter((todo) => todo.completed);
+
+		// Delete each completed todo
+		for (const todo of todosToDelete) {
+			await ctx.db.delete(todo._id);
+		}
+
+		return { success: true, deleted: todosToDelete.length };
+	},
+});
+
+/**
+ * Get todo statistics
+ */
+export const getTodoStats = query({
+	handler: async (ctx) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			throw new Error("Unauthorized: Must be logged in to view stats");
+		}
+
+		const todos = await ctx.db
+			.query("todos")
+			.withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+			.collect();
+
+		const completed = todos.filter((t) => t.completed).length;
+		const pending = todos.filter((t) => !t.completed).length;
+		const total = todos.length;
+
+		// Calculate completion rate
+		const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+		// Get today's created todos
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		const todayMs = today.getTime();
+
+		const todaysTodos = todos.filter((t) => t._creationTime >= todayMs);
+		const todaysCompleted = todaysTodos.filter((t) => t.completed).length;
+
+		return {
+			total,
+			completed,
+			pending,
+			completionRate,
+			todaysTotal: todaysTodos.length,
+			todaysCompleted,
+		};
+	},
+});
+
+/**
+ * Delete multiple todos
+ */
+export const deleteMany = mutation({
+	args: {
+		ids: v.array(v.id("todos")),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			throw new Error("Unauthorized: Must be logged in to delete todos");
+		}
+
+		// Verify all todos belong to the current user
+		for (const id of args.ids) {
+			const todo = await ctx.db.get(id);
+			if (!todo) {
+				throw new Error(`Todo ${id} not found`);
+			}
+			if (todo.userId !== identity.subject) {
+				throw new Error(`Unauthorized: Cannot delete todo ${id}`);
+			}
+		}
+
+		// Delete all todos
+		for (const id of args.ids) {
+			await ctx.db.delete(id);
+		}
+
+		return { success: true, deleted: args.ids.length };
+	},
+});
