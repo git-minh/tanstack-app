@@ -232,7 +232,8 @@ jobs:
             cd apps/web
             export CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN}"
             export VITE_CONVEX_URL="${VITE_CONVEX_URL}"
-            pnpm run deploy
+            export VITE_CONVEX_SITE_URL="${VITE_CONVEX_SITE_URL}"
+            wrangler deploy --var VITE_CONVEX_URL:"${VITE_CONVEX_URL}" --var VITE_CONVEX_SITE_URL:"${VITE_CONVEX_SITE_URL}"
 
       # Store deployment artifacts
       - store_artifacts:

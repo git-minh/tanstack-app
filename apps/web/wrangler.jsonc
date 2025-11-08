@@ -9,6 +9,10 @@
 	},
 	"observability": {
 		"enabled": true
+	},
+	"vars": {
+		"VITE_CONVEX_URL": "",
+		"VITE_CONVEX_SITE_URL": ""
 	}
 	// "kv_namespaces": [
 	//   {

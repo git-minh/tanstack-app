@@ -35,22 +35,45 @@ The application deploys to two main platforms:
     "enabled": true
   },
   "vars": {
-    "CONVEX_URL": "https://your-project.convex.cloud"
+    "VITE_CONVEX_URL": "",
+    "VITE_CONVEX_SITE_URL": ""
   }
 }
 ```
 
+**Note:** The `vars` section declares environment variables. Values are passed during deployment via CLI flags or set per environment.
+
 ### 2. Deploy to Cloudflare
 
+**Manual Deployment:**
 ```bash
-# From root directory
-pnpm build
-pnpm deploy
-
-# Or directly from apps/web
+# From apps/web directory
 cd apps/web
-pnpm deploy
+
+# Deploy with environment variables
+wrangler deploy \
+  --var VITE_CONVEX_URL:"https://your-project.convex.cloud" \
+  --var VITE_CONVEX_SITE_URL:"https://your-project.convex.site"
 ```
+
+**CI/CD Deployment (CircleCI):**
+
+The `.circleci/config.yml` automatically deploys on push to master:
+```yaml
+- run:
+    name: Deploy frontend to Cloudflare
+    command: |
+      cd apps/web
+      export CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN}"
+      export VITE_CONVEX_URL="${VITE_CONVEX_URL}"
+      export VITE_CONVEX_SITE_URL="${VITE_CONVEX_SITE_URL}"
+      wrangler deploy --var VITE_CONVEX_URL:"${VITE_CONVEX_URL}" --var VITE_CONVEX_SITE_URL:"${VITE_CONVEX_SITE_URL}"
+```
+
+**Required CircleCI Environment Variables:**
+- `CLOUDFLARE_API_TOKEN` - Cloudflare API token
+- `VITE_CONVEX_URL` - Production Convex backend URL
+- `VITE_CONVEX_SITE_URL` - Production site URL
 
 ### 3. Configure Custom Domain (Optional)
 

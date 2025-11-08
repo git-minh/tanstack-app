@@ -55,3 +55,10 @@ apps/web/src/routeTree.gen.ts
 # CircleCI environment variables guide (contains secrets)
 .circleci/ADD_ENV_VARS.md
 .circleci/ENVIRONMENT_VARIABLES.md
+
+# Session documentation and summary files
+*_SUMMARY.md
+*_GUIDE.md
+*_IMPLEMENTATION.md
+*_FIX.md
+*_IMPROVEMENTS.md
