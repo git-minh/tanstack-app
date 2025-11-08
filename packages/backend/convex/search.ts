@@ -3,7 +3,7 @@ import { v } from "convex/values";
 
 /**
  * Global search across all tables
- * Searches in tasks, contacts, and todos
+ * Searches in tasks, contacts, todos, and projects
  */
 export const searchAll = query({
 	args: {
@@ -21,6 +21,7 @@ export const searchAll = query({
 				tasks: [],
 				contacts: [],
 				todos: [],
+				projects: [],
 				total: 0,
 			};
 		}
@@ -64,11 +65,25 @@ export const searchAll = query({
 			return todo.text.toLowerCase().includes(searchTerm);
 		});
 
+		// Search projects
+		const projects = await ctx.db
+			.query("projects")
+			.withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+			.collect();
+
+		const matchingProjects = projects.filter((project) => {
+			const nameMatch = project.name.toLowerCase().includes(searchTerm);
+			const descMatch = project.description?.toLowerCase().includes(searchTerm);
+			const idMatch = project.displayId.toLowerCase().includes(searchTerm);
+			return nameMatch || descMatch || idMatch;
+		});
+
 		return {
 			tasks: matchingTasks.slice(0, 10), // Limit results
 			contacts: matchingContacts.slice(0, 10),
 			todos: matchingTodos.slice(0, 10),
-			total: matchingTasks.length + matchingContacts.length + matchingTodos.length,
+			projects: matchingProjects.slice(0, 10),
+			total: matchingTasks.length + matchingContacts.length + matchingTodos.length + matchingProjects.length,
 		};
 	},
 });

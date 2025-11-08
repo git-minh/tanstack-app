@@ -1,4 +1,4 @@
-import { LayoutDashboard, ListTodo, CheckSquare, Users } from 'lucide-react'
+import { LayoutDashboard, ListTodo, CheckSquare, Users, FolderKanban } from 'lucide-react'
 import { type SidebarData } from '../types'
 
 /**
@@ -24,6 +24,11 @@ export function getSidebarData(user: {
             title: 'Dashboard',
             url: '/dashboard',
             icon: LayoutDashboard,
+          },
+          {
+            title: 'Projects',
+            url: '/projects',
+            icon: FolderKanban,
           },
           {
             title: 'Tasks',

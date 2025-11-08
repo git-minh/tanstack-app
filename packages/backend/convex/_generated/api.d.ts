@@ -16,6 +16,7 @@ import type * as healthCheck from "../healthCheck.js";
 import type * as hierarchy from "../hierarchy.js";
 import type * as http from "../http.js";
 import type * as privateData from "../privateData.js";
+import type * as projects from "../projects.js";
 import type * as search from "../search.js";
 import type * as tasks from "../tasks.js";
 import type * as todos from "../todos.js";
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   hierarchy: typeof hierarchy;
   http: typeof http;
   privateData: typeof privateData;
+  projects: typeof projects;
   search: typeof search;
   tasks: typeof tasks;
   todos: typeof todos;
