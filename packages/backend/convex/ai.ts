@@ -328,7 +328,7 @@ async function callAzureOpenAI(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "api-key": AZURE_OPENAI_KEY,
+        "api-key": AZURE_OPENAI_KEY!,
       },
       body: JSON.stringify(requestBody),
     });
@@ -374,7 +374,7 @@ export const generateProject = action({
   args: {
     prompt: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<GenerateProjectResponse> => {
     // Track created IDs for potential rollback (declare outside try block)
     const createdIds: {
       projectId?: Id<"projects">;
