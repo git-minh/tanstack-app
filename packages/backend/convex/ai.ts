@@ -286,41 +286,53 @@ Please analyze the description and create a comprehensive project plan with appr
 /**
  * Azure OpenAI API call helper function
  *
- * Makes HTTP requests to Azure OpenAI GPT-5 endpoint with proper configuration.
- * Handles the specific requirements for GPT-5 API (max_completion_tokens, API version, etc.)
+ * Makes HTTP requests to Azure OpenAI endpoint with proper configuration.
+ * Handles both o1-series models (o1-mini, o1-preview) and GPT-4 series models.
+ *
+ * Model-specific behavior:
+ * - o1-series: Uses max_completion_tokens, no temperature, no response_format, no system messages
+ * - GPT-4 series: Uses max_tokens, supports temperature, response_format, system messages
  *
  * @param messages - Array of chat messages with role and content
- * @param options - Optional configuration (temperature, maxTokens, responseFormat)
+ * @param options - Optional configuration
  * @returns Parsed JSON response from Azure OpenAI
  * @throws Error if API call fails or returns non-OK status
  */
 async function callAzureOpenAI(
-  messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
+  messages: Array<{ role: "user" | "assistant" | "system"; content: string }>,
   options: {
-    temperature?: number;
     maxTokens?: number;
+    temperature?: number;
     responseFormat?: "text" | "json_object";
+    useO1Model?: boolean; // Flag to indicate o1-series model
   } = {}
 ) {
   const {
-    temperature = 0.7,
     maxTokens = 4000,
+    temperature = 0.7,
     responseFormat = "json_object",
+    useO1Model = true, // Default to o1 model based on deployment name
   } = options;
 
   // Construct Azure OpenAI endpoint URL with API version
-  const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2025-01-01-preview`;
+  const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2024-08-01-preview`;
 
-  // Build request body - GPT-5 requires max_completion_tokens instead of max_tokens
+  // Build request body based on model type
   const requestBody: Record<string, unknown> = {
     messages,
-    temperature,
-    max_completion_tokens: maxTokens,
   };
 
-  // Add response_format only if json_object is requested
-  if (responseFormat === "json_object") {
-    requestBody.response_format = { type: "json_object" };
+  if (useO1Model) {
+    // o1-series models use max_completion_tokens and don't support temperature or response_format
+    requestBody.max_completion_tokens = maxTokens;
+  } else {
+    // GPT-4 series models use max_tokens and support temperature and response_format
+    requestBody.max_tokens = maxTokens;
+    requestBody.temperature = temperature;
+
+    if (responseFormat === "json_object") {
+      requestBody.response_format = { type: "json_object" };
+    }
   }
 
   try {
@@ -344,8 +356,12 @@ async function callAzureOpenAI(
     // Parse response
     const data = await response.json() as AzureOpenAIResponse;
 
+    // Debug: Log the full response structure
+    console.log("Azure OpenAI full response:", JSON.stringify(data, null, 2));
+
     // Validate response structure
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error("Response structure:", JSON.stringify(data, null, 2));
       throw new Error(
         "Invalid response structure from Azure OpenAI: missing choices"
       );
@@ -406,19 +422,31 @@ export const generateProject = action({
 
       // Build prompts with current context
       const userPrompt = buildUserPrompt(args.prompt, new Date());
-      const messages = [
-        { role: "system" as const, content: SYSTEM_PROMPT },
-        { role: "user" as const, content: userPrompt },
-      ];
+
+      // Determine if using o1-series model (deployment "gpt-5" uses o1-series parameters)
+      const useO1Model = true; // Set to false only if using GPT-4/GPT-4o
+
+      // Build messages based on model type
+      const messages = useO1Model
+        ? [
+            // o1-series: combine system and user into single user message
+            { role: "user" as const, content: `${SYSTEM_PROMPT}\n\n---\n\n${userPrompt}` },
+          ]
+        : [
+            // GPT-4 series: use separate system and user messages
+            { role: "system" as const, content: SYSTEM_PROMPT },
+            { role: "user" as const, content: userPrompt },
+          ];
 
       // Call Azure OpenAI API (Subtask 1.2 ✓)
       console.log("Calling Azure OpenAI API...");
       let aiResponse: AzureOpenAIResponse;
       try {
         aiResponse = await callAzureOpenAI(messages, {
+          maxTokens: 16000,  // O1 models need more tokens for reasoning + output
           temperature: 0.7,
-          maxTokens: 4000,
           responseFormat: "json_object",
+          useO1Model,
         });
       } catch (error) {
         console.error("Azure OpenAI API call failed:", error);
@@ -430,10 +458,12 @@ export const generateProject = action({
       // Extract the generated content
       const firstChoice = aiResponse.choices[0];
       if (!firstChoice || !firstChoice.message) {
+        console.error("First choice structure:", JSON.stringify(firstChoice, null, 2));
         throw new Error("AI response missing expected content structure");
       }
       const generatedContent = firstChoice.message.content;
-      console.log("AI Response received, length:", generatedContent.length);
+      console.log("AI Response received, length:", generatedContent?.length ?? 0);
+      console.log("Content preview:", generatedContent?.substring(0, 200) ?? "null/empty");
 
       // Parse and validate AI response (Subtask 1.4 ✓, Subtask 1.8 ✓)
       console.log("Parsing and validating AI response...");
