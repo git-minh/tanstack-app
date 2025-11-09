@@ -2,7 +2,7 @@ import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { parseAIResponse } from "./ai-schema";
+import { parseAIResponse } from "./ai_schema";
 
 /**
  * Azure OpenAI API response type
