@@ -91,6 +91,11 @@ OPENAI_API_KEY=sk-...
 STRIPE_SECRET_KEY=sk_live_...
 SENDGRID_API_KEY=SG.your-api-key
 
+# Azure OpenAI Configuration (AI Project Generation)
+AZURE_OPENAI_ENDPOINT=https://YOUR-RESOURCE.openai.azure.com
+AZURE_OPENAI_KEY=your-azure-openai-api-key
+AZURE_OPENAI_DEPLOYMENT=gpt-5
+
 # Development
 NODE_ENV=development
 LOG_LEVEL=debug
@@ -149,6 +154,174 @@ npx convex env set CONVEX_SITE_URL https://your-project.convex.site
 ```bash
 npx convex env list
 ```
+
+## Setting Up Azure OpenAI for AI Project Generation
+
+The application uses Azure OpenAI GPT-5 for AI-powered project generation features. This requires three environment variables to be configured.
+
+### 1. Obtain Azure OpenAI Credentials
+
+Go to the Azure Portal (portal.azure.com) and navigate to your Azure OpenAI resource:
+
+1. **AZURE_OPENAI_ENDPOINT**: Found in "Keys and Endpoint" section
+   - Format: `https://YOUR-RESOURCE.openai.azure.com` or `https://YOUR-RESOURCE.cognitiveservices.azure.com`
+
+2. **AZURE_OPENAI_KEY**: Found in "Keys and Endpoint" section
+   - Use either "Key 1" or "Key 2"
+
+3. **AZURE_OPENAI_DEPLOYMENT**: The deployment name you created
+   - Example: `gpt-5`, `gpt-4`, `gpt-35-turbo`
+
+### 2. Configure Environment Variables
+
+**For Local Development** (`packages/backend/.env.local`):
+```env
+# Azure OpenAI Configuration for AI Project Generation
+# These variables are used by the AI generation action (convex/ai.ts)
+AZURE_OPENAI_ENDPOINT=https://your-resource.cognitiveservices.azure.com
+AZURE_OPENAI_KEY=your-api-key-here
+AZURE_OPENAI_DEPLOYMENT=gpt-5
+```
+
+**For Production** (set via Convex CLI):
+```bash
+npx convex env set AZURE_OPENAI_ENDPOINT "https://your-resource.cognitiveservices.azure.com"
+npx convex env set AZURE_OPENAI_KEY "your-api-key-here"
+npx convex env set AZURE_OPENAI_DEPLOYMENT "gpt-5"
+```
+
+### 3. Verify Configuration
+
+**Check Convex environment:**
+```bash
+npx convex env list | grep AZURE
+```
+
+**Test the endpoint:**
+```bash
+curl -X POST "https://your-resource.cognitiveservices.azure.com/openai/deployments/gpt-5/chat/completions?api-version=2025-01-01-preview" \
+  -H "Content-Type: application/json" \
+  -H "api-key: your-api-key-here" \
+  -d '{
+    "messages": [{"role": "user", "content": "Say hello"}],
+    "max_completion_tokens": 10
+  }'
+```
+
+**Successful response:**
+```json
+{
+  "choices": [{
+    "message": {
+      "role": "assistant",
+      "content": "Hello!"
+    }
+  }],
+  "model": "gpt-5-2025-08-07",
+  "usage": {
+    "prompt_tokens": 11,
+    "completion_tokens": 3,
+    "total_tokens": 14
+  }
+}
+```
+
+### 4. Important API Differences for GPT-5
+
+Azure OpenAI GPT-5 has some API differences compared to GPT-4:
+
+- **Token Parameter**: Use `max_completion_tokens` instead of `max_tokens`
+- **API Version**: Use `2025-01-01-preview` or later
+- **Reasoning Tokens**: GPT-5 includes `reasoning_tokens` in usage statistics
+
+**Correct API Call Pattern:**
+```typescript
+// packages/backend/convex/ai.ts
+const response = await fetch(
+  `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2025-01-01-preview`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "api-key": AZURE_OPENAI_KEY,
+    },
+    body: JSON.stringify({
+      messages: [
+        { role: "system", content: "You are a helpful assistant." },
+        { role: "user", content: prompt }
+      ],
+      max_completion_tokens: 4000, // NOT max_tokens
+    }),
+  }
+);
+```
+
+### 5. Usage in Convex Actions
+
+```typescript
+// packages/backend/convex/ai.ts
+import { action } from "./_generated/server";
+import { v } from "convex/values";
+
+const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT!;
+const AZURE_OPENAI_KEY = process.env.AZURE_OPENAI_KEY!;
+const AZURE_OPENAI_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT!;
+
+export const generateProject = action({
+  args: { prompt: v.string() },
+  handler: async (ctx, args) => {
+    const response = await fetch(
+      `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2025-01-01-preview`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": AZURE_OPENAI_KEY,
+        },
+        body: JSON.stringify({
+          messages: [
+            { role: "user", content: args.prompt }
+          ],
+          max_completion_tokens: 4000,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Azure OpenAI API error: ${response.status}`);
+    }
+
+    return await response.json();
+  },
+});
+```
+
+### 6. Security Notes
+
+- **Never commit** Azure OpenAI credentials to version control
+- **Rotate keys regularly** in Azure Portal
+- **Use environment-specific keys** for development and production
+- **Monitor usage** in Azure Portal to track costs
+- **Set spending limits** in Azure to prevent unexpected charges
+
+### 7. Troubleshooting
+
+**Connection Issues:**
+- Verify endpoint URL format (with or without `/openai` suffix)
+- Check API key is valid in Azure Portal
+- Ensure deployment name matches exactly
+
+**API Errors:**
+- `unsupported_parameter`: Check for `max_tokens` → use `max_completion_tokens`
+- `model_not_found`: Verify deployment name is correct
+- `401 Unauthorized`: Check API key is set correctly
+- `429 Rate Limit`: Implement retry logic with exponential backoff
+
+**Cost Management:**
+- GPT-5 is more expensive than GPT-4
+- Implement `max_completion_tokens` limits to control costs
+- Cache responses when possible
+- Monitor token usage in production
 
 ## Common Environment Variable Patterns
 
