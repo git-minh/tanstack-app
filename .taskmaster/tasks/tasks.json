@@ -1,0 +1,613 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Backend - Azure OpenAI Integration Action",
+        "description": "Create Convex action to integrate with Azure OpenAI GPT-5 API for project generation",
+        "status": "done",
+        "priority": "critical",
+        "dependencies": [
+          "2"
+        ],
+        "details": "Implement the core Convex action (ai.ts) that calls Azure OpenAI API with structured prompts, parses responses, and orchestrates batch creation of projects, tasks, and contacts. This is the foundation of the entire AI generation feature.",
+        "testStrategy": "Unit tests for API call logic, response parsing, and error handling. Mock Azure OpenAI responses for testing.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create ai.ts file with generateProject action structure",
+            "description": "Set up the basic Convex action file with proper imports and action definition",
+            "status": "done",
+            "details": "Import action, v from convex. Define generateProject action with prompt argument. Add user authentication check using ctx.auth.getUserIdentity().",
+            "testStrategy": "Verify action is callable and requires authentication"
+          },
+          {
+            "id": 2,
+            "title": "Implement Azure OpenAI API call function",
+            "description": "Create callAzureOpenAI helper function that makes HTTP requests to Azure OpenAI",
+            "status": "done",
+            "details": "Use native fetch to call Azure OpenAI endpoint. Include proper headers (api-key, Content-Type). Handle response_format: json_object for structured output. Set temperature: 0.7, max_tokens: 4000.",
+            "testStrategy": "Test with mock responses. Verify error handling for API failures."
+          },
+          {
+            "id": 3,
+            "title": "Design and implement AI prompt templates",
+            "description": "Create system and user prompt templates for project generation",
+            "status": "done",
+            "details": "System prompt: Define AI role as project management expert. Specify JSON schema for output. Include generation rules for projects, tasks, contacts. User prompt: Include user description, current date, timezone context.",
+            "testStrategy": "Test prompts with various project descriptions. Validate JSON schema compliance."
+          },
+          {
+            "id": 4,
+            "title": "Implement response parsing with Zod validation",
+            "description": "Create parseAndValidateAIResponse function with strict schema validation",
+            "status": "done",
+            "details": "Define Zod schema matching AI output structure. Parse JSON string. Validate all required fields. Handle validation errors gracefully with clear messages.",
+            "testStrategy": "Test with valid and invalid JSON. Verify all edge cases are handled."
+          },
+          {
+            "id": 5,
+            "title": "Implement batch creation logic with hierarchy handling",
+            "description": "Create project, then tasks (respecting parent-child), then contacts in sequence",
+            "status": "done",
+            "details": "1. Call api.projects.create with project data. 2. Create parent tasks first, store IDs in Map. 3. Create subtasks with parentTaskId references. 4. Create all contacts. 5. Link all tasks to project via projectId.",
+            "testStrategy": "Test with nested task hierarchies. Verify all relationships are correct."
+          },
+          {
+            "id": 6,
+            "title": "Add comprehensive error handling and recovery",
+            "description": "Implement try-catch blocks, error messages, and partial failure handling",
+            "status": "done",
+            "details": "Wrap API calls in try-catch. Log errors for debugging. Track created item IDs for rollback. Return meaningful error messages to frontend. Handle rate limits and timeouts.",
+            "testStrategy": "Test various failure scenarios. Verify error messages are user-friendly."
+          },
+          {
+            "id": 7,
+            "title": "Implement rollback/cleanup mechanism for partial failures",
+            "description": "Create cleanup logic to remove partially created items when generation fails midway",
+            "details": "Track all created IDs (projectId, taskIds[], contactIds[]) during batch creation. Implement deleteCreatedItems() helper that removes all items if an error occurs. Wrap batch creation in try-catch and call cleanup on failure. Test with simulated failures at different stages.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 1
+          },
+          {
+            "id": 8,
+            "title": "Create ai-schema.ts for AI response validation",
+            "description": "Define Zod schemas for validating Azure OpenAI responses in a separate schema file",
+            "details": "Create packages/backend/convex/ai-schema.ts. Define schemas: aiProjectResponseSchema (includes project, tasks[], contacts[]). Define individual schemas: projectSchema, taskSchema, contactSchema. Export TypeScript types for use in ai.ts. This separates validation logic from action logic for better maintainability.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 1
+          },
+          {
+            "id": 9,
+            "title": "Define standardized error response format",
+            "description": "Create consistent error response structure for frontend error handling",
+            "details": "Define error response type: { success: false, error: { code: string, message: string, details?: any } }. Create helper function formatError(error: Error): ErrorResponse. Map different error types (API errors, validation errors, auth errors) to specific error codes. Document error codes for frontend consumption. Ensure all thrown errors follow this format.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 1
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Backend - Environment Configuration",
+        "description": "Set up Azure OpenAI environment variables in Convex",
+        "status": "done",
+        "priority": "critical",
+        "dependencies": [],
+        "details": "Configure the three required environment variables for Azure OpenAI access: AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_KEY, and AZURE_OPENAI_DEPLOYMENT. These must be set via Convex CLI for production and optionally in local .env for development.",
+        "testStrategy": "Verify variables are accessible in Convex action. Test with both production and development configurations.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set production environment variables via Convex CLI",
+            "description": "Run npx convex env set commands for all three Azure OpenAI variables",
+            "status": "done",
+            "details": "Commands: npx convex env set AZURE_OPENAI_ENDPOINT, npx convex env set AZURE_OPENAI_KEY, npx convex env set AZURE_OPENAI_DEPLOYMENT. Use actual Azure resource values.",
+            "testStrategy": "Verify variables with npx convex env list"
+          },
+          {
+            "id": 2,
+            "title": "Add development .env configuration (optional)",
+            "description": "Create .env file in packages/backend for local development",
+            "status": "done",
+            "details": "Add AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_KEY, AZURE_OPENAI_DEPLOYMENT to packages/backend/.env.local. Document in ENVIRONMENT.md.",
+            "testStrategy": "Test local development server can access variables"
+          },
+          {
+            "id": 3,
+            "title": "Document environment setup in docs/ENVIRONMENT.md",
+            "description": "Add Azure OpenAI configuration section to environment documentation",
+            "status": "done",
+            "details": "Document all three variables, how to obtain them from Azure portal, and setup steps. Include troubleshooting section.",
+            "testStrategy": "Follow documentation to verify completeness"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Frontend - AI Generation Dialog Component",
+        "description": "Create the modal dialog component for AI project generation with form and loading states",
+        "status": "done",
+        "priority": "high",
+        "dependencies": [],
+        "details": "Build a React component using shadcn/ui Dialog that accepts project descriptions via textarea. Include form validation with React Hook Form + Zod, loading states with spinner, and proper error handling. Follow existing dialog patterns from task-form-dialog.tsx.",
+        "testStrategy": "Component tests for rendering, form validation, loading states, and error display. Integration tests for dialog open/close behavior.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create feature directory structure",
+            "description": "Set up ai-generation feature folder with components, data, and hooks subdirectories",
+            "status": "done",
+            "details": "Create: apps/web/src/features/ai-generation/components/, apps/web/src/features/ai-generation/data/, apps/web/src/features/ai-generation/hooks/",
+            "testStrategy": "Verify folder structure matches project conventions"
+          },
+          {
+            "id": 2,
+            "title": "Create Zod schema for form validation",
+            "description": "Define generateProjectFormSchema in data/schema.ts with proper validation rules",
+            "status": "done",
+            "details": "Schema: prompt field, string type, min 20 chars, max 2000 chars. Export TypeScript type. Include helpful error messages.",
+            "testStrategy": "Test schema with valid/invalid inputs. Verify error messages."
+          },
+          {
+            "id": 3,
+            "title": "Build GenerateDialog component with form",
+            "description": "Create dialog component with textarea, buttons, and React Hook Form integration",
+            "status": "done",
+            "details": "Use shadcn Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription. Add Textarea (8 rows), Label, help text. Integrate useForm with zodResolver. Add Cancel and Generate buttons.",
+            "testStrategy": "Test form submission, validation errors, button states"
+          },
+          {
+            "id": 4,
+            "title": "Implement loading state UI",
+            "description": "Add loading spinner and progress message when AI is generating",
+            "status": "done",
+            "details": "Show Loader2 icon with spin animation. Display messages: 'AI is analyzing your project...' and 'This usually takes 10-30 seconds'. Replace form content during loading.",
+            "testStrategy": "Verify loading state appears immediately on submit"
+          },
+          {
+            "id": 5,
+            "title": "Add error handling and success feedback",
+            "description": "Implement toast notifications for success and error states",
+            "status": "done",
+            "details": "Use sonner toast.success for successful generation (show counts). Use toast.error for failures (show error message). Keep dialog open on error, close on success after 500ms.",
+            "testStrategy": "Test both success and error scenarios"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Frontend - Dashboard Integration",
+        "description": "Add 'Generate Project with AI' button to dashboard and wire up dialog",
+        "status": "pending",
+        "priority": "high",
+        "dependencies": [
+          "1",
+          "3"
+        ],
+        "details": "Modify the dashboard route to include a prominent button in the header that opens the AI generation dialog. Include proper state management for dialog visibility and action calling with loading/error states.",
+        "testStrategy": "E2E test: Click button → Dialog opens → Enter description → Submit → Verify success. Test error scenarios.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Add Generate button to dashboard header",
+            "description": "Modify dashboard.tsx to include button with Sparkles icon",
+            "status": "pending",
+            "details": "Add Button component next to dashboard title. Use Sparkles icon from lucide-react. Label: 'Generate Project with AI'. Primary variant.",
+            "testStrategy": "Visual test: Button appears in correct position with icon"
+          },
+          {
+            "id": 2,
+            "title": "Add dialog state management",
+            "description": "Create useState for dialog open/close and wire up to button",
+            "status": "pending",
+            "details": "const [generateDialogOpen, setGenerateDialogOpen] = useState(false). Button onClick sets to true. Pass to GenerateDialog component.",
+            "testStrategy": "Test dialog opens on button click, closes on cancel"
+          },
+          {
+            "id": 3,
+            "title": "Implement handleGenerate callback",
+            "description": "Create async function that calls Convex action and handles responses",
+            "status": "pending",
+            "details": "Use useAction hook to get generateProject function. Implement try-catch. Show success toast with project name and counts. Show error toast on failure. Re-throw error for dialog handling.",
+            "testStrategy": "Test success and error flows with mock action"
+          },
+          {
+            "id": 4,
+            "title": "Import and render GenerateDialog component",
+            "description": "Add GenerateDialog to dashboard JSX with proper props",
+            "status": "pending",
+            "details": "Import GenerateDialog. Add before closing tag of component. Pass open, onOpenChange, and onGenerate props.",
+            "testStrategy": "Verify dialog renders and functions correctly"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Testing - Unit Tests for Backend",
+        "description": "Write comprehensive unit tests for AI action and helper functions",
+        "status": "pending",
+        "priority": "medium",
+        "dependencies": [
+          "1"
+        ],
+        "details": "Create test suite for packages/backend/convex/ai.ts covering response parsing, error handling, hierarchy logic, and batch creation. Use mocks for API calls and database operations.",
+        "testStrategy": "Achieve >80% code coverage for ai.ts. Test all error paths and edge cases.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set up test file and mocking infrastructure",
+            "description": "Create ai.test.ts with proper mocks for Convex context and Azure API",
+            "status": "pending",
+            "details": "Mock ctx.auth, ctx.runMutation, fetch for Azure API. Set up test data fixtures for valid/invalid responses.",
+            "testStrategy": "Verify mocks work correctly"
+          },
+          {
+            "id": 2,
+            "title": "Test AI response parsing with valid data",
+            "description": "Test parseAndValidateAIResponse with various valid JSON structures",
+            "status": "pending",
+            "details": "Test: minimal valid response, full response with all optional fields, nested tasks with parents, multiple contacts.",
+            "testStrategy": "All valid structures should parse successfully"
+          },
+          {
+            "id": 3,
+            "title": "Test AI response parsing with invalid data",
+            "description": "Test error handling for malformed, incomplete, or invalid responses",
+            "status": "pending",
+            "details": "Test: invalid JSON, missing required fields, wrong types, invalid enum values, circular task references.",
+            "testStrategy": "All invalid inputs should throw descriptive errors"
+          },
+          {
+            "id": 4,
+            "title": "Test batch creation logic and hierarchy",
+            "description": "Test that projects, tasks, and contacts are created in correct order with relationships",
+            "status": "pending",
+            "details": "Test: parent tasks created before subtasks, all tasks linked to project, taskIdMap maintains correct references, contacts created independently.",
+            "testStrategy": "Verify mutation call order and arguments"
+          },
+          {
+            "id": 5,
+            "title": "Test error handling and edge cases",
+            "description": "Test API failures, partial creation failures, authentication errors",
+            "status": "pending",
+            "details": "Test: Azure API timeout, invalid API key, mutation failures midway, unauthenticated user.",
+            "testStrategy": "All errors should be caught and return meaningful messages"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Testing - Frontend Component Tests",
+        "description": "Write unit and integration tests for AI generation dialog component",
+        "status": "pending",
+        "priority": "medium",
+        "dependencies": [
+          "3"
+        ],
+        "details": "Create test suite for GenerateDialog component covering rendering, form validation, user interactions, loading states, and error handling. Use React Testing Library and Vitest.",
+        "testStrategy": "Achieve >80% component coverage. Test all user interaction flows.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Test dialog rendering and form elements",
+            "description": "Test that dialog renders correctly with all form elements present",
+            "status": "pending",
+            "details": "Test: title appears, description appears, textarea is present, buttons are present, help text is visible.",
+            "testStrategy": "Snapshot test and element query tests"
+          },
+          {
+            "id": 2,
+            "title": "Test form validation rules",
+            "description": "Test minimum/maximum character validation and error messages",
+            "status": "pending",
+            "details": "Test: empty submission shows error, <20 chars shows min error, >2000 chars shows max error, valid input passes.",
+            "testStrategy": "Use user-event to type and submit"
+          },
+          {
+            "id": 3,
+            "title": "Test loading state transitions",
+            "description": "Test that loading UI appears during submission",
+            "status": "pending",
+            "details": "Test: form hides during loading, spinner appears, loading message displays, buttons are disabled.",
+            "testStrategy": "Mock async onGenerate function"
+          },
+          {
+            "id": 4,
+            "title": "Test success and error flows",
+            "description": "Test dialog behavior on successful and failed generation",
+            "status": "pending",
+            "details": "Test: successful generation closes dialog and resets form, error keeps dialog open, error displays error state.",
+            "testStrategy": "Mock onGenerate to resolve/reject"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Testing - E2E Integration Tests",
+        "description": "Create end-to-end tests for complete AI generation workflow",
+        "status": "pending",
+        "priority": "medium",
+        "dependencies": [
+          "4"
+        ],
+        "details": "Write E2E tests that cover the full user journey from clicking the generate button to seeing created projects/tasks/contacts in the database. Use real Convex instance with test data.",
+        "testStrategy": "Test complete happy path and error scenarios. Verify database state after generation.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set up E2E test environment",
+            "description": "Configure test Convex instance and E2E test utilities",
+            "status": "pending",
+            "details": "Set up separate Convex dev deployment for testing. Configure test authentication. Set up cleanup utilities.",
+            "testStrategy": "Verify test environment is isolated"
+          },
+          {
+            "id": 2,
+            "title": "Test happy path: Simple project generation",
+            "description": "E2E test for generating a simple project with tasks and contacts",
+            "status": "pending",
+            "details": "Test flow: Navigate to dashboard → Click Generate button → Enter simple description → Submit → Verify success toast → Check projects page → Verify tasks page → Verify contacts page.",
+            "testStrategy": "All generated items should appear in database and UI"
+          },
+          {
+            "id": 3,
+            "title": "Test complex project with hierarchy",
+            "description": "E2E test for generating project with nested tasks",
+            "status": "pending",
+            "details": "Test: Enter complex description with multiple phases → Verify parent tasks created → Verify subtasks linked correctly → Verify task hierarchy displays properly.",
+            "testStrategy": "Navigate to tasks page and verify tree structure"
+          },
+          {
+            "id": 4,
+            "title": "Test error scenarios and validation",
+            "description": "E2E tests for various error conditions",
+            "status": "pending",
+            "details": "Test: Empty form submission → Too short description → API failure handling → Network error handling.",
+            "testStrategy": "Verify error messages and dialog state"
+          },
+          {
+            "id": 5,
+            "title": "Smoke test: Basic backend-frontend integration",
+            "description": "Quick integration test to verify backend action can be called from frontend before full E2E testing",
+            "details": "Test: 1) Frontend can successfully call api.ai.generateProject action. 2) Authentication token is passed correctly. 3) Backend returns expected response structure. 4) Basic error handling works (unauthenticated user, invalid prompt). This is a prerequisite sanity check before investing in full E2E test infrastructure.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 7
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Testing - Manual QA with Diverse Examples",
+        "description": "Perform manual testing with various real-world project descriptions",
+        "status": "pending",
+        "priority": "low",
+        "dependencies": [
+          "7"
+        ],
+        "details": "Test the AI generation feature with 10+ diverse project types to ensure quality and appropriate task breakdown. Document results and edge cases discovered.",
+        "testStrategy": "Create test matrix with different project types, sizes, and complexity levels.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Test software development projects",
+            "description": "Test with web app, mobile app, and API projects",
+            "status": "pending",
+            "details": "Examples: SaaS application, mobile fitness app, REST API for e-commerce, microservices architecture.",
+            "testStrategy": "Verify appropriate technical tasks and roles are generated"
+          },
+          {
+            "id": 2,
+            "title": "Test non-technical projects",
+            "description": "Test with marketing, event planning, and business projects",
+            "status": "pending",
+            "details": "Examples: Product launch campaign, conference organization, business process improvement, hiring workflow.",
+            "testStrategy": "Verify AI adapts to non-technical context appropriately"
+          },
+          {
+            "id": 3,
+            "title": "Test edge cases and unusual inputs",
+            "description": "Test with minimal descriptions, vague prompts, and special characters",
+            "status": "pending",
+            "details": "Test: 20-character minimum, vague description ('do something'), special characters, non-English (if supported), very detailed description (2000 chars).",
+            "testStrategy": "Document how AI handles edge cases"
+          },
+          {
+            "id": 4,
+            "title": "Create test report and document findings",
+            "description": "Compile manual testing results into comprehensive report",
+            "status": "pending",
+            "details": "Document: Success rate, common issues found, quality of generated content, user experience feedback, recommendations for improvements.",
+            "testStrategy": "Share report with team for review"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Documentation - Update CLAUDE.md",
+        "description": "Add AI generation feature documentation to CLAUDE.md for future AI assistants",
+        "status": "pending",
+        "priority": "low",
+        "dependencies": [
+          "1",
+          "4"
+        ],
+        "details": "Document the AI generation feature in CLAUDE.md including architecture, usage patterns, and implementation details so future Claude Code instances understand the feature.",
+        "testStrategy": "Review documentation for completeness and accuracy.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Add AI Generation section to Architecture",
+            "description": "Document Azure OpenAI integration and Convex action pattern",
+            "status": "pending",
+            "details": "Add section under 'Critical Integration Points' explaining AI action architecture, environment variables, and prompt engineering approach.",
+            "testStrategy": "Verify technical accuracy"
+          },
+          {
+            "id": 2,
+            "title": "Document usage patterns and examples",
+            "description": "Add code examples for using the AI generation feature",
+            "status": "pending",
+            "details": "Include: How to call the action, example prompts, expected response structure, error handling pattern.",
+            "testStrategy": "Test code examples work correctly"
+          },
+          {
+            "id": 3,
+            "title": "Add troubleshooting section",
+            "description": "Document common issues and solutions for AI generation",
+            "status": "pending",
+            "details": "Include: API key issues, timeout handling, response validation errors, partial creation failures.",
+            "testStrategy": "Verify all documented issues have solutions"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Documentation - Update Environment Guide",
+        "description": "Add Azure OpenAI configuration to docs/ENVIRONMENT.md",
+        "status": "pending",
+        "priority": "low",
+        "dependencies": [
+          "2"
+        ],
+        "details": "Update the environment documentation to include Azure OpenAI setup instructions, variable descriptions, and how to obtain credentials from Azure portal.",
+        "testStrategy": "Follow documentation to verify setup process is clear.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Add Azure OpenAI section to ENVIRONMENT.md",
+            "description": "Document all three required environment variables",
+            "status": "pending",
+            "details": "Add section: 'Azure OpenAI for AI Generation'. Document AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_KEY, AZURE_OPENAI_DEPLOYMENT with descriptions and example values.",
+            "testStrategy": "Verify formatting and completeness"
+          },
+          {
+            "id": 2,
+            "title": "Add Azure portal setup instructions",
+            "description": "Document how to obtain credentials from Azure",
+            "status": "pending",
+            "details": "Step-by-step: Create Azure OpenAI resource → Deploy GPT-5 model → Get endpoint URL → Get API key → Configure deployment name.",
+            "testStrategy": "Follow steps in Azure portal to verify accuracy"
+          },
+          {
+            "id": 3,
+            "title": "Add troubleshooting guide",
+            "description": "Document common Azure OpenAI setup issues and solutions",
+            "status": "pending",
+            "details": "Cover: Invalid API key, wrong endpoint format, deployment not found, quota exceeded, region availability.",
+            "testStrategy": "Test documented solutions"
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Performance Optimization - Response Time Monitoring",
+        "description": "Implement monitoring and logging for AI generation performance",
+        "status": "pending",
+        "priority": "low",
+        "dependencies": [
+          "1"
+        ],
+        "details": "Add timing logs to track API call duration, parsing time, and batch creation time. Log all requests for debugging and optimization. Monitor for performance issues.",
+        "testStrategy": "Review logs to identify bottlenecks. Verify all stages are timed correctly.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Add timing instrumentation to action",
+            "description": "Add console.log statements with timestamps for each major step",
+            "status": "pending",
+            "details": "Log: Start time, API call start/end, parsing start/end, project creation, task creation, contact creation, total time.",
+            "testStrategy": "Review logs in Convex dashboard"
+          },
+          {
+            "id": 2,
+            "title": "Implement request/response logging",
+            "description": "Log all AI requests and responses for debugging",
+            "status": "pending",
+            "details": "Log: User prompt, AI response (truncated if large), success/failure, error messages, generated item counts.",
+            "testStrategy": "Verify logs contain useful debugging information"
+          },
+          {
+            "id": 3,
+            "title": "Add performance alerts for slow requests",
+            "description": "Set up monitoring for requests exceeding 30 seconds",
+            "status": "pending",
+            "details": "Log warnings for slow AI calls. Track P50, P95, P99 response times. Consider adding Sentry or similar for alerting.",
+            "testStrategy": "Trigger slow requests and verify alerts"
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Production Readiness - Security Review and Launch Checklist",
+        "description": "Complete security review, final testing, and pre-launch checklist",
+        "status": "pending",
+        "priority": "medium",
+        "dependencies": [
+          "8",
+          "9",
+          "10",
+          "11"
+        ],
+        "details": "Perform comprehensive security review, validate all tests pass, ensure documentation is complete, and verify production environment is properly configured before launch.",
+        "testStrategy": "Complete all items on launch checklist. Get approval from team.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Security review: Input validation and sanitization",
+            "description": "Review all user inputs for proper validation and sanitization",
+            "status": "pending",
+            "details": "Check: Prompt length limits enforced, special characters handled, SQL injection prevention, XSS prevention, prompt injection awareness.",
+            "testStrategy": "Attempt to bypass validation with malicious inputs"
+          },
+          {
+            "id": 2,
+            "title": "Security review: API key protection",
+            "description": "Verify Azure OpenAI credentials are properly secured",
+            "status": "pending",
+            "details": "Check: Keys stored in Convex environment (not code), no keys in logs, no keys in error messages, keys not exposed to frontend.",
+            "testStrategy": "Review all code paths that access API keys"
+          },
+          {
+            "id": 3,
+            "title": "Verify production environment configuration",
+            "description": "Confirm all production environment variables are set correctly",
+            "status": "pending",
+            "details": "Verify in Convex production deployment: AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_KEY, AZURE_OPENAI_DEPLOYMENT are all set and valid.",
+            "testStrategy": "Test generation in production environment"
+          },
+          {
+            "id": 4,
+            "title": "Run full test suite and verify all pass",
+            "description": "Execute all unit, integration, and E2E tests",
+            "status": "pending",
+            "details": "Run: pnpm test for frontend, backend unit tests, E2E test suite. All tests must pass.",
+            "testStrategy": "Green test run with >80% coverage"
+          },
+          {
+            "id": 5,
+            "title": "Complete launch checklist and get team approval",
+            "description": "Review final checklist with team and get sign-off to launch",
+            "status": "pending",
+            "details": "Checklist: All tests pass, documentation complete, security review done, monitoring set up, rollback plan documented, team trained.",
+            "testStrategy": "Team meeting to review and approve launch"
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "version": "1.0.0",
+      "createdAt": "2025-01-09",
+      "projectName": "AI-Powered Project Generation Feature",
+      "totalTasks": 12,
+      "source": "AI-PRD.md - Comprehensive Product Requirements Document",
+      "created": "2025-11-09T15:28:04.519Z",
+      "description": "Tasks for master context",
+      "updated": "2025-11-09T16:29:55.317Z"
+    }
+  }
+}

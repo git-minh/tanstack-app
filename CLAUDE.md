@@ -806,3 +806,7 @@ const { data: roots } = useSuspenseQuery(
 ```
 
 These implementations serve as reference patterns for building production-ready features in this codebase.
+
+## Task Master AI Instructions
+**Import Task Master's development workflow commands and guidelines, treat as if import is in the main CLAUDE.md file.**
+@./.taskmaster/CLAUDE.md
