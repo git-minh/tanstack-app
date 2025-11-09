@@ -25,6 +25,24 @@ export const getAll = query({
 	},
 });
 
+export const getById = query({
+	args: { id: v.id("tasks") },
+	handler: async (ctx, { id }) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			throw new Error("Unauthorized: Must be logged in to view tasks");
+		}
+		const task = await ctx.db.get(id);
+		
+		// Security: only return if belongs to user
+		if (!task || task.userId !== identity.subject) {
+			return null;
+		}
+		
+		return task;
+	},
+});
+
 export const create = mutation({
 	args: {
 		title: v.string(),

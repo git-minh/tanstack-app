@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@tanstack/backend/convex/_generated/api";
+import type { Id } from "@tanstack/backend/convex/_generated/dataModel";
 import {
 	Dialog,
 	DialogContent,
@@ -57,6 +58,14 @@ export function TaskFormDialog({
 		convexQuery(api.projects.getActive, {})
 	);
 
+	// Fetch parent task for inheritance (only when creating subtask)
+	const { data: parentTask } = useQuery(
+		convexQuery(
+			api.tasks.getById,
+			parentTaskId ? { id: parentTaskId as Id<"tasks"> } : "skip"
+		)
+	);
+
 	const {
 		register,
 		handleSubmit,
@@ -69,12 +78,12 @@ export function TaskFormDialog({
 		defaultValues: {
 			title: task?.title || "",
 			status: task?.status || "todo",
-			priority: task?.priority || "medium",
-			label: task?.label || "feature",
+			priority: parentTask?.priority || task?.priority || "medium",
+			label: parentTask?.label || task?.label || "feature",
 			description: task?.description || "",
 			dueDate: task?.dueDate,
 			parentTaskId: parentTaskId || task?.parentTaskId || undefined,
-			projectId: (task as any)?.projectId || undefined,
+			projectId: parentTask?.projectId || (task as any)?.projectId || undefined,
 		},
 	});
 
@@ -84,15 +93,15 @@ export function TaskFormDialog({
 			reset({
 				title: task?.title || "",
 				status: task?.status || "todo",
-				priority: task?.priority || "medium",
-				label: task?.label || "feature",
+				priority: parentTask?.priority || task?.priority || "medium",
+				label: parentTask?.label || task?.label || "feature",
 				description: task?.description || "",
 				dueDate: task?.dueDate,
 				parentTaskId: parentTaskId || task?.parentTaskId || undefined,
-				projectId: (task as any)?.projectId || undefined,
+				projectId: parentTask?.projectId || (task as any)?.projectId || undefined,
 			});
 		}
-	}, [open, task, parentTaskId, reset]);
+	}, [open, task, parentTask, parentTaskId, reset]);
 
 	const onFormSubmit = async (values: TaskFormValues) => {
 		setIsSubmitting(true);
@@ -121,6 +130,20 @@ export function TaskFormDialog({
 				</DialogHeader>
 				<form onSubmit={handleSubmit(onFormSubmit)}>
 					<div className="grid gap-4 py-4">
+						{mode === "create" && parentTask && (
+							<div className="rounded-md bg-muted p-3 text-sm space-y-1">
+								<p className="font-medium">
+									Creating subtask under{" "}
+									<span className="font-mono text-xs bg-background px-1.5 py-0.5 rounded">
+										{parentTask.displayId}
+									</span>
+								</p>
+								<p className="text-xs text-muted-foreground">
+									Inherited: Priority ({parentTask.priority}), Label ({parentTask.label})
+									{parentTask.projectId && ", Project"}
+								</p>
+							</div>
+						)}
 						<div className="grid gap-2">
 							<Label htmlFor="title">Title</Label>
 							<Input
