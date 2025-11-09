@@ -106,8 +106,11 @@ export function parseAIResponse(jsonString: string): AIProjectResponse {
     return validated;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      // In Zod v4, use toString() for error details
-      throw new Error(`AI response validation failed: ${error.toString()}`);
+      // Use structured error representation for better debugging
+      const errorDetails = JSON.stringify(error.issues, null, 2);
+      throw new Error(
+        `AI response validation failed:\n${errorDetails}`
+      );
     }
     throw new Error(
       `Unexpected validation error: ${error instanceof Error ? error.message : "Unknown error"}`
