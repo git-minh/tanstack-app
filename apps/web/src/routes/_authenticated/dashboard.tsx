@@ -1,23 +1,60 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useAction } from "convex/react";
+import { api } from "@tanstack/backend/convex/_generated/api";
+import { Sparkles } from "lucide-react";
 import { StatCards } from "@/components/features/dashboard/stat-cards";
 import { ActivityChart } from "@/components/features/dashboard/activity-chart";
 import { RecentActivityTable } from "@/components/features/dashboard/recent-activity-table";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { Button } from "@/components/ui/button";
+import {
+	GenerateDialog,
+	type GenerateProjectFormValues,
+	type GenerateResult,
+} from "@/features/ai-generation";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
 	component: DashboardRoute,
 });
 
 function DashboardRoute() {
+	const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
+	const generateProject = useAction(api.ai.generateProject);
+
+	const handleGenerate = async (
+		values: GenerateProjectFormValues
+	): Promise<GenerateResult> => {
+		try {
+			const result = await generateProject({ prompt: values.prompt });
+
+			// Return counts for success toast
+			return {
+				projectsCount: result.summary.projectsCreated || 0,
+				tasksCount: result.summary.tasksCreated || 0,
+				contactsCount: result.summary.contactsCreated || 0,
+			};
+		} catch (error) {
+			// Re-throw error for dialog error handling
+			throw error;
+		}
+	};
+
 	return (
 		<ErrorBoundary>
 			<div className="space-y-6">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-					<p className="text-muted-foreground">
-						Track your tasks and productivity at a glance
-					</p>
+				<div className="flex items-center justify-between">
+					<div>
+						<h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+						<p className="text-muted-foreground">
+							Track your tasks and productivity at a glance
+						</p>
+					</div>
+					<Button onClick={() => setGenerateDialogOpen(true)}>
+						<Sparkles className="mr-2 h-4 w-4" />
+						Generate Project with AI
+					</Button>
 				</div>
 
 				{/* AuthGuard prevents queries from executing before auth is ready */}
@@ -32,6 +69,12 @@ function DashboardRoute() {
 					<RecentActivityTable />
 				</AuthGuard>
 			</div>
+
+			<GenerateDialog
+				open={generateDialogOpen}
+				onOpenChange={setGenerateDialogOpen}
+				onSubmit={handleGenerate}
+			/>
 		</ErrorBoundary>
 	);
 }

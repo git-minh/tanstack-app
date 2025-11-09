@@ -182,7 +182,7 @@
         "id": 4,
         "title": "Frontend - Dashboard Integration",
         "description": "Add 'Generate Project with AI' button to dashboard and wire up dialog",
-        "status": "pending",
+        "status": "done",
         "priority": "high",
         "dependencies": [
           "1",
@@ -195,7 +195,7 @@
             "id": 1,
             "title": "Add Generate button to dashboard header",
             "description": "Modify dashboard.tsx to include button with Sparkles icon",
-            "status": "pending",
+            "status": "done",
             "details": "Add Button component next to dashboard title. Use Sparkles icon from lucide-react. Label: 'Generate Project with AI'. Primary variant.",
             "testStrategy": "Visual test: Button appears in correct position with icon"
           },
@@ -203,7 +203,7 @@
             "id": 2,
             "title": "Add dialog state management",
             "description": "Create useState for dialog open/close and wire up to button",
-            "status": "pending",
+            "status": "done",
             "details": "const [generateDialogOpen, setGenerateDialogOpen] = useState(false). Button onClick sets to true. Pass to GenerateDialog component.",
             "testStrategy": "Test dialog opens on button click, closes on cancel"
           },
@@ -211,7 +211,7 @@
             "id": 3,
             "title": "Implement handleGenerate callback",
             "description": "Create async function that calls Convex action and handles responses",
-            "status": "pending",
+            "status": "done",
             "details": "Use useAction hook to get generateProject function. Implement try-catch. Show success toast with project name and counts. Show error toast on failure. Re-throw error for dialog handling.",
             "testStrategy": "Test success and error flows with mock action"
           },
@@ -219,7 +219,7 @@
             "id": 4,
             "title": "Import and render GenerateDialog component",
             "description": "Add GenerateDialog to dashboard JSX with proper props",
-            "status": "pending",
+            "status": "done",
             "details": "Import GenerateDialog. Add before closing tag of component. Pass open, onOpenChange, and onGenerate props.",
             "testStrategy": "Verify dialog renders and functions correctly"
           }
@@ -607,7 +607,7 @@
       "source": "AI-PRD.md - Comprehensive Product Requirements Document",
       "created": "2025-11-09T15:28:04.519Z",
       "description": "Tasks for master context",
-      "updated": "2025-11-09T16:29:55.317Z"
+      "updated": "2025-11-09T16:39:39.443Z"
     }
   }
 }
