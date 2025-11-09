@@ -233,7 +233,7 @@ jobs:
             export CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN}"
             export VITE_CONVEX_URL="${VITE_CONVEX_URL}"
             export VITE_CONVEX_SITE_URL="${VITE_CONVEX_SITE_URL}"
-            wrangler deploy --var VITE_CONVEX_URL:"${VITE_CONVEX_URL}" --var VITE_CONVEX_SITE_URL:"${VITE_CONVEX_SITE_URL}"
+            npx wrangler deploy --var VITE_CONVEX_URL:"${VITE_CONVEX_URL}" --var VITE_CONVEX_SITE_URL:"${VITE_CONVEX_SITE_URL}"
 
       # Store deployment artifacts
       - store_artifacts:
