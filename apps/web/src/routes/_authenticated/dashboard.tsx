@@ -30,8 +30,9 @@ function DashboardRoute() {
 			const result = await generateProject({ prompt: values.prompt });
 
 			// Return counts for success toast
+			// projectsCount is derived from whether a project was created (projectId exists)
 			return {
-				projectsCount: result.summary.projectsCreated || 0,
+				projectsCount: result.summary.projectId ? 1 : 0,
 				tasksCount: result.summary.tasksCreated || 0,
 				contactsCount: result.summary.contactsCreated || 0,
 			};
