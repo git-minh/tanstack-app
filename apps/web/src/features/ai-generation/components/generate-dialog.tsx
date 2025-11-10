@@ -91,8 +91,8 @@ export function GenerateDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="sm:max-w-[500px]">
-				<DialogHeader>
+			<DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col gap-0 p-0">
+				<DialogHeader className="px-6 pt-6 pb-4">
 					<DialogTitle>Generate Project with AI</DialogTitle>
 					<DialogDescription>
 						{isSubmitting
@@ -101,7 +101,7 @@ export function GenerateDialog({
 					</DialogDescription>
 				</DialogHeader>
 				{isSubmitting ? (
-					<div className="flex flex-col items-center justify-center py-8 gap-4">
+					<div className="flex flex-col items-center justify-center py-8 gap-4 px-6 pb-6">
 						<Loader2 className="h-12 w-12 animate-spin text-primary" />
 						<div className="text-center space-y-2">
 							<p className="text-lg font-medium">AI is analyzing your project...</p>
@@ -111,16 +111,15 @@ export function GenerateDialog({
 						</div>
 					</div>
 				) : (
-					<form onSubmit={handleSubmit(onFormSubmit)}>
-						<div className="grid gap-4 py-4">
+					<form onSubmit={handleSubmit(onFormSubmit)} className="flex flex-col flex-1 min-h-0">
+						<div className="flex-1 overflow-y-auto px-6 py-4">
 							<div className="grid gap-2">
 								<Label htmlFor="prompt">Project Description</Label>
 								<Textarea
 									id="prompt"
 									placeholder="E.g., A task management app with projects, tags, and due dates..."
 									{...register("prompt")}
-									className={errors.prompt ? "border-destructive" : ""}
-									rows={8}
+									className={`resize-none min-h-[200px] ${errors.prompt ? "border-destructive" : ""}`}
 								/>
 								<p className="text-xs text-muted-foreground">
 									Provide a detailed description of your project (20-2000 characters)
@@ -132,7 +131,7 @@ export function GenerateDialog({
 								)}
 							</div>
 						</div>
-						<div className="flex justify-end gap-2">
+						<div className="flex justify-end gap-2 border-t bg-background px-6 py-4">
 							<Button
 								type="button"
 								variant="outline"

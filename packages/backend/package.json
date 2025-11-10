@@ -10,14 +10,19 @@
     "build": "echo 'Convex backend - no build needed'",
     "check-types": "tsc --noEmit",
     "dev": "convex dev",
-    "dev:setup": "convex dev --configure --until-success"
+    "dev:setup": "convex dev --configure --until-success",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
     "@types/node": "^24.3.0",
-    "typescript": "catalog:"
+    "@vitest/coverage-v8": "^3.0.0",
+    "typescript": "catalog:",
+    "vitest": "^3.0.0"
   },
   "dependencies": {
     "@convex-dev/better-auth": "catalog:",
