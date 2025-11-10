@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TasksMobileCard } from "./tasks-mobile-card";
 import { TasksEmptyState } from "./tasks-empty-state";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ interface TasksCardViewProps {
 	onBulkStatusUpdate?: (ids: string[], status: string) => void;
 	onBulkPriorityUpdate?: (ids: string[], priority: string) => void;
 	onDeleteMany?: (ids: string[]) => void;
+	enablePagination?: boolean;
 }
 
 export function TasksCardView({
@@ -33,9 +34,12 @@ export function TasksCardView({
 	onBulkStatusUpdate,
 	onBulkPriorityUpdate,
 	onDeleteMany,
+	enablePagination = true,
 }: TasksCardViewProps) {
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [searchQuery, setSearchQuery] = useState("");
+	const [currentPage, setCurrentPage] = useState(0);
+	const pageSize = 10;
 
 	// Filter tasks by search query
 	const filteredData = searchQuery
@@ -44,6 +48,20 @@ export function TasksCardView({
 				task.displayId.toLowerCase().includes(searchQuery.toLowerCase())
 		  )
 		: data;
+
+	// Reset pagination when search query or data changes
+	useEffect(() => {
+		setCurrentPage(0);
+	}, [searchQuery, filteredData.length]);
+
+	// Apply pagination if enabled
+	const paginatedData = enablePagination
+		? filteredData.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
+		: filteredData;
+
+	const totalPages = enablePagination ? Math.ceil(filteredData.length / pageSize) : 1;
+	const canPreviousPage = currentPage > 0;
+	const canNextPage = currentPage < totalPages - 1;
 
 	const toggleSelect = (id: string) => {
 		const newSelected = new Set(selectedIds);
@@ -56,10 +74,11 @@ export function TasksCardView({
 	};
 
 	const selectAll = () => {
-		if (selectedIds.size === filteredData.length) {
+		const displayData = enablePagination ? paginatedData : filteredData;
+		if (selectedIds.size === displayData.length) {
 			setSelectedIds(new Set());
 		} else {
-			setSelectedIds(new Set(filteredData.map((t) => t._id)));
+			setSelectedIds(new Set(displayData.map((t) => t._id)));
 		}
 	};
 
@@ -102,7 +121,7 @@ export function TasksCardView({
 						onClick={selectAll}
 						className="flex-1"
 					>
-						{selectedIds.size === filteredData.length ? "Deselect All" : "Select All"}
+						{selectedIds.size === paginatedData.length ? "Deselect All" : "Select All"}
 					</Button>
 					{selectedIds.size > 0 && (
 						<span className="text-sm text-muted-foreground">
@@ -179,8 +198,8 @@ export function TasksCardView({
 
 			{/* Cards list */}
 			<div className="space-y-3">
-				{filteredData.length > 0 ? (
-					filteredData.map((task) => (
+				{paginatedData.length > 0 ? (
+					paginatedData.map((task) => (
 						<TasksMobileCard
 							key={task._id}
 							task={task}
@@ -207,6 +226,39 @@ export function TasksCardView({
 					</div>
 				)}
 			</div>
+
+			{/* Pagination controls or info text */}
+			{filteredData.length > 0 && (
+				<div className="flex items-center justify-between py-4 border-t">
+					<div className="text-sm text-muted-foreground">
+						{enablePagination ? (
+							<>Page {currentPage + 1} of {totalPages}</>
+						) : (
+							<>Showing all {filteredData.length} {filteredData.length === 1 ? "task" : "tasks"}</>
+						)}
+					</div>
+					{enablePagination && (
+						<div className="flex space-x-2">
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => setCurrentPage(currentPage - 1)}
+								disabled={!canPreviousPage}
+							>
+								Previous
+							</Button>
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => setCurrentPage(currentPage + 1)}
+								disabled={!canNextPage}
+							>
+								Next
+							</Button>
+						</div>
+					)}
+				</div>
+			)}
 		</div>
 	);
 }

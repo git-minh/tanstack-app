@@ -64,6 +64,7 @@ interface TasksTableProps {
 	onBulkStatusUpdate?: (ids: string[], status: string) => void;
 	onBulkPriorityUpdate?: (ids: string[], priority: string) => void;
 	onReorderTask?: (taskId: string, overTaskId: string) => void;
+	enablePagination?: boolean;
 }
 
 export function TasksTable({
@@ -77,6 +78,7 @@ export function TasksTable({
 	onBulkStatusUpdate,
 	onBulkPriorityUpdate,
 	onReorderTask,
+	enablePagination = true,
 }: TasksTableProps) {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -121,7 +123,7 @@ export function TasksTable({
 		data,
 		columns,
 		getCoreRowModel: getCoreRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
+		...(enablePagination && { getPaginationRowModel: getPaginationRowModel() }),
 		getSortedRowModel: getSortedRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
 		getExpandedRowModel: getExpandedRowModel(),
@@ -300,25 +302,32 @@ export function TasksTable({
 				<div className="text-sm text-muted-foreground">
 					{selectedRows.length} of {table.getFilteredRowModel().rows.length}{" "}
 					row(s) selected.
+					{!enablePagination && data.length > 0 && (
+						<span className="ml-2 text-muted-foreground/80">
+							(Showing all {data.length} {data.length === 1 ? "task" : "tasks"})
+						</span>
+					)}
 				</div>
-				<div className="flex space-x-2">
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={() => table.previousPage()}
-						disabled={!table.getCanPreviousPage()}
-					>
-						Previous
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={() => table.nextPage()}
-						disabled={!table.getCanNextPage()}
-					>
-						Next
-					</Button>
-				</div>
+				{enablePagination && (
+					<div className="flex space-x-2">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => table.previousPage()}
+							disabled={!table.getCanPreviousPage()}
+						>
+							Previous
+						</Button>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => table.nextPage()}
+							disabled={!table.getCanNextPage()}
+						>
+							Next
+						</Button>
+					</div>
+				)}
 			</div>
 			</div>
 		</DndContext>
