@@ -128,6 +128,7 @@ export function TasksTable({
 		getFilteredRowModel: getFilteredRowModel(),
 		getExpandedRowModel: getExpandedRowModel(),
 		getSubRows: (row) => row.subRows,
+		paginateExpandedRows: false, // Don't paginate expanded subtasks - show all on parent's page
 		onSortingChange: setSorting,
 		onColumnFiltersChange: setColumnFilters,
 		onColumnVisibilityChange: setColumnVisibility,
