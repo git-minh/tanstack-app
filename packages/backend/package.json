@@ -28,6 +28,7 @@
     "@convex-dev/better-auth": "catalog:",
     "better-auth": "catalog:",
     "convex": "catalog:",
+    "firecrawl": "^4.5.0",
     "zod": "^4.1.12"
   }
 }
