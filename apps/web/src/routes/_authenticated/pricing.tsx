@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PricingTable } from "autumn-js/react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_authenticated/pricing")({
   component: PricingRoute,
@@ -16,17 +15,7 @@ function PricingRoute() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>AI Project Generation</CardTitle>
-          <CardDescription>
-            Select a plan to unlock powerful AI-driven project generation
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PricingTable />
-        </CardContent>
-      </Card>
+      <PricingTable />
     </div>
   );
 }

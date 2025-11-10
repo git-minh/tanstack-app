@@ -5,8 +5,7 @@ import { Loader2, Link as LinkIcon, X, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useAction, useQuery } from "convex/react";
 import { api } from "@tanstack/backend/convex/_generated/api";
-import { useNavigate } from "@tanstack/react-router";
-// import { useCustomer } from "autumn-js/react"; // TODO: Configure Autumn first
+import { useCustomer } from "autumn-js/react";
 import {
 	Dialog,
 	DialogContent,
@@ -53,8 +52,7 @@ export function GenerateDialog({
 
 	const scrapeUrl = useAction(api.ai.scrapeUrl);
 	const usage = useQuery(api.usage.getUserUsage);
-	const navigate = useNavigate();
-	// const { checkout } = useCustomer(); // TODO: Configure Autumn first
+	const { checkout } = useCustomer();
 
 	const {
 		register,
@@ -104,11 +102,19 @@ export function GenerateDialog({
 		setUrlInput("");
 	};
 
-	const handleUpgrade = () => {
-		// TODO: Configure Autumn checkout flow
-		// For now, navigate to pricing page
-		onOpenChange(false);
-		navigate({ to: "/pricing" });
+	const handleUpgrade = async () => {
+		try {
+			const checkoutUrl = await checkout({
+				priceId: "price_pro_monthly", // Update this with actual Autumn price ID
+			});
+
+			if (checkoutUrl) {
+				window.location.href = checkoutUrl;
+			}
+		} catch (error) {
+			toast.error("Failed to start checkout. Please try again.");
+			console.error("Checkout error:", error);
+		}
 	};
 
 	const handleFormSubmit = async (e: React.FormEvent) => {

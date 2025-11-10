@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
-// import { AutumnProvider } from "autumn-js/react"; // TODO: Configure Autumn first
+import { AutumnProvider } from "autumn-js/react";
 
 import {
 	HeadContent,
@@ -86,30 +86,30 @@ function RootDocument() {
 			client={context.convexClient}
 			authClient={authClient}
 		>
-			{/* <AutumnProvider convex={context.convexClient} convexApi={(api as any).autumn}> */}
-			<html lang="en" suppressHydrationWarning>
-				<head>
-					<HeadContent />
-				</head>
-				<body>
-					<ThemeProvider
-						attribute="class"
-						defaultTheme="light"
-						enableSystem
-						disableTransitionOnChange
-					>
-						{/* Subtle loading indicator that doesn't cause layout shift */}
-						{isFetching && (
-							<div className="fixed top-0 left-0 right-0 h-1 z-50 bg-gradient-to-r from-primary/50 via-primary to-primary/50 animate-pulse" />
-						)}
-						<Outlet />
-						<Toaster richColors />
-						<TanStackRouterDevtools position="bottom-left" />
-					</ThemeProvider>
-					<Scripts />
-				</body>
-			</html>
-			{/* </AutumnProvider> */}
+			<AutumnProvider convex={context.convexClient} convexApi={(api as any).autumn}>
+				<html lang="en" suppressHydrationWarning>
+					<head>
+						<HeadContent />
+					</head>
+					<body>
+						<ThemeProvider
+							attribute="class"
+							defaultTheme="light"
+							enableSystem
+							disableTransitionOnChange
+						>
+							{/* Subtle loading indicator that doesn't cause layout shift */}
+							{isFetching && (
+								<div className="fixed top-0 left-0 right-0 h-1 z-50 bg-gradient-to-r from-primary/50 via-primary to-primary/50 animate-pulse" />
+							)}
+							<Outlet />
+							<Toaster richColors />
+							<TanStackRouterDevtools position="bottom-left" />
+						</ThemeProvider>
+						<Scripts />
+					</body>
+				</html>
+			</AutumnProvider>
 		</ConvexBetterAuthProvider>
 	);
 }
