@@ -105,7 +105,7 @@ export function GenerateDialog({
 	const handleUpgrade = async () => {
 		try {
 			const checkoutUrl = await checkout({
-				priceId: "price_pro_monthly", // Update this with actual Autumn price ID
+				productId: "pro", // Autumn product ID from dashboard
 			});
 
 			if (checkoutUrl) {
