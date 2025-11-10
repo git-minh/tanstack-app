@@ -283,7 +283,7 @@
         "id": 6,
         "title": "Testing - Frontend Component Tests",
         "description": "Write unit and integration tests for AI generation dialog component",
-        "status": "pending",
+        "status": "done",
         "priority": "medium",
         "dependencies": [
           "3"
@@ -295,7 +295,7 @@
             "id": 1,
             "title": "Test dialog rendering and form elements",
             "description": "Test that dialog renders correctly with all form elements present",
-            "status": "pending",
+            "status": "done",
             "details": "Test: title appears, description appears, textarea is present, buttons are present, help text is visible.",
             "testStrategy": "Snapshot test and element query tests"
           },
@@ -303,7 +303,7 @@
             "id": 2,
             "title": "Test form validation rules",
             "description": "Test minimum/maximum character validation and error messages",
-            "status": "pending",
+            "status": "done",
             "details": "Test: empty submission shows error, <20 chars shows min error, >2000 chars shows max error, valid input passes.",
             "testStrategy": "Use user-event to type and submit"
           },
@@ -311,7 +311,7 @@
             "id": 3,
             "title": "Test loading state transitions",
             "description": "Test that loading UI appears during submission",
-            "status": "pending",
+            "status": "done",
             "details": "Test: form hides during loading, spinner appears, loading message displays, buttons are disabled.",
             "testStrategy": "Mock async onGenerate function"
           },
@@ -319,7 +319,7 @@
             "id": 4,
             "title": "Test success and error flows",
             "description": "Test dialog behavior on successful and failed generation",
-            "status": "pending",
+            "status": "done",
             "details": "Test: successful generation closes dialog and resets form, error keeps dialog open, error displays error state.",
             "testStrategy": "Mock onGenerate to resolve/reject"
           }
@@ -607,7 +607,7 @@
       "source": "AI-PRD.md - Comprehensive Product Requirements Document",
       "created": "2025-11-09T15:28:04.519Z",
       "description": "Tasks for master context",
-      "updated": "2025-11-10T00:17:12.835Z"
+      "updated": "2025-11-10T00:23:24.042Z"
     }
   }
 }
