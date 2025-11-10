@@ -428,6 +428,7 @@ export function Tasks() {
 								onBulkStatusUpdate={handleBulkStatusUpdate}
 								onBulkPriorityUpdate={handleBulkPriorityUpdate}
 								onDeleteMany={handleDeleteMany}
+								enablePagination={!selectedProjectId}
 							/>
 						) : (
 							<TasksTable
@@ -441,6 +442,7 @@ export function Tasks() {
 								onBulkStatusUpdate={handleBulkStatusUpdate}
 								onBulkPriorityUpdate={handleBulkPriorityUpdate}
 								onReorderTask={handleReorderTask}
+								enablePagination={!selectedProjectId}
 							/>
 						)}
 					</CardContent>
