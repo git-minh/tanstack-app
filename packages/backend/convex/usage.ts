@@ -6,12 +6,19 @@ const FREE_TIER_LIMIT = 5;
 const PRO_TIER_LIMIT = Infinity;
 
 /**
- * Get or create user usage record
+ * Get or create user usage record (for queries - read-only)
  */
-async function ensureUserUsage(
-  ctx: QueryCtx | MutationCtx,
-  userId: string
-) {
+async function getUserUsageRecord(ctx: QueryCtx, userId: string) {
+  return await ctx.db
+    .query("userUsage")
+    .withIndex("by_userId", (q: any) => q.eq("userId", userId))
+    .first();
+}
+
+/**
+ * Get or create user usage record (for mutations - read-write)
+ */
+async function ensureUserUsage(ctx: MutationCtx, userId: string) {
   const existing = await ctx.db
     .query("userUsage")
     .withIndex("by_userId", (q: any) => q.eq("userId", userId))
@@ -66,14 +73,26 @@ export const getUserUsage = query({
       throw new Error("Unauthorized");
     }
 
-    const usage = await ensureUserUsage(ctx, identity.subject);
+    const usage = await getUserUsageRecord(ctx, identity.subject);
+
+    // If no usage record exists, return default values for free tier
+    if (!usage) {
+      return {
+        count: 0,
+        limit: FREE_TIER_LIMIT,
+        tier: "free" as const,
+        hasAccess: true,
+        remaining: FREE_TIER_LIMIT,
+      };
+    }
+
     const limit =
       usage.subscriptionTier === "pro" ? PRO_TIER_LIMIT : FREE_TIER_LIMIT;
 
     return {
       count: usage.aiGenerationCount,
       limit,
-      tier: usage.subscriptionTier,
+      tier: usage.subscriptionTier as "free" | "pro",
       hasAccess: usage.aiGenerationCount < limit,
       remaining: Math.max(0, limit - usage.aiGenerationCount),
     };

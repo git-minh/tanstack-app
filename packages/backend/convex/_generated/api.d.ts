@@ -11,6 +11,7 @@
 import type * as ai from "../ai.js";
 import type * as ai_schema from "../ai_schema.js";
 import type * as auth from "../auth.js";
+import type * as autumn from "../autumn.js";
 import type * as contacts from "../contacts.js";
 import type * as counters from "../counters.js";
 import type * as dashboard from "../dashboard.js";
@@ -22,6 +23,7 @@ import type * as projects from "../projects.js";
 import type * as search from "../search.js";
 import type * as tasks from "../tasks.js";
 import type * as todos from "../todos.js";
+import type * as usage from "../usage.js";
 
 import type {
   ApiFromModules,
@@ -41,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   ai: typeof ai;
   ai_schema: typeof ai_schema;
   auth: typeof auth;
+  autumn: typeof autumn;
   contacts: typeof contacts;
   counters: typeof counters;
   dashboard: typeof dashboard;
@@ -52,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   search: typeof search;
   tasks: typeof tasks;
   todos: typeof todos;
+  usage: typeof usage;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 
@@ -2164,4 +2168,5 @@ export declare const components: {
       updateMany: FunctionReference<"mutation", "internal", any, any>;
     };
   };
+  autumn: {};
 };
