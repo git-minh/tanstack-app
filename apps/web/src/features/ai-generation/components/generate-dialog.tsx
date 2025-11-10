@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Link as LinkIcon, X } from "lucide-react";
 import { toast } from "sonner";
+import { useAction } from "convex/react";
+import { api } from "@tanstack/backend/convex/_generated/api";
 import {
 	Dialog,
 	DialogContent,
@@ -10,9 +12,15 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
 	generateProjectFormSchema,
 	type GenerateProjectFormValues,
@@ -36,12 +44,19 @@ export function GenerateDialog({
 	onSubmit,
 }: GenerateDialogProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [urlInput, setUrlInput] = useState("");
+	const [scrapedContent, setScrapedContent] = useState("");
+	const [isScrapingUrl, setIsScrapingUrl] = useState(false);
+	const [urlOpen, setUrlOpen] = useState(false);
+
+	const scrapeUrl = useAction(api.ai.scrapeUrl);
 
 	const {
 		register,
 		handleSubmit,
 		formState: { errors },
 		reset,
+		setValue,
 	} = useForm<GenerateProjectFormValues>({
 		resolver: zodResolver(generateProjectFormSchema),
 		defaultValues: {
@@ -49,10 +64,45 @@ export function GenerateDialog({
 		},
 	});
 
+	const handleScrapeUrl = async () => {
+		if (!urlInput.trim()) {
+			toast.error("Please enter a URL");
+			return;
+		}
+
+		setIsScrapingUrl(true);
+		try {
+			const result = await scrapeUrl({ url: urlInput });
+
+			if (result.success && result.markdown) {
+				setScrapedContent(result.markdown);
+				toast.success(
+					`Scraped ${result.originalLength} characters${result.truncated ? " (truncated to 10,000)" : ""}`
+				);
+			} else {
+				toast.error(result.error || "Failed to scrape URL");
+			}
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "Failed to scrape URL");
+		} finally {
+			setIsScrapingUrl(false);
+		}
+	};
+
+	const handleClearScrapedContent = () => {
+		setScrapedContent("");
+		setUrlInput("");
+	};
+
 	const onFormSubmit = async (values: GenerateProjectFormValues) => {
 		setIsSubmitting(true);
 		try {
-			const result = await onSubmit(values);
+			// Combine scraped content with user prompt
+			const finalPrompt = scrapedContent
+				? `Content from ${urlInput}:\n\n${scrapedContent}\n\n---\n\nAdditional context: ${values.prompt || "No additional context provided."}`
+				: values.prompt;
+
+			const result = await onSubmit({ prompt: finalPrompt });
 
 			// Build success message with counts
 			const counts: string[] = [];
@@ -75,6 +125,9 @@ export function GenerateDialog({
 			// Close dialog after 500ms on success
 			setTimeout(() => {
 				reset();
+				setScrapedContent("");
+				setUrlInput("");
+				setUrlOpen(false);
 				onOpenChange(false);
 			}, 500);
 		} catch (error) {
@@ -113,22 +166,89 @@ export function GenerateDialog({
 				) : (
 					<form onSubmit={handleSubmit(onFormSubmit)} className="flex flex-col flex-1 min-h-0">
 						<div className="flex-1 overflow-y-auto px-6 py-4">
-							<div className="grid gap-2">
-								<Label htmlFor="prompt">Project Description</Label>
-								<Textarea
-									id="prompt"
-									placeholder="E.g., A task management app with projects, tags, and due dates..."
-									{...register("prompt")}
-									className={`resize-y min-h-[200px] max-h-[600px] overflow-y-auto ${errors.prompt ? "border-destructive" : ""}`}
-								/>
-								<p className="text-xs text-muted-foreground">
-									Provide a detailed description of your project (20-2000 characters)
-								</p>
-								{errors.prompt && (
-									<p className="text-sm text-destructive">
-										{errors.prompt.message}
+							<div className="grid gap-4">
+								{/* URL Import Section */}
+								<Collapsible open={urlOpen} onOpenChange={setUrlOpen}>
+									<div className="flex items-center gap-2">
+										<CollapsibleTrigger asChild>
+											<Button
+												type="button"
+												variant="ghost"
+												size="sm"
+												className="w-full justify-start gap-2 text-sm font-medium"
+											>
+												<LinkIcon className="h-4 w-4" />
+												Import from URL (optional)
+											</Button>
+										</CollapsibleTrigger>
+									</div>
+									<CollapsibleContent className="mt-2 space-y-2">
+										<div className="flex gap-2">
+											<Input
+												placeholder="https://github.com/..."
+												value={urlInput}
+												onChange={(e) => setUrlInput(e.target.value)}
+												disabled={isScrapingUrl}
+											/>
+											<Button
+												type="button"
+												onClick={handleScrapeUrl}
+												disabled={isScrapingUrl || !urlInput.trim()}
+												size="sm"
+											>
+												{isScrapingUrl ? (
+													<>
+														<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+														Scraping...
+													</>
+												) : (
+													"Scrape"
+												)}
+											</Button>
+										</div>
+										{scrapedContent && (
+											<div className="rounded-md border bg-muted p-3 space-y-2">
+												<div className="flex items-center justify-between">
+													<p className="text-sm font-medium">
+														Scraped content ({scrapedContent.length} chars)
+													</p>
+													<Button
+														type="button"
+														variant="ghost"
+														size="sm"
+														onClick={handleClearScrapedContent}
+													>
+														<X className="h-4 w-4" />
+													</Button>
+												</div>
+												<p className="text-xs text-muted-foreground line-clamp-3">
+													{scrapedContent.substring(0, 200)}...
+												</p>
+											</div>
+										)}
+									</CollapsibleContent>
+								</Collapsible>
+
+								{/* Project Description */}
+								<div className="grid gap-2">
+									<Label htmlFor="prompt">Project Description</Label>
+									<Textarea
+										id="prompt"
+										placeholder="E.g., A task management app with projects, tags, and due dates..."
+										{...register("prompt")}
+										className={`resize-y min-h-[200px] max-h-[600px] overflow-y-auto ${errors.prompt ? "border-destructive" : ""}`}
+									/>
+									<p className="text-xs text-muted-foreground">
+										{scrapedContent
+											? "Add additional context or leave empty to use only scraped content"
+											: "Provide a detailed description of your project (20-2000 characters)"}
 									</p>
-								)}
+									{errors.prompt && (
+										<p className="text-sm text-destructive">
+											{errors.prompt.message}
+										</p>
+									)}
+								</div>
 							</div>
 						</div>
 						<div className="flex justify-end gap-2 border-t bg-background px-6 py-4">

@@ -378,6 +378,81 @@ async function callAzureOpenAI(
 }
 
 /**
+ * Scrape a URL and return its content as markdown
+ *
+ * Uses Firecrawl API to extract clean markdown content from web pages.
+ * Useful for importing context from GitHub READMEs, documentation sites, or blog posts.
+ */
+export const scrapeUrl = action({
+  args: {
+    url: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    try {
+      // Validate URL format
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(args.url);
+        if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+          throw new Error('Only HTTP and HTTPS URLs are supported');
+        }
+      } catch (error) {
+        throw new Error(`Invalid URL format: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+
+      // Check for FIRECRAWL_API_KEY
+      const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY;
+      if (!FIRECRAWL_API_KEY) {
+        throw new Error('FIRECRAWL_API_KEY environment variable is not set');
+      }
+
+      // Import Firecrawl dynamically
+      const { default: FirecrawlApp } = await import('firecrawl');
+
+      // Initialize Firecrawl client
+      const firecrawl = new FirecrawlApp({ apiKey: FIRECRAWL_API_KEY });
+
+      console.log('Scraping URL:', args.url);
+
+      // Scrape the URL with markdown format
+      const result = await firecrawl.scrape(args.url, {
+        formats: ['markdown'],
+      });
+
+      // Extract markdown content
+      const markdown = result.markdown || '';
+
+      // Apply character limit (10,000 chars)
+      const truncatedMarkdown = markdown.length > 10000
+        ? markdown.substring(0, 10000) + '\n\n[Content truncated to 10,000 characters]'
+        : markdown;
+
+      console.log('Scrape successful:', {
+        url: args.url,
+        contentLength: markdown.length,
+        truncated: markdown.length > 10000,
+      });
+
+      return {
+        success: true,
+        url: args.url,
+        markdown: truncatedMarkdown,
+        originalLength: markdown.length,
+        truncated: markdown.length > 10000,
+      };
+    } catch (error) {
+      console.error('URL scraping failed:', error);
+
+      // Return error response
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred while scraping URL',
+      };
+    }
+  },
+});
+
+/**
  * Generate a complete project structure from a natural language description
  *
  * This action uses Azure OpenAI GPT-5 to parse user input and create:
