@@ -6,6 +6,7 @@ import { ConvexReactClient } from "convex/react";
 import { routeTree } from "./routeTree.gen";
 import Loader from "./components/loader";
 import { NotFound } from "./components/error-pages/not-found";
+import * as Sentry from "@sentry/react";
 import "./index.css";
 
 export function getRouter() {
@@ -13,6 +14,25 @@ export function getRouter() {
 	if (!CONVEX_URL) {
 		console.error("missing envar VITE_CONVEX_URL");
 	}
+
+	// Initialize Sentry for error monitoring and performance tracking
+	// Only run on client-side to avoid SSR issues
+	const SENTRY_DSN = (import.meta as any).env.VITE_SENTRY_DSN;
+	if (SENTRY_DSN && typeof window !== 'undefined') {
+		Sentry.init({
+			dsn: SENTRY_DSN,
+			integrations: [
+				Sentry.browserTracingIntegration(),
+				Sentry.replayIntegration(),
+			],
+			// Performance Monitoring
+			tracesSampleRate: 1.0, // Capture 100% of transactions for performance monitoring
+			// Session Replay
+			replaysSessionSampleRate: 0.1, // 10% of sessions
+			replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors
+		});
+	}
+
 	const convex = new ConvexReactClient(CONVEX_URL, {
 		unsavedChangesWarning: false,
 		// Pause queries until user is authenticated to prevent "Unauthorized" errors
