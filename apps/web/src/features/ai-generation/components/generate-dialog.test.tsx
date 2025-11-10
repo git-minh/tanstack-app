@@ -325,10 +325,8 @@ describe("GenerateDialog - Loading States (Subtask 6.3)", () => {
 			expect(screen.queryByLabelText("Project Description")).not.toBeInTheDocument();
 		});
 
-		// Loading spinner should appear (it's an SVG, not img)
-		const spinner = document.querySelector('.animate-spin');
-		expect(spinner).toBeInTheDocument();
-		expect(spinner).toHaveClass("lucide-loader-circle");
+		// Loading spinner should appear
+		expect(screen.getByLabelText("Loading spinner")).toBeInTheDocument();
 
 		// Loading message should appear
 		expect(

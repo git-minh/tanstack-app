@@ -102,7 +102,7 @@ export function GenerateDialog({
 				</DialogHeader>
 				{isSubmitting ? (
 					<div className="flex flex-col items-center justify-center py-8 gap-4 px-6 pb-6">
-						<Loader2 className="h-12 w-12 animate-spin text-primary" />
+						<Loader2 className="h-12 w-12 animate-spin text-primary" aria-label="Loading spinner" />
 						<div className="text-center space-y-2">
 							<p className="text-lg font-medium">AI is analyzing your project...</p>
 							<p className="text-sm text-muted-foreground">
@@ -119,7 +119,7 @@ export function GenerateDialog({
 									id="prompt"
 									placeholder="E.g., A task management app with projects, tags, and due dates..."
 									{...register("prompt")}
-									className={`resize-none min-h-[200px] ${errors.prompt ? "border-destructive" : ""}`}
+									className={`resize-y min-h-[200px] max-h-[600px] overflow-y-auto ${errors.prompt ? "border-destructive" : ""}`}
 								/>
 								<p className="text-xs text-muted-foreground">
 									Provide a detailed description of your project (20-2000 characters)
