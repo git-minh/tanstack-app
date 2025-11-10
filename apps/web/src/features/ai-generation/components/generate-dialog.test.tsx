@@ -22,6 +22,11 @@ vi.mock("sonner", () => ({
 	},
 }));
 
+// Mock convex/react hooks
+vi.mock("convex/react", () => ({
+	useAction: vi.fn(() => vi.fn()),
+}));
+
 describe("GenerateDialog - Rendering and Form Elements (Subtask 6.1)", () => {
 	const mockOnOpenChange = vi.fn();
 	const mockOnSubmit = vi.fn();
@@ -109,7 +114,7 @@ describe("GenerateDialog - Rendering and Form Elements (Subtask 6.1)", () => {
 		);
 
 		expect(
-			screen.getByText(/Provide a detailed description.*20-2000 characters/i)
+			screen.getByText(/Provide a detailed description.*20-30,000 characters/i)
 		).toBeInTheDocument();
 	});
 
@@ -166,6 +171,7 @@ describe("GenerateDialog - Form Validation (Subtask 6.2)", () => {
 	});
 
 	it("should show error for empty submission", async () => {
+		const { toast } = await import("sonner");
 		const user = userEvent.setup();
 
 		render(
@@ -179,14 +185,17 @@ describe("GenerateDialog - Form Validation (Subtask 6.2)", () => {
 		const generateButton = screen.getByRole("button", { name: /^generate$/i });
 		await user.click(generateButton);
 
-		// Should show validation error for empty input
-		expect(
-			await screen.findByText(/must be at least 20 characters/i)
-		).toBeInTheDocument();
+		// Should show toast error for empty input
+		await waitFor(() => {
+			expect(toast.error).toHaveBeenCalledWith(
+				"Please provide either a project description or scrape a URL"
+			);
+		});
 		expect(mockOnSubmit).not.toHaveBeenCalled();
 	});
 
 	it("should show error when input is less than 20 characters", async () => {
+		const { toast } = await import("sonner");
 		const user = userEvent.setup();
 
 		render(
@@ -203,13 +212,16 @@ describe("GenerateDialog - Form Validation (Subtask 6.2)", () => {
 		const generateButton = screen.getByRole("button", { name: /^generate$/i });
 		await user.click(generateButton);
 
-		expect(
-			await screen.findByText(/must be at least 20 characters/i)
-		).toBeInTheDocument();
+		// Should show toast error for input less than 20 chars
+		await waitFor(() => {
+			expect(toast.error).toHaveBeenCalledWith(
+				"Please provide either a project description or scrape a URL"
+			);
+		});
 		expect(mockOnSubmit).not.toHaveBeenCalled();
 	});
 
-	it("should show error when input exceeds 2000 characters", async () => {
+	it("should show error when input exceeds 30000 characters", async () => {
 		const user = userEvent.setup();
 
 		render(
@@ -220,20 +232,23 @@ describe("GenerateDialog - Form Validation (Subtask 6.2)", () => {
 			/>
 		);
 
-		const textarea = screen.getByLabelText("Project Description");
-		const longText = "A".repeat(2001); // 2001 chars (exceeds limit)
-		await user.type(textarea, longText);
+		const textarea = screen.getByLabelText("Project Description") as HTMLTextAreaElement;
+		const longText = "A".repeat(30001); // 30001 chars (exceeds limit)
+
+		// Use paste instead of type to avoid timeout
+		await user.click(textarea);
+		await user.paste(longText);
 
 		const generateButton = screen.getByRole("button", { name: /^generate$/i });
 		await user.click(generateButton);
 
 		expect(
-			await screen.findByText(/must not exceed 2000 characters/i)
+			await screen.findByText(/must not exceed 30000 characters/i)
 		).toBeInTheDocument();
 		expect(mockOnSubmit).not.toHaveBeenCalled();
 	});
 
-	it("should accept valid input (20-2000 characters)", async () => {
+	it("should accept valid input (20-30000 characters)", async () => {
 		const user = userEvent.setup();
 		mockOnSubmit.mockResolvedValue({ projectsCount: 1, tasksCount: 5 });
 
@@ -245,48 +260,20 @@ describe("GenerateDialog - Form Validation (Subtask 6.2)", () => {
 			/>
 		);
 
-		const textarea = screen.getByLabelText("Project Description");
+		const textarea = screen.getByLabelText("Project Description") as HTMLTextAreaElement;
 		const validText = "A valid project description with enough characters to pass validation";
-		await user.type(textarea, validText);
+
+		// Use paste for consistent text input
+		await user.click(textarea);
+		await user.paste(validText);
 
 		const generateButton = screen.getByRole("button", { name: /^generate$/i });
 		await user.click(generateButton);
-
-		// Should not show validation errors
-		expect(
-			screen.queryByText(/must be at least 20 characters/i)
-		).not.toBeInTheDocument();
-		expect(
-			screen.queryByText(/must not exceed 2000 characters/i)
-		).not.toBeInTheDocument();
 
 		// Should call onSubmit with the entered text
 		await waitFor(() => {
 			expect(mockOnSubmit).toHaveBeenCalledWith({ prompt: validText });
 		});
-	});
-
-	it("should highlight textarea with error styling when validation fails", async () => {
-		const user = userEvent.setup();
-
-		render(
-			<GenerateDialog
-				open={true}
-				onOpenChange={mockOnOpenChange}
-				onSubmit={mockOnSubmit}
-			/>
-		);
-
-		const textarea = screen.getByLabelText("Project Description");
-		const generateButton = screen.getByRole("button", { name: /^generate$/i });
-
-		await user.click(generateButton);
-
-		// Wait for validation error
-		await screen.findByText(/must be at least 20 characters/i);
-
-		// Textarea should have error border class
-		expect(textarea).toHaveClass("border-destructive");
 	});
 });
 

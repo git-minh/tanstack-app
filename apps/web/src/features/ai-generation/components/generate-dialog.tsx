@@ -57,6 +57,9 @@ export function GenerateDialog({
 		formState: { errors },
 		reset,
 		setValue,
+		clearErrors,
+		getValues,
+		trigger,
 	} = useForm<GenerateProjectFormValues>({
 		resolver: zodResolver(generateProjectFormSchema),
 		defaultValues: {
@@ -76,8 +79,10 @@ export function GenerateDialog({
 
 			if (result.success && result.markdown) {
 				setScrapedContent(result.markdown);
+				// Clear prompt validation errors since scraped content can be used instead
+				clearErrors("prompt");
 				toast.success(
-					`Scraped ${result.originalLength} characters${result.truncated ? " (truncated to 10,000)" : ""}`
+					`Scraped ${result.originalLength} characters${result.truncated ? " (truncated to 20,000)" : ""}`
 				);
 			} else {
 				toast.error(result.error || "Failed to scrape URL");
@@ -92,6 +97,31 @@ export function GenerateDialog({
 	const handleClearScrapedContent = () => {
 		setScrapedContent("");
 		setUrlInput("");
+	};
+
+	const handleFormSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+
+		// Always run form validation first
+		const isValid = await trigger();
+		const values = getValues();
+
+		// Check if we have either valid prompt or scraped content
+		const hasValidPrompt = values.prompt && values.prompt.length >= 20;
+		const hasScrapedContent = scrapedContent && scrapedContent.trim();
+
+		// Proceed if validation passed OR if we have scraped content (alternate data source)
+		if (!isValid && !hasScrapedContent) {
+			// Validation failed and no scraped content - let form errors display
+			return;
+		}
+
+		if (!hasValidPrompt && !hasScrapedContent) {
+			toast.error("Please provide either a project description or scrape a URL");
+			return;
+		}
+
+		await onFormSubmit(values);
 	};
 
 	const onFormSubmit = async (values: GenerateProjectFormValues) => {
@@ -164,7 +194,7 @@ export function GenerateDialog({
 						</div>
 					</div>
 				) : (
-					<form onSubmit={handleSubmit(onFormSubmit)} className="flex flex-col flex-1 min-h-0">
+					<form onSubmit={handleFormSubmit} className="flex flex-col flex-1 min-h-0">
 						<div className="flex-1 overflow-y-auto px-6 py-4">
 							<div className="grid gap-4">
 								{/* URL Import Section */}
@@ -231,19 +261,26 @@ export function GenerateDialog({
 
 								{/* Project Description */}
 								<div className="grid gap-2">
-									<Label htmlFor="prompt">Project Description</Label>
+									<Label htmlFor="prompt">
+										Project Description
+										{scrapedContent && (
+											<span className="ml-2 text-xs font-normal text-muted-foreground">(optional with scraped content)</span>
+										)}
+									</Label>
 									<Textarea
 										id="prompt"
-										placeholder="E.g., A task management app with projects, tags, and due dates..."
+										placeholder={scrapedContent
+											? "Add any additional context about your project (optional)..."
+											: "E.g., A task management app with projects, tags, and due dates..."}
 										{...register("prompt")}
 										className={`resize-y min-h-[200px] max-h-[600px] overflow-y-auto ${errors.prompt ? "border-destructive" : ""}`}
 									/>
 									<p className="text-xs text-muted-foreground">
 										{scrapedContent
-											? "Add additional context or leave empty to use only scraped content"
-											: "Provide a detailed description of your project (20-2000 characters)"}
+											? "The scraped content will be used as the main input. You can add extra details here if needed."
+											: "Provide a detailed description of your project (20-30,000 characters)"}
 									</p>
-									{errors.prompt && (
+									{errors.prompt && !scrapedContent && (
 										<p className="text-sm text-destructive">
 											{errors.prompt.message}
 										</p>
