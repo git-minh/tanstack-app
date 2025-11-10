@@ -1,0 +1,407 @@
+# TanStack Start Hackathon - Missing Sponsor Integrations PRD
+
+## Overview
+Complete the required sponsor integrations for the TanStack Start Hackathon submission. Deadline: November 17, 2025 at 12:00 PM PT. Current readiness: 6/10. Target: 8.5-9/10.
+
+## Context
+The app already has excellent TanStack Start + Convex implementation with a unique AI project generation feature using Azure OpenAI. We're missing 3 critical sponsor integrations (Firecrawl, Sentry, Autumn) and need to properly configure CodeRabbit.
+
+## Required Integrations
+
+### 1. Sentry Error Monitoring (Priority 1 - 30 min)
+**Goal:** Implement comprehensive error tracking and performance monitoring.
+
+**Requirements:**
+- Install @sentry/react and @sentry/vite-plugin packages
+- Initialize Sentry in apps/web/src/router.tsx with proper configuration
+- Add Sentry Vite plugin to vite.config.ts for source map upload
+- Configure browser tracing and session replay integrations
+- Set up environment variable VITE_SENTRY_DSN
+- Test error tracking by triggering intentional error
+- Verify errors appear in Sentry dashboard
+- Add error boundaries to critical components
+- Configure performance monitoring with tracesSampleRate
+- Set up user context tracking (userId, email)
+
+**Acceptance Criteria:**
+- Errors automatically captured and sent to Sentry
+- Source maps uploaded for readable stack traces
+- User sessions can be replayed
+- Performance metrics tracked
+- Environment variables documented in docs/ENVIRONMENT.md
+
+### 2. Firecrawl Web Scraping (Priority 2 - 1.5-2 hours)
+**Goal:** Integrate Firecrawl to scrape websites and feed content to AI generation.
+
+**Requirements:**
+- Install @firecrawl/firecrawl-node in packages/backend
+- Create Convex action: scrapeUrl in packages/backend/convex/ai.ts
+- Configure Firecrawl with FIRECRAWL_API_KEY environment variable
+- Add "Import from URL" input field to GenerateDialog component
+- Implement URL validation (must be valid HTTP/HTTPS URL)
+- Add scraping loading state with progress indicator
+- Call scrapeUrl action before AI generation when URL provided
+- Append scraped markdown content to user prompt
+- Handle scraping errors gracefully (invalid URL, timeout, rate limit)
+- Test with various URLs: GitHub READMEs, documentation sites, blog posts
+- Add character limit for scraped content (max 10,000 chars)
+- Show scraped content preview to user before generation
+
+**Use Cases:**
+- User pastes GitHub repo URL → Scrapes README → Generates project structure
+- User pastes documentation URL → Extracts content → Creates implementation tasks
+- User provides project spec URL → Parses requirements → Builds complete project
+
+**Acceptance Criteria:**
+- URL input field integrated into GenerateDialog
+- Firecrawl successfully scrapes markdown from URLs
+- Scraped content enhances AI generation quality
+- Error handling for failed scrapes
+- Environment variable documented
+
+### 3. Autumn Pricing/Billing (Priority 3 - 1 hour)
+**Goal:** Add subscription billing with usage-based limits for AI generation.
+
+**Requirements:**
+- Install @autumnhq/autumn-js in apps/web
+- Create pricing page at apps/web/src/routes/_authenticated/pricing.tsx
+- Define pricing tiers: Free (5 AI generations/month), Pro ($9/month unlimited)
+- Add usage tracking to Convex: aiGenerations counter per user
+- Create Convex query: getUserUsage returning generation count and limit
+- Implement usage limit check before AI generation
+- Show upgrade prompt when free users hit limit
+- Create Autumn checkout session integration
+- Add VITE_AUTUMN_API_KEY environment variable
+- Create subscription management in user settings
+- Add "Upgrade to Pro" button in GenerateDialog for free users
+- Track subscription status in Convex user table
+- Handle webhook for subscription status updates
+- Add pricing tier badge to user profile
+
+**Pricing Page Components:**
+- Pricing tiers comparison table
+- Feature list (Free vs Pro)
+- "Current Plan" indicator
+- CTA buttons: "Get Started" (Free), "Upgrade" (Pro)
+- FAQs section
+
+**Acceptance Criteria:**
+- Free users limited to 5 AI generations
+- Pro users have unlimited generations
+- Checkout flow works end-to-end (test mode)
+- Usage counter updates correctly
+- Pricing page accessible from sidebar
+- Subscription status persisted in database
+
+### 4. CodeRabbit Configuration (Priority 4 - 15 min)
+**Goal:** Properly configure CodeRabbit for AI-powered code reviews.
+
+**Requirements:**
+- Create .coderabbit.yml configuration file in project root
+- Enable auto_review for pull requests
+- Configure request_changes_workflow
+- Enable chat auto_reply feature
+- Set language to English
+- Document CodeRabbit setup in README.md
+- Add CodeRabbit configuration section to CLAUDE.md
+- Update README with CodeRabbit integration details
+- Verify badge already present in README
+- Test with sample pull request (if possible)
+
+**Configuration:**
+- Auto-review: enabled for all PRs
+- Skip drafts: true
+- Request changes workflow: enabled
+- Chat: enabled with auto-reply
+
+**Acceptance Criteria:**
+- .coderabbit.yml file created with proper config
+- Configuration documented in project docs
+- README updated with integration details
+
+## Testing & Quality Assurance
+
+### Integration Testing (45 min)
+**Goal:** Test all sponsor integrations end-to-end.
+
+**Requirements:**
+- Test Sentry: Trigger error → Verify dashboard → Check source maps
+- Test Firecrawl: Scrape 3 different URLs → Verify content quality
+- Test Autumn: Complete checkout flow in test mode → Verify webhook
+- Test CodeRabbit: Review configuration validity
+- Test all integrations together in complete user flow
+- Verify environment variables in production
+- Check for console errors or warnings
+- Test mobile responsiveness for new components
+- Verify accessibility (keyboard navigation, ARIA labels)
+- Load testing for concurrent AI generations
+
+**Test Scenarios:**
+1. Free user hits generation limit → Sees upgrade prompt → Completes checkout
+2. User provides GitHub URL → Firecrawl scrapes → AI generates project
+3. Error occurs during generation → Sentry captures → User sees friendly message
+4. Pro user generates unlimited projects → Usage tracked correctly
+
+**Acceptance Criteria:**
+- All integrations work independently
+- All integrations work together
+- No console errors
+- Mobile-friendly UI
+- Accessible components
+
+### Documentation (30 min)
+**Goal:** Update all documentation with new integrations.
+
+**Requirements:**
+- Update docs/ENVIRONMENT.md with all new environment variables
+- Add sponsor integration section to CLAUDE.md
+- Update README.md with sponsor logos and descriptions
+- Create .env.example with all required variables
+- Document Firecrawl usage limits and best practices
+- Document Sentry configuration options
+- Document Autumn pricing tier management
+- Add troubleshooting section for each integration
+- Update architecture diagrams if needed
+
+**New Environment Variables:**
+```
+# Sentry Error Monitoring
+VITE_SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
+
+# Firecrawl Web Scraping
+FIRECRAWL_API_KEY=fc-xxx
+
+# Autumn Pricing/Billing
+VITE_AUTUMN_API_KEY=autumn_xxx
+```
+
+**Acceptance Criteria:**
+- All environment variables documented
+- Integration guides complete
+- Troubleshooting sections added
+- README updated with sponsor info
+
+## Deployment & Submission
+
+### Production Deployment (30 min)
+**Goal:** Deploy all changes to production with proper environment configuration.
+
+**Requirements:**
+- Set Convex environment variables for Firecrawl
+- Set Cloudflare environment variables for Sentry and Autumn
+- Verify CircleCI pipeline succeeds
+- Test all integrations in production environment
+- Verify custom domain if configured
+- Check Cloudflare Analytics for errors
+- Monitor Convex logs for issues
+- Ensure all API keys are valid and active
+- Test from different devices and browsers
+
+**Deployment Checklist:**
+- [ ] Backend environment variables set in Convex
+- [ ] Frontend environment variables set in Cloudflare
+- [ ] CircleCI pipeline green
+- [ ] Production smoke test passed
+- [ ] No errors in Sentry dashboard
+- [ ] Convex functions deploying correctly
+
+**Acceptance Criteria:**
+- App deployed and accessible
+- All sponsor integrations working in production
+- No errors in monitoring dashboards
+- Performance acceptable (<2s page load)
+
+### Video Demo Creation (1 hour)
+**Goal:** Create compelling 2-3 minute demo video showcasing all features.
+
+**Requirements:**
+- Record screen with high quality settings (1080p minimum)
+- Script outline covering all required sections
+- Show TanStack Start routing and SSR features
+- Demonstrate Convex real-time updates
+- Showcase Firecrawl → AI generation flow end-to-end
+- Show Sentry error tracking (trigger test error)
+- Demonstrate Autumn pricing and upgrade flow
+- Mention CodeRabbit integration
+- Highlight Cloudflare deployment
+- Show unique AI feature value proposition
+- Keep under 3 minutes total length
+- Edit for smooth flow and pacing
+- Add title cards and transitions
+- Include background music (optional)
+- Upload to YouTube (public or unlisted)
+
+**Video Structure:**
+1. Introduction (15s): App name, tech stack overview
+2. Core Features (30s): Navigation, real-time, hierarchy
+3. Sponsor Integrations (75s): Firecrawl, Sentry, Autumn demos
+4. Unique Value (15s): AI generation competitive advantage
+5. Closing (15s): GitHub, live demo link, call to action
+
+**Acceptance Criteria:**
+- Video is 2-3 minutes
+- Shows all sponsor integrations
+- High quality recording
+- Uploaded to YouTube
+- Link ready for submission
+
+### Vibe Apps Submission (15 min)
+**Goal:** Submit app to Vibe Apps directory before deadline.
+
+**Requirements:**
+- Choose compelling app name (consider "ProjectAI" or similar)
+- Write engaging tagline (max 100 chars)
+- Create detailed description highlighting all integrations
+- Add all required tags: tanstackstart, convex, ai, saas, cloudflare
+- Provide GitHub repository URL
+- Provide live demo URL (Cloudflare Workers)
+- Include YouTube video link
+- Submit before November 17, 2025 at 12:00 PM PT
+- Verify submission confirmation received
+
+**Description Template:**
+"[App Name] generates complete project structures from natural language or website URLs. Built with TanStack Start for full-stack SSR, Convex for real-time database, Firecrawl for intelligent web scraping, Sentry for error monitoring, and Autumn for subscription billing. Features hierarchical projects, AI-powered task generation, and collaborative real-time updates."
+
+**Acceptance Criteria:**
+- Submitted to Vibe Apps before deadline
+- All required fields completed
+- "tanstackstart" tag included
+- Confirmation email received
+
+### Social Media Promotion (30 min)
+**Goal:** Share submission on social media for bonus points.
+
+**Requirements:**
+- Create Twitter/X post with app demo
+- Tag all sponsors: @tan_stack @convex_dev @coderabbitai @firecrawl_dev @netlify @autumnpricing @Cloudflare @getsentry
+- Include screenshot or short video clip
+- Add link to live demo
+- Use relevant hashtags: #TanStackStart #Hackathon #WebDev
+- Create LinkedIn post with same content
+- Tag sponsors on LinkedIn
+- Share in relevant developer communities
+- Engage with other participants
+- Share updates during implementation
+
+**Post Template:**
+"Just submitted to the #TanStackStart Hackathon! 🚀
+
+Built [App Name] - AI-powered project management with @tan_stack @convex_dev @firecrawl_dev @getsentry @autumnpricing @Cloudflare @coderabbitai
+
+✨ Generate projects from URLs
+⚡️ Real-time collaboration
+🔒 Production-ready with monitoring
+
+Try it: [demo-link]
+Code: [github-link]
+
+#WebDev #AI"
+
+**Acceptance Criteria:**
+- Posted on Twitter/X
+- Posted on LinkedIn
+- All sponsors tagged
+- Links included
+- Posted before submission deadline
+
+## Success Metrics
+
+**Minimum Viable:**
+- All 4 sponsor integrations functional
+- Video demo completed and uploaded
+- Submitted to Vibe Apps before deadline
+- No critical bugs in production
+
+**Competitive (Top 3 Potential):**
+- All minimum requirements met
+- High-quality video with professional editing
+- Strong social media engagement
+- Clean, well-documented codebase
+- Unique AI + Firecrawl integration showcase
+
+**Winning (1st Place Potential):**
+- All competitive requirements met
+- Exceptional integration of all sponsors
+- Clear business value and use cases
+- Outstanding video production quality
+- Strong community engagement
+- Production-ready code quality
+
+## Timeline (7 Days Remaining)
+
+**Day 1 (Today - Nov 10):**
+- Sentry integration (30 min)
+- Firecrawl integration (2 hours)
+- Total: 2.5 hours
+
+**Day 2 (Nov 11):**
+- Autumn integration (1 hour)
+- CodeRabbit configuration (15 min)
+- Integration testing (45 min)
+- Total: 2 hours
+
+**Day 3 (Nov 12):**
+- Documentation updates (30 min)
+- Production deployment (30 min)
+- Total: 1 hour
+
+**Day 4 (Nov 13):**
+- Video demo creation (1 hour)
+- Video editing and upload (30 min)
+- Total: 1.5 hours
+
+**Day 5-6 (Nov 14-16):**
+- Buffer for fixes and improvements
+- Social media posts
+- Final testing
+
+**Day 7 (Nov 17):**
+- Vibe Apps submission
+- Final social media push
+- Deadline: 12:00 PM PT
+
+## Risk Mitigation
+
+**Risks:**
+1. API rate limits (Firecrawl, Azure OpenAI)
+   - Mitigation: Implement caching, usage limits
+2. Integration complexity (Autumn webhooks)
+   - Mitigation: Use test mode, simplify MVP
+3. Video quality
+   - Mitigation: Practice run, use good microphone
+4. Deployment issues
+   - Mitigation: Deploy early, test thoroughly
+
+**Fallback Plan:**
+- If integration fails, document in video and show partial implementation
+- Focus on quality over quantity - better to have 3 perfect integrations than 4 broken ones
+- Have backup video ready in case re-recording needed
+
+## Technical Notes
+
+**Existing Architecture to Leverage:**
+- AI generation already uses Azure OpenAI - integrate Firecrawl here
+- User authentication already in place - use for usage tracking
+- Convex real-time already working - use for subscription updates
+- CircleCI pipeline ready - just add environment variables
+
+**Potential Challenges:**
+- Firecrawl API rate limits - need to handle gracefully
+- Autumn webhook verification - may need test mode only
+- Sentry source maps - ensure build configuration correct
+- Video recording - need quiet environment and stable app
+
+## Appendix
+
+**Useful Links:**
+- Hackathon Page: https://lu.ma/tanstack-start-hackathon
+- Firecrawl Docs: https://docs.firecrawl.dev
+- Sentry React Docs: https://docs.sentry.io/platforms/javascript/guides/react/
+- Autumn Docs: https://docs.autumnpricing.com
+- Vibe Apps: [Submission platform link]
+
+**API Key Signup:**
+- Firecrawl: https://firecrawl.dev (500 free credits)
+- Sentry: https://sentry.io (free tier)
+- Autumn: https://autumnpricing.com (test mode)
+- CodeRabbit: https://coderabbit.ai (free for open source)

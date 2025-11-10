@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
+// import { AutumnProvider } from "autumn-js/react"; // TODO: Configure Autumn first
 
 import {
 	HeadContent,
@@ -25,6 +26,7 @@ import {
 } from "@convex-dev/better-auth/react-start";
 import { authClient } from "@/lib/auth-client";
 import { createAuth } from "@tanstack/backend/convex/auth";
+import { api } from "@tanstack/backend/convex/_generated/api";
 
 const fetchAuth = createServerFn({ method: "GET" }).handler(async () => {
 	const { session } = await fetchSession(getRequest());
@@ -84,6 +86,7 @@ function RootDocument() {
 			client={context.convexClient}
 			authClient={authClient}
 		>
+			{/* <AutumnProvider convex={context.convexClient} convexApi={(api as any).autumn}> */}
 			<html lang="en" suppressHydrationWarning>
 				<head>
 					<HeadContent />
@@ -106,6 +109,7 @@ function RootDocument() {
 					<Scripts />
 				</body>
 			</html>
+			{/* </AutumnProvider> */}
 		</ConvexBetterAuthProvider>
 	);
 }

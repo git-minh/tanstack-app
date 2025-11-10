@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Link as LinkIcon, X } from "lucide-react";
+import { Loader2, Link as LinkIcon, X, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { useAction } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import { api } from "@tanstack/backend/convex/_generated/api";
+import { useNavigate } from "@tanstack/react-router";
+// import { useCustomer } from "autumn-js/react"; // TODO: Configure Autumn first
 import {
 	Dialog,
 	DialogContent,
@@ -50,6 +52,9 @@ export function GenerateDialog({
 	const [urlOpen, setUrlOpen] = useState(false);
 
 	const scrapeUrl = useAction(api.ai.scrapeUrl);
+	const usage = useQuery(api.usage.getUserUsage);
+	const navigate = useNavigate();
+	// const { checkout } = useCustomer(); // TODO: Configure Autumn first
 
 	const {
 		register,
@@ -97,6 +102,13 @@ export function GenerateDialog({
 	const handleClearScrapedContent = () => {
 		setScrapedContent("");
 		setUrlInput("");
+	};
+
+	const handleUpgrade = () => {
+		// TODO: Configure Autumn checkout flow
+		// For now, navigate to pricing page
+		onOpenChange(false);
+		navigate({ to: "/pricing" });
 	};
 
 	const handleFormSubmit = async (e: React.FormEvent) => {
@@ -182,6 +194,53 @@ export function GenerateDialog({
 							? "Please wait while we generate your project"
 							: "Describe your project and AI will generate the structure, tasks, and initial setup for you."}
 					</DialogDescription>
+					{usage && !isSubmitting && (
+						<div className="mt-3 p-3 rounded-md bg-muted">
+							<div className="flex items-center justify-between">
+								<div className="flex items-center gap-2">
+									<Sparkles className="h-4 w-4 text-primary" />
+									<span className="text-sm font-medium">
+										{usage.tier === "free" ? "Free Plan" : "Pro Plan"}
+									</span>
+								</div>
+								<span className="text-sm text-muted-foreground">
+									{usage.tier === "free"
+										? `${usage.remaining} of ${usage.limit} generations remaining`
+										: "Unlimited generations"}
+								</span>
+							</div>
+							{usage.tier === "free" && usage.remaining <= 2 && (
+								<div className="mt-2 pt-2 border-t">
+									<p className="text-xs text-muted-foreground mb-2">
+										You're running low on generations. Upgrade to Pro for unlimited AI generations.
+									</p>
+									<Button
+										size="sm"
+										variant="default"
+										onClick={handleUpgrade}
+										className="w-full"
+									>
+										Upgrade to Pro - $9/month
+									</Button>
+								</div>
+							)}
+							{usage.tier === "free" && !usage.hasAccess && (
+								<div className="mt-2 pt-2 border-t">
+									<p className="text-xs text-destructive font-medium mb-2">
+										You've reached your monthly limit. Upgrade to continue generating projects.
+									</p>
+									<Button
+										size="sm"
+										variant="default"
+										onClick={handleUpgrade}
+										className="w-full"
+									>
+										Upgrade to Pro - $9/month
+									</Button>
+								</div>
+							)}
+						</div>
+					)}
 				</DialogHeader>
 				{isSubmitting ? (
 					<div className="flex flex-col items-center justify-center py-8 gap-4 px-6 pb-6">
