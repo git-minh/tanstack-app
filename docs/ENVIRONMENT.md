@@ -39,6 +39,9 @@ VITE_ENABLE_DEBUG=false
 # Third-party Services
 VITE_API_URL=https://api.example.com
 VITE_STRIPE_PUBLIC_KEY=pk_test_...
+
+# Error Monitoring (Sentry)
+VITE_SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
 ```
 
 ### How Frontend Variables Work
@@ -154,6 +157,73 @@ npx convex env set CONVEX_SITE_URL https://your-project.convex.site
 ```bash
 npx convex env list
 ```
+
+## Setting Up Sentry Error Monitoring
+
+The application uses Sentry for error tracking and performance monitoring. Configuration requires environment variables for both runtime and build-time.
+
+### 1. Create a Sentry Project
+
+1. Sign up at [sentry.io](https://sentry.io) or log in
+2. Create a new project (select "React" as platform)
+3. Copy the DSN from project settings
+
+### 2. Configure Runtime Variables
+
+**For Development** (`apps/web/.env.local`):
+```env
+# Sentry Error Monitoring (Required)
+VITE_SENTRY_DSN=https://your-public-key@sentry.io/your-project-id
+```
+
+**For Production** (set in deployment environment):
+```env
+VITE_SENTRY_DSN=https://your-public-key@sentry.io/your-project-id
+```
+
+### 3. Configure Build-Time Variables (Optional)
+
+For source map uploads during production builds:
+
+```env
+# Sentry Source Maps Upload (Optional - for better error tracking)
+SENTRY_ORG=your-organization-slug
+SENTRY_PROJECT=your-project-name
+SENTRY_AUTH_TOKEN=your-auth-token
+```
+
+**To get auth token:**
+1. Go to Sentry → Settings → Account → API → Auth Tokens
+2. Create new token with `project:releases` and `org:read` scopes
+3. Copy the token
+
+### 4. Verify Setup
+
+**Check Sentry is initialized:**
+```typescript
+// In browser console after app loads
+window.__SENTRY__
+```
+
+**Test error tracking:**
+```typescript
+// Trigger test error in browser console
+throw new Error("Sentry test error");
+```
+
+**Check Sentry dashboard:**
+- Navigate to Issues in Sentry dashboard
+- Verify error appears with correct source maps
+- Check session replay if available
+
+### 5. Features Enabled
+
+- **Error Tracking**: All unhandled errors and exceptions
+- **Performance Monitoring**: 100% of transactions tracked
+- **Session Replay**: 10% of sessions, 100% of error sessions
+- **Source Maps**: Automatic upload during production builds (if auth token configured)
+- **User Context**: Automatic user identification
+- **Breadcrumbs**: User interactions and console logs
 
 ## Setting Up Azure OpenAI for AI Project Generation
 
