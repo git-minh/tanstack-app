@@ -416,23 +416,24 @@ export const scrapeUrl = action({
 
       console.log('Scraping URL:', args.url);
 
-      // Scrape the URL with markdown format
+      // Scrape the URL with markdown format and extended timeout
       const result = await firecrawl.scrape(args.url, {
         formats: ['markdown'],
+        timeout: 120000, // 2 minutes timeout
       });
 
       // Extract markdown content
       const markdown = result.markdown || '';
 
-      // Apply character limit (10,000 chars)
-      const truncatedMarkdown = markdown.length > 10000
-        ? markdown.substring(0, 10000) + '\n\n[Content truncated to 10,000 characters]'
+      // Apply character limit (20,000 chars)
+      const truncatedMarkdown = markdown.length > 20000
+        ? markdown.substring(0, 20000) + '\n\n[Content truncated to 20,000 characters]'
         : markdown;
 
       console.log('Scrape successful:', {
         url: args.url,
         contentLength: markdown.length,
-        truncated: markdown.length > 10000,
+        truncated: markdown.length > 20000,
       });
 
       return {
@@ -440,15 +441,32 @@ export const scrapeUrl = action({
         url: args.url,
         markdown: truncatedMarkdown,
         originalLength: markdown.length,
-        truncated: markdown.length > 10000,
+        truncated: markdown.length > 20000,
       };
     } catch (error) {
       console.error('URL scraping failed:', error);
 
+      // Provide helpful error messages based on error type
+      let errorMessage = 'Unknown error occurred while scraping URL';
+
+      if (error instanceof Error) {
+        if (error.message.includes('timeout')) {
+          errorMessage = 'The website took too long to respond. Try a different URL or a simpler page.';
+        } else if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+          errorMessage = 'Could not connect to the website. Please check the URL and try again.';
+        } else if (error.message.includes('403') || error.message.includes('401')) {
+          errorMessage = 'Access denied by the website. Try a different URL that allows scraping.';
+        } else if (error.message.includes('404')) {
+          errorMessage = 'Page not found. Please check the URL and try again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       // Return error response
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred while scraping URL',
+        error: errorMessage,
       };
     }
   },
@@ -486,6 +504,14 @@ export const generateProject = action({
         throw new Error("Unauthorized: Must be logged in to generate projects");
       }
 
+      // 2. Check usage limits before generating
+      const usage = await ctx.runQuery(api.usage.getUserUsage);
+      if (!usage.hasAccess) {
+        throw new Error(
+          `Usage limit reached (${usage.count}/${usage.limit}). Please upgrade to Pro for unlimited generations.`
+        );
+      }
+
       // Log the prompt for debugging
       console.log("Generating project from prompt:", args.prompt.substring(0, 100) + "...");
 
@@ -493,8 +519,8 @@ export const generateProject = action({
       if (args.prompt.length < 20) {
         throw new Error("Project description is too short. Please provide at least 20 characters.");
       }
-      if (args.prompt.length > 5000) {
-        throw new Error("Project description is too long. Please keep it under 5000 characters.");
+      if (args.prompt.length > 30000) {
+        throw new Error("Project description is too long. Please keep it under 30000 characters.");
       }
 
       // Build prompts with current context
@@ -692,6 +718,9 @@ export const generateProject = action({
           `Failed to create contacts (${totalContactsCreated} created): ${error instanceof Error ? error.message : "Unknown error"}`
         );
       }
+
+      // Increment usage count after successful generation
+      await ctx.runMutation(api.usage.incrementUsageCount);
 
       // Return success summary (Subtask 1.9 ✓)
       return {

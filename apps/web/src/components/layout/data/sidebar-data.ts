@@ -1,4 +1,4 @@
-import { LayoutDashboard, ListTodo, CheckSquare, Users, FolderKanban } from 'lucide-react'
+import { LayoutDashboard, ListTodo, CheckSquare, Users, FolderKanban, CreditCard } from 'lucide-react'
 import { type SidebarData } from '../types'
 
 /**
@@ -44,6 +44,11 @@ export function getSidebarData(user: {
             title: 'Todos',
             url: '/todos',
             icon: ListTodo,
+          },
+          {
+            title: 'Pricing',
+            url: '/pricing',
+            icon: CreditCard,
           },
         ],
       },

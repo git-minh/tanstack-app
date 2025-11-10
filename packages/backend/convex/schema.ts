@@ -84,4 +84,10 @@ export default defineSchema({
 		name: v.string(),
 		value: v.number(),
 	}).index("by_name", ["name"]),
+	userUsage: defineTable({
+		userId: v.string(),
+		aiGenerationCount: v.number(),
+		subscriptionTier: v.string(), // "free" or "pro"
+		lastResetDate: v.number(), // Monthly reset timestamp
+	}).index("by_userId", ["userId"]),
 });

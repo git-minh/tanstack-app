@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@convex-dev/better-auth": "catalog:",
+    "@useautumn/convex": "^0.0.15",
     "better-auth": "catalog:",
     "convex": "catalog:",
     "firecrawl": "^4.5.0",

@@ -597,6 +597,239 @@
             "testStrategy": "Team meeting to review and approve launch"
           }
         ]
+      },
+      {
+        "id": 13,
+        "title": "Sentry Error Monitoring Integration",
+        "description": "Implement comprehensive error tracking and performance monitoring with Sentry for the hackathon submission",
+        "details": "Install @sentry/react and @sentry/vite-plugin. Initialize Sentry in router.tsx with browser tracing and session replay. Configure source map uploads. Set up VITE_SENTRY_DSN environment variable. Test error tracking and verify dashboard. Time estimate: 30 minutes. Priority 1 for hackathon.",
+        "testStrategy": "Trigger intentional error and verify it appears in Sentry dashboard with correct source maps and user context",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Install Sentry packages",
+            "description": "Install @sentry/react and @sentry/vite-plugin in apps/web",
+            "details": "Run: cd apps/web && pnpm add @sentry/react @sentry/vite-plugin",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 13
+          },
+          {
+            "id": 2,
+            "title": "Initialize Sentry in router.tsx",
+            "description": "Configure Sentry SDK with browser tracing and session replay",
+            "details": "Add Sentry.init() in apps/web/src/router.tsx with DSN, browserTracingIntegration, replayIntegration. Set tracesSampleRate: 1.0, replaysSessionSampleRate: 0.1, replaysOnErrorSampleRate: 1.0",
+            "status": "done",
+            "dependencies": [
+              1
+            ],
+            "parentTaskId": 13
+          },
+          {
+            "id": 3,
+            "title": "Add Sentry Vite plugin for source maps",
+            "description": "Configure sentryVitePlugin in vite.config.ts to upload source maps",
+            "details": "Import sentryVitePlugin in apps/web/vite.config.ts. Add to plugins array with org, project, and authToken configuration. Enable source map generation in build options",
+            "status": "done",
+            "dependencies": [
+              2
+            ],
+            "parentTaskId": 13
+          },
+          {
+            "id": 4,
+            "title": "Configure environment variables and test error tracking",
+            "description": "Set up VITE_SENTRY_DSN and verify errors are captured in Sentry dashboard",
+            "details": "Add VITE_SENTRY_DSN to .env.local. Get DSN from Sentry project settings. Trigger intentional error in dev environment. Verify error appears in Sentry dashboard with correct source maps, user context, and breadcrumbs",
+            "status": "done",
+            "dependencies": [
+              3
+            ],
+            "parentTaskId": 13
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "title": "Firecrawl Web Scraping Integration",
+        "description": "Integrate Firecrawl to scrape websites and enhance AI project generation with web content",
+        "details": "Install @firecrawl/firecrawl-node. Create scrapeUrl Convex action. Add \"Import from URL\" input to GenerateDialog. Implement URL validation and scraping flow. Append scraped markdown to AI prompts. Handle errors gracefully. Configure FIRECRAWL_API_KEY. Time estimate: 1.5-2 hours. Priority 2 for hackathon - highest impact for differentiation.",
+        "testStrategy": "Test scraping GitHub READMEs, documentation sites, and blog posts. Verify scraped content enhances AI generation quality",
+        "status": "done",
+        "dependencies": [
+          13
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Install Firecrawl package in backend",
+            "description": "Add @firecrawl/firecrawl-node to backend dependencies",
+            "details": "Run: cd packages/backend && pnpm add @firecrawl/firecrawl-node",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 14
+          },
+          {
+            "id": 2,
+            "title": "Create scrapeUrl Convex action",
+            "description": "Add Firecrawl scraping action to packages/backend/convex/ai.ts",
+            "details": "Create action scrapeUrl with url argument. Initialize FirecrawlApp with FIRECRAWL_API_KEY from env. Call scrapeUrl with formats: ['markdown', 'html']. Return markdown content. Handle errors (invalid URL, timeout, rate limit). Add 10,000 char limit on scraped content",
+            "status": "done",
+            "dependencies": [
+              1
+            ],
+            "parentTaskId": 14
+          },
+          {
+            "id": 3,
+            "title": "Add URL input field to GenerateDialog",
+            "description": "Update GenerateDialog component to include optional URL import feature",
+            "details": "Add Input field for URL above the prompt textarea in apps/web/src/features/ai-generation/components/generate-dialog.tsx. Add label \"Import from URL (optional)\". Implement URL validation using Zod (must be valid HTTP/HTTPS). Add loading state indicator for scraping. Show character count preview after scraping",
+            "status": "done",
+            "dependencies": [
+              2
+            ],
+            "parentTaskId": 14
+          },
+          {
+            "id": 4,
+            "title": "Integrate Firecrawl into AI generation flow",
+            "description": "Connect URL scraping to AI generation and test end-to-end",
+            "details": "When URL provided, call scrapeUrl action before generateProject. Append scraped markdown to user prompt with context like \"Content from [url]: \\n\\n[scraped content]\". Handle scraping errors gracefully with toast notifications. Test with GitHub READMEs, docs sites, blog posts. Configure FIRECRAWL_API_KEY in Convex environment",
+            "status": "done",
+            "dependencies": [
+              3
+            ],
+            "parentTaskId": 14
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "title": "Autumn Pricing and Billing Integration",
+        "description": "Add subscription billing with usage-based limits for AI generation using Autumn",
+        "details": "Install @autumnhq/autumn-js. Create pricing page with Free (5 generations) and Pro ($9/month unlimited) tiers. Add usage tracking to Convex. Implement checkout flow. Add upgrade prompts for free users at limit. Configure VITE_AUTUMN_API_KEY. Handle subscription webhooks. Time estimate: 1 hour. Priority 3 for hackathon.",
+        "testStrategy": "Test checkout flow in test mode, verify usage limits enforced, confirm subscription status updates correctly",
+        "status": "done",
+        "dependencies": [
+          14
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Install Autumn package and create pricing page",
+            "description": "Add Autumn billing SDK and create pricing page component",
+            "details": "Run: cd apps/web && pnpm add @autumnhq/autumn-js. Create apps/web/src/routes/_authenticated/pricing.tsx with pricing tiers: Free (5 AI generations/month) and Pro ($9/month unlimited). Design pricing comparison table with feature lists and CTA buttons",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 15
+          },
+          {
+            "id": 2,
+            "title": "Add usage tracking to Convex",
+            "description": "Create aiGenerations counter and usage query in Convex backend",
+            "details": "Add aiGenerationCount field to users table in schema.ts. Create query getUserUsage returning current count and tier limit. Increment counter in generateProject action. Add subscription tier field to users (free/pro). Create mutation to update subscription status",
+            "status": "done",
+            "dependencies": [
+              1
+            ],
+            "parentTaskId": 15
+          },
+          {
+            "id": 3,
+            "title": "Implement usage limits and upgrade prompts",
+            "description": "Add usage limit checks and upgrade UI to GenerateDialog",
+            "details": "Check usage before AI generation. Show upgrade prompt when free users hit 5 generation limit. Add \"Upgrade to Pro\" button in GenerateDialog for free users near limit. Integrate Autumn checkout session creation. Configure VITE_AUTUMN_API_KEY. Handle successful checkout redirect",
+            "status": "done",
+            "dependencies": [
+              2
+            ],
+            "parentTaskId": 15
+          }
+        ]
+      },
+      {
+        "id": 16,
+        "title": "CodeRabbit Configuration",
+        "description": "Properly configure CodeRabbit for AI-powered code reviews",
+        "details": "Create .coderabbit.yml configuration file with auto_review enabled, request_changes_workflow, and chat auto_reply. Document setup in README.md and CLAUDE.md. Verify badge in README. Time estimate: 15 minutes. Priority 4 for hackathon.",
+        "testStrategy": "Validate .coderabbit.yml syntax, verify configuration is properly documented",
+        "status": "pending",
+        "dependencies": [
+          15
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Integration Testing and Quality Assurance",
+        "description": "Test all sponsor integrations end-to-end and verify production readiness",
+        "details": "Test Sentry error tracking, Firecrawl scraping with multiple URLs, Autumn checkout flow, CodeRabbit config. Test complete user flows: free user hitting limit, URL scraping to generation, error handling. Verify mobile responsiveness and accessibility. Check production environment variables. Time estimate: 45 minutes.",
+        "testStrategy": "Execute test matrix covering all integrations individually and together. Verify no console errors, mobile-friendly UI, and accessible components",
+        "status": "pending",
+        "dependencies": [
+          16
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 18,
+        "title": "Documentation Updates",
+        "description": "Update all project documentation with new sponsor integrations",
+        "details": "Update docs/ENVIRONMENT.md with VITE_SENTRY_DSN, FIRECRAWL_API_KEY, VITE_AUTUMN_API_KEY. Add sponsor integration section to CLAUDE.md. Update README.md with sponsor logos and descriptions. Create .env.example. Add troubleshooting sections. Document usage limits and best practices. Time estimate: 30 minutes.",
+        "testStrategy": "Verify all environment variables documented, integration guides complete, troubleshooting sections added",
+        "status": "pending",
+        "dependencies": [
+          17
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Production Deployment",
+        "description": "Deploy all changes to production with proper environment configuration",
+        "details": "Set Convex environment variables for Firecrawl using npx convex env set. Set Cloudflare environment variables for Sentry and Autumn using npx wrangler secret put. Verify CircleCI pipeline succeeds. Test all integrations in production. Monitor Sentry and Convex dashboards for errors. Ensure all API keys valid. Time estimate: 30 minutes.",
+        "testStrategy": "Production smoke test: verify app deployed, all integrations working, no errors in monitoring dashboards, performance acceptable",
+        "status": "pending",
+        "dependencies": [
+          18
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Video Demo Creation",
+        "description": "Create compelling 2-3 minute demo video showcasing all features and integrations",
+        "details": "Record screen at 1080p. Script covering: intro (15s), TanStack Start + Convex features (30s), sponsor integrations demo - Firecrawl scraping, Sentry errors, Autumn pricing (75s), unique AI value (15s), closing with links (15s). Edit for smooth flow. Add title cards. Upload to YouTube. Keep under 3 minutes. Time estimate: 1 hour recording + 30 min editing.",
+        "testStrategy": "Review video for quality, verify all sponsor integrations shown, confirm under 3 minutes, test YouTube link works",
+        "status": "pending",
+        "dependencies": [
+          19
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 21,
+        "title": "Vibe Apps Submission and Social Media Promotion",
+        "description": "Submit app to Vibe Apps directory and promote on social media before deadline",
+        "details": "Submit to Vibe Apps with compelling name, tagline, description highlighting all integrations. Add tags: tanstackstart, convex, ai, saas, cloudflare. Include GitHub URL, live demo URL, YouTube video link. Submit before Nov 17 12:00 PM PT. Post on Twitter/X and LinkedIn tagging all sponsors. Share in developer communities. Time estimate: 45 minutes total (15 min submission + 30 min social).",
+        "testStrategy": "Verify submission confirmation received, social posts published with all sponsor tags, links working correctly",
+        "status": "pending",
+        "dependencies": [
+          20
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
@@ -607,7 +840,7 @@
       "source": "AI-PRD.md - Comprehensive Product Requirements Document",
       "created": "2025-11-09T15:28:04.519Z",
       "description": "Tasks for master context",
-      "updated": "2025-11-10T00:23:24.042Z"
+      "updated": "2025-11-10T14:24:20.327Z"
     }
   }
 }

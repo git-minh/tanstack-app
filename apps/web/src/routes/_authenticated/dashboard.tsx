@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { useState, useRef, useEffect } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAction } from "convex/react";
 import { api } from "@tanstack/backend/convex/_generated/api";
 import { Sparkles } from "lucide-react";
@@ -22,12 +22,35 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function DashboardRoute() {
 	const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
 	const generateProject = useAction(api.ai.generateProject);
+	const navigate = useNavigate();
+	const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+	// Cleanup timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (navigationTimeoutRef.current) {
+				clearTimeout(navigationTimeoutRef.current);
+			}
+		};
+	}, []);
 
 	const handleGenerate = async (
 		values: GenerateProjectFormValues
 	): Promise<GenerateResult> => {
 		try {
 			const result = await generateProject({ prompt: values.prompt });
+
+			// Navigate to projects page after successful creation
+			if (result.summary.projectId) {
+				// Clear any existing timeout
+				if (navigationTimeoutRef.current) {
+					clearTimeout(navigationTimeoutRef.current);
+				}
+				// Use setTimeout to allow success toast to display before navigation
+				navigationTimeoutRef.current = setTimeout(() => {
+					navigate({ to: "/projects" });
+				}, 1000);
+			}
 
 			// Return counts for success toast
 			// projectsCount is derived from whether a project was created (projectId exists)
