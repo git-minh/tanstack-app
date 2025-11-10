@@ -8,7 +8,7 @@
  * - Azure OpenAI API integration
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ActionCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { parseAIResponse } from "./ai_schema";
@@ -44,20 +44,6 @@ function createMockContext(overrides?: Partial<ActionCtx>): ActionCtx {
   } as unknown as ActionCtx;
 }
 
-/**
- * Mock successful Azure OpenAI response
- */
-function createMockAzureResponse(content: string) {
-  return {
-    choices: [
-      {
-        message: {
-          content,
-        },
-      },
-    ],
-  };
-}
 
 /**
  * Valid AI response test data
@@ -549,7 +535,7 @@ describe("Batch Creation Logic and Hierarchy", () => {
     const callOrder: string[] = [];
 
     // Track call order based on args
-    ctx.runMutation = vi.fn().mockImplementation((mutation, args: any) => {
+    ctx.runMutation = vi.fn().mockImplementation((_mutation, args: any) => {
       if (args.name) {
         // Project creation (has 'name')
         callOrder.push("project");
@@ -583,7 +569,7 @@ describe("Batch Creation Logic and Hierarchy", () => {
     const ctx = createMockContext();
     const taskCreationOrder: Array<{ title: string; isSubtask: boolean }> = [];
 
-    ctx.runMutation = vi.fn().mockImplementation((mutation, args: any) => {
+    ctx.runMutation = vi.fn().mockImplementation((_mutation, args: any) => {
       if (args.name) {
         // Project creation
         return Promise.resolve(mockProjectResponse);
@@ -630,7 +616,7 @@ describe("Batch Creation Logic and Hierarchy", () => {
     const ctx = createMockContext();
     const taskProjectIds: Array<Id<"projects"> | undefined> = [];
 
-    ctx.runMutation = vi.fn().mockImplementation((mutation, args: any) => {
+    ctx.runMutation = vi.fn().mockImplementation((_mutation, args: any) => {
       if (args.name) {
         // Project creation
         return Promise.resolve(mockProjectResponse);
@@ -681,7 +667,7 @@ describe("Batch Creation Logic and Hierarchy", () => {
     const ctx = createMockContext();
     const contactEmails: string[] = [];
 
-    ctx.runMutation = vi.fn().mockImplementation((mutation, args: any) => {
+    ctx.runMutation = vi.fn().mockImplementation((_mutation, args: any) => {
       if (args.name) {
         // Project creation
         return Promise.resolve(mockProjectResponse);
@@ -720,7 +706,7 @@ describe("Batch Creation Logic and Hierarchy", () => {
     const ctx = createMockContext();
     const mutations: Array<{ type: string; args: any }> = [];
 
-    ctx.runMutation = vi.fn().mockImplementation((mutation, args: any) => {
+    ctx.runMutation = vi.fn().mockImplementation((_mutation, args: any) => {
       let mutationType = "unknown";
 
       if (args.name && !args.firstName) {
@@ -835,7 +821,7 @@ describe("Error Handling and Edge Cases", () => {
     let callCount = 0;
     const createdIds: string[] = [];
 
-    ctx.runMutation = vi.fn().mockImplementation((mutation, args: any) => {
+    ctx.runMutation = vi.fn().mockImplementation((_mutation, args: any) => {
       callCount++;
 
       if (args.name) {
@@ -960,7 +946,7 @@ describe("Error Handling and Edge Cases", () => {
   });
 
   it("should handle malformed Azure API responses", () => {
-    const invalidResponses = [
+    const invalidResponses: Array<any> = [
       { choices: [] }, // Empty choices
       { choices: [{}] }, // Missing message
       { choices: [{ message: {} }] }, // Missing content
@@ -968,11 +954,15 @@ describe("Error Handling and Edge Cases", () => {
     ];
 
     invalidResponses.forEach((response) => {
+      const firstChoice = response.choices?.[0];
       const hasValidStructure =
         response.choices &&
-        response.choices[0] &&
-        response.choices[0].message &&
-        response.choices[0].message.content;
+        firstChoice &&
+        typeof firstChoice === "object" &&
+        "message" in firstChoice &&
+        firstChoice.message &&
+        typeof firstChoice.message === "object" &&
+        "content" in firstChoice.message;
 
       expect(hasValidStructure).toBeFalsy();
     });
