@@ -17,3 +17,24 @@ export const autumn = new Autumn(components.autumn, {
     };
   },
 });
+
+/**
+ * These exports are required for Autumn React hooks and components
+ */
+export const {
+  track,
+  cancel,
+  query,
+  attach,
+  check,
+  checkout,
+  usage,
+  setupPayment,
+  createCustomer,
+  listProducts,
+  billingPortal,
+  createReferralCode,
+  redeemReferralCode,
+  createEntity,
+  getEntity,
+} = autumn.api();
