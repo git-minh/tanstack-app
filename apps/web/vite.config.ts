@@ -32,7 +32,8 @@ export default defineConfig(({ mode }) => {
 			rollupOptions: {
 				output: {
 					// Manual chunk splitting for better caching
-					manualChunks: (id) => {
+					// Only use in non-CI builds to avoid initialization order issues with esbuild
+					manualChunks: !isCI ? (id) => {
 						// Vendor chunks
 						if (id.includes('node_modules')) {
 							// Charts library - lazy loaded on dashboard only
@@ -58,7 +59,7 @@ export default defineConfig(({ mode }) => {
 							// Everything else
 							return 'vendor';
 						}
-					},
+					} : undefined,
 				},
 			},
 			// Use esbuild in CI (faster, less memory), terser locally for better compression
