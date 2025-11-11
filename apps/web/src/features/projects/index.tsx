@@ -23,7 +23,8 @@ const ProjectFormDialog = lazy(() =>
 	import("./components/project-form-dialog").then(m => ({ default: m.ProjectFormDialog }))
 );
 import { ProjectsSkeleton } from "./components/projects-skeleton";
-import { Plus, Filter } from "lucide-react";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Filter from "lucide-react/dist/esm/icons/filter";
 import { toast } from "sonner";
 import type { Project } from "./data/schema";
 

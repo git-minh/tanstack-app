@@ -32,7 +32,13 @@ const TaskFormDialog = lazy(() =>
 	import("./components/task-form-dialog").then(m => ({ default: m.TaskFormDialog }))
 );
 import { TasksSkeleton } from "./components/tasks-skeleton";
-import { Plus, Filter, Calendar, AlertCircle, Clock, CheckCircle2, FolderKanban } from "lucide-react";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Filter from "lucide-react/dist/esm/icons/filter";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
+import Clock from "lucide-react/dist/esm/icons/clock";
+import CheckCircle2 from "lucide-react/dist/esm/icons/check-circle-2";
+import FolderKanban from "lucide-react/dist/esm/icons/folder-kanban";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Task } from "./data/schema";
