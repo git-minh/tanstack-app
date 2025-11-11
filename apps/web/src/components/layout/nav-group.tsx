@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { Link, useLocation } from '@tanstack/react-router'
+import { Link, useLocation, useRouter } from '@tanstack/react-router'
 import { ChevronRight } from 'lucide-react'
 import {
   Collapsible,
@@ -64,6 +64,15 @@ function NavBadge({ children }: { children: ReactNode }) {
 
 function SidebarMenuLink({ item, href }: { item: NavLink; href: string }) {
   const { setOpenMobile } = useSidebar()
+  const router = useRouter()
+
+  // Preload route on hover for instant navigation
+  const handleMouseEnter = () => {
+    router.preloadRoute({ to: item.url }).catch(() => {
+      // Silently ignore preload errors
+    })
+  }
+
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
@@ -71,7 +80,7 @@ function SidebarMenuLink({ item, href }: { item: NavLink; href: string }) {
         isActive={checkIsActive(href, item)}
         tooltip={item.title}
       >
-        <Link to={item.url} onClick={() => setOpenMobile(false)}>
+        <Link to={item.url} onClick={() => setOpenMobile(false)} onMouseEnter={handleMouseEnter}>
           {item.icon && <item.icon />}
           <span>{item.title}</span>
           {item.badge && <NavBadge>{item.badge}</NavBadge>}
@@ -89,6 +98,15 @@ function SidebarMenuCollapsible({
   href: string
 }) {
   const { setOpenMobile } = useSidebar()
+  const router = useRouter()
+
+  // Preload sub-item route on hover
+  const handleSubItemMouseEnter = (url: string) => {
+    router.preloadRoute({ to: url }).catch(() => {
+      // Silently ignore preload errors
+    })
+  }
+
   return (
     <Collapsible
       asChild
@@ -112,7 +130,7 @@ function SidebarMenuCollapsible({
                   asChild
                   isActive={checkIsActive(href, subItem)}
                 >
-                  <Link to={subItem.url} onClick={() => setOpenMobile(false)}>
+                  <Link to={subItem.url} onClick={() => setOpenMobile(false)} onMouseEnter={() => handleSubItemMouseEnter(subItem.url)}>
                     {subItem.icon && <subItem.icon />}
                     <span>{subItem.title}</span>
                     {subItem.badge && <NavBadge>{subItem.badge}</NavBadge>}
@@ -134,6 +152,15 @@ function SidebarMenuCollapsedDropdown({
   item: NavCollapsible
   href: string
 }) {
+  const router = useRouter()
+
+  // Preload route on hover
+  const handleMouseEnter = (url: string) => {
+    router.preloadRoute({ to: url }).catch(() => {
+      // Silently ignore preload errors
+    })
+  }
+
   return (
     <SidebarMenuItem>
       <DropdownMenu>
@@ -158,6 +185,7 @@ function SidebarMenuCollapsedDropdown({
               <Link
                 to={sub.url}
                 className={`${checkIsActive(href, sub) ? 'bg-secondary' : ''}`}
+                onMouseEnter={() => handleMouseEnter(sub.url)}
               >
                 {sub.icon && <sub.icon />}
                 <span className='max-w-52 text-wrap'>{sub.title}</span>
