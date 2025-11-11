@@ -1,7 +1,4 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { convexQuery } from "@convex-dev/react-query";
-import { api } from "@tanstack/backend/convex/_generated/api";
 import { Badge } from "@/components/ui/badge";
 import {
 	Table,
@@ -11,12 +8,23 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import type { Id } from "@tanstack/backend/convex/_generated/dataModel";
 
-export function RecentActivityTable() {
-	const { data: activities } = useSuspenseQuery(
-		convexQuery(api.dashboard.getRecentActivity, {})
-	);
+interface RecentActivityTableProps {
+	data: Array<{
+		id: Id<"todos">;
+		text: string;
+		status: string;
+		createdAt: string;
+		completed: boolean;
+	}>;
+}
 
+/**
+ * Recent activity table - shows last 10 user tasks
+ * Can be lazy loaded for progressive rendering
+ */
+export default function RecentActivityTable({ data: activities }: RecentActivityTableProps) {
 	return (
 		<Card>
 			<CardHeader>
