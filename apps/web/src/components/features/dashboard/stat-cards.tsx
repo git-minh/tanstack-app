@@ -1,13 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { convexQuery } from "@convex-dev/react-query";
-import { api } from "@tanstack/backend/convex/_generated/api";
 import { CheckCircle2, Circle, ListTodo, TrendingUp } from "lucide-react";
 
-export function StatCards() {
-	const { data: stats } = useSuspenseQuery(
-		convexQuery(api.dashboard.getStats, {})
-	);
+interface StatCardsProps {
+	data: {
+		totalTasks: number;
+		activeTasks: number;
+		completedTasks: number;
+		completionRate: number;
+	};
+}
+
+export function StatCards({ data: stats }: StatCardsProps) {
 
 	const cards = [
 		{

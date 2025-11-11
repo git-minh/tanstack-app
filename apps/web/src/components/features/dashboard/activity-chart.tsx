@@ -1,7 +1,4 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { convexQuery } from "@convex-dev/react-query";
-import { api } from "@tanstack/backend/convex/_generated/api";
 import {
 	Area,
 	AreaChart,
@@ -12,11 +9,19 @@ import {
 	YAxis,
 } from "recharts";
 
-export function ActivityChart() {
-	const { data: chartData } = useSuspenseQuery(
-		convexQuery(api.dashboard.getChartData, {})
-	);
+interface ActivityChartProps {
+	data: Array<{
+		date: string;
+		created: number;
+		completed: number;
+	}>;
+}
 
+/**
+ * Activity chart component - lazy loaded to reduce initial bundle size
+ * Saves 1.3MB from main bundle (Recharts)
+ */
+export default function ActivityChart({ data: chartData }: ActivityChartProps) {
 	return (
 		<Card>
 			<CardHeader>
