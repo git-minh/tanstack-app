@@ -25,6 +25,14 @@ vi.mock("sonner", () => ({
 // Mock convex/react hooks
 vi.mock("convex/react", () => ({
 	useAction: vi.fn(() => vi.fn()),
+	useQuery: vi.fn(() => undefined),
+}));
+
+// Mock autumn-js/react
+vi.mock("autumn-js/react", () => ({
+	useCustomer: vi.fn(() => ({
+		checkout: vi.fn(),
+	})),
 }));
 
 describe("GenerateDialog - Rendering and Form Elements (Subtask 6.1)", () => {
