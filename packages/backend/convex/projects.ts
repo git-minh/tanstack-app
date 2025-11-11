@@ -80,6 +80,35 @@ export const getRootProjects = query({
 	},
 });
 
+/**
+ * OPTIMIZED: Get all projects page data in a single query
+ * Consolidates getHierarchy + getRootProjects to eliminate redundant database calls
+ * Following dashboard.getDashboardData and tasks.getTasksPageData pattern
+ */
+export const getProjectsPageData = query({
+	handler: async (ctx) => {
+		const identity = await requireAuth(ctx);
+
+		// Single database query - fetch all projects
+		const allProjects = await ctx.db
+			.query("projects")
+			.withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+			.collect();
+
+		// Build hierarchical structure
+		const hierarchicalProjects = buildProjectHierarchy(allProjects);
+
+		// Extract root projects from same dataset (no additional query needed)
+		const rootProjects = allProjects.filter(project => project.level === 0);
+
+		// Return all data needed by projects page
+		return {
+			hierarchicalProjects,
+			rootProjects,
+		};
+	},
+});
+
 export const getActive = query({
 	handler: async (ctx) => {
 		const identity = await requireAuth(ctx);

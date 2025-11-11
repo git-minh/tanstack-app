@@ -282,6 +282,40 @@ export const getRootTasks = query({
 });
 
 /**
+ * OPTIMIZED: Get all tasks page data in a single query
+ * Consolidates getHierarchy + getRootTasks to eliminate redundant database calls
+ * Following dashboard.getDashboardData pattern for optimal performance
+ */
+export const getTasksPageData = query({
+	handler: async (ctx) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			throw new Error("Unauthorized: Must be logged in to view tasks");
+		}
+
+		// Single database query - fetch all tasks
+		const allTasks = await ctx.db
+			.query("tasks")
+			.withIndex("by_userId_and_sortPath", (q) =>
+				q.eq("userId", identity.subject)
+			)
+			.collect();
+
+		// Build hierarchical structure
+		const hierarchicalTasks = buildTaskHierarchy(allTasks);
+
+		// Extract root tasks from same dataset (no additional query needed)
+		const rootTasks = allTasks.filter(task => task.level === 0);
+
+		// Return all data needed by tasks page
+		return {
+			hierarchicalTasks,
+			rootTasks,
+		};
+	},
+});
+
+/**
  * Get direct children of a specific task
  */
 export const getChildTasks = query({
