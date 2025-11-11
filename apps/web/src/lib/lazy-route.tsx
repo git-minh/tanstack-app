@@ -23,22 +23,6 @@ export function lazyRoute<T extends ComponentType<any>>(
 }
 
 /**
- * Preload a route component for instant navigation
- *
- * Usage:
- * ```tsx
- * <Link onMouseEnter={() => preloadRoute(() => import('@/features/dashboard'))}>
- *   Dashboard
- * </Link>
- * ```
- */
-export function preloadRoute<T extends ComponentType<any>>(
-  importFn: () => Promise<{ default: T }>
-): Promise<{ default: T }> {
-  return importFn();
-}
-
-/**
  * Create a route skeleton component
  * Useful for creating route-specific loading states
  */
