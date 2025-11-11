@@ -1,4 +1,4 @@
-import { Suspense, useState } from "react";
+import { Suspense, useState, lazy } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@tanstack/backend/convex/_generated/api";
@@ -25,8 +25,12 @@ import { Badge } from "@/components/ui/badge";
 import { TasksTable } from "./components/tasks-table";
 import { TasksCardView } from "./components/tasks-card-view";
 import { columns } from "./components/tasks-columns";
-import { TaskFormDialog } from "./components/task-form-dialog";
 import { TasksStats } from "./components/tasks-stats";
+
+// Lazy load TaskFormDialog - only loads when user clicks "New Task" button
+const TaskFormDialog = lazy(() =>
+	import("./components/task-form-dialog").then(m => ({ default: m.TaskFormDialog }))
+);
 import { TasksSkeleton } from "./components/tasks-skeleton";
 import { Plus, Filter, Calendar, AlertCircle, Clock, CheckCircle2, FolderKanban } from "lucide-react";
 import { toast } from "sonner";
@@ -463,15 +467,17 @@ export function Tasks() {
 				</div>
 			)}
 
-			<TaskFormDialog
-				open={dialogOpen}
-				onOpenChange={setDialogOpen}
-				task={editingTask}
-				onSubmit={handleSubmitTask}
-				mode={dialogMode}
-				rootTasks={rootTasks}
-				parentTaskId={parentTaskId}
-			/>
+			<Suspense fallback={null}>
+				<TaskFormDialog
+					open={dialogOpen}
+					onOpenChange={setDialogOpen}
+					task={editingTask}
+					onSubmit={handleSubmitTask}
+					mode={dialogMode}
+					rootTasks={rootTasks}
+					parentTaskId={parentTaskId}
+				/>
+			</Suspense>
 		</>
 	);
 }
