@@ -9,15 +9,18 @@ import { StatCards } from "@/components/features/dashboard/stat-cards";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Button } from "@/components/ui/button";
-import {
-	GenerateDialog,
-	type GenerateProjectFormValues,
-	type GenerateResult,
+import type {
+	GenerateProjectFormValues,
+	GenerateResult,
 } from "@/features/ai-generation";
 
 // Lazy load heavy components for better code splitting
 const ActivityChart = lazy(() => import("@/components/features/dashboard/activity-chart"));
 const RecentActivityTable = lazy(() => import("@/components/features/dashboard/recent-activity-table"));
+// Lazy load GenerateDialog - only loads when "Generate Project with AI" button is clicked
+const GenerateDialog = lazy(() =>
+	import("@/features/ai-generation").then(m => ({ default: m.GenerateDialog }))
+);
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
 	component: DashboardRoute,
@@ -91,11 +94,13 @@ function DashboardRoute() {
 				</AuthGuard>
 			</div>
 
-			<GenerateDialog
-				open={generateDialogOpen}
-				onOpenChange={setGenerateDialogOpen}
-				onSubmit={handleGenerate}
-			/>
+			<Suspense fallback={null}>
+				<GenerateDialog
+					open={generateDialogOpen}
+					onOpenChange={setGenerateDialogOpen}
+					onSubmit={handleGenerate}
+				/>
+			</Suspense>
 		</ErrorBoundary>
 	);
 }

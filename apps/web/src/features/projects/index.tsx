@@ -1,4 +1,4 @@
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, lazy } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@tanstack/backend/convex/_generated/api";
@@ -16,8 +16,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ProjectsTable } from "./components/projects-table";
 import { columns } from "./components/projects-columns";
-import { ProjectFormDialog } from "./components/project-form-dialog";
 import { ProjectsStats } from "./components/projects-stats";
+
+// Lazy load ProjectFormDialog - only loads when user clicks "New Project" button
+const ProjectFormDialog = lazy(() =>
+	import("./components/project-form-dialog").then(m => ({ default: m.ProjectFormDialog }))
+);
 import { ProjectsSkeleton } from "./components/projects-skeleton";
 import { Plus, Filter } from "lucide-react";
 import { toast } from "sonner";
@@ -272,15 +276,17 @@ export function Projects() {
 				</CardContent>
 			</Card>
 
-			<ProjectFormDialog
-				open={dialogOpen}
-				onOpenChange={setDialogOpen}
-				project={editingProject}
-				onSubmit={handleSubmitProject}
-				mode={dialogMode}
-				rootProjects={rootProjects}
-				parentProjectId={parentProjectId}
-			/>
+			<Suspense fallback={null}>
+				<ProjectFormDialog
+					open={dialogOpen}
+					onOpenChange={setDialogOpen}
+					project={editingProject}
+					onSubmit={handleSubmitProject}
+					mode={dialogMode}
+					rootProjects={rootProjects}
+					parentProjectId={parentProjectId}
+				/>
+			</Suspense>
 		</div>
 	);
 }

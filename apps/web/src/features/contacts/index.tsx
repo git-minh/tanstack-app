@@ -1,4 +1,4 @@
-import { Suspense, useState } from "react";
+import { Suspense, useState, lazy } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@tanstack/backend/convex/_generated/api";
@@ -16,8 +16,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ContactsTable } from "./components/contacts-table";
 import { columns } from "./components/contacts-columns";
-import { ContactFormDialog } from "./components/contact-form-dialog";
 import { ContactsStats } from "./components/contacts-stats";
+
+// Lazy load ContactFormDialog - only loads when user clicks "New Contact" button
+const ContactFormDialog = lazy(() =>
+	import("./components/contact-form-dialog").then(m => ({ default: m.ContactFormDialog }))
+);
 import { ContactsSkeleton } from "./components/contacts-skeleton";
 import { UserPlus, Filter, Users, UserCheck, UserX, Building, Mail, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -355,13 +359,15 @@ export function Contacts() {
 				</Card>
 			</div>
 
-			<ContactFormDialog
-				open={dialogOpen}
-				onOpenChange={setDialogOpen}
-				contact={editingContact}
-				onSubmit={handleSubmitContact}
-				mode={dialogMode}
-			/>
+			<Suspense fallback={null}>
+				<ContactFormDialog
+					open={dialogOpen}
+					onOpenChange={setDialogOpen}
+					contact={editingContact}
+					onSubmit={handleSubmitContact}
+					mode={dialogMode}
+				/>
+			</Suspense>
 		</>
 	);
 }
