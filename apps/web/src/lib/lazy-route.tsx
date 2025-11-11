@@ -1,4 +1,4 @@
-import { lazy, type ComponentType, type LazyExoticComponent, type ReactNode } from 'react';
+import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 
 /**
  * Lazy load utility for route components with improved error handling
@@ -20,37 +20,4 @@ export function lazyRoute<T extends ComponentType<any>>(
       throw error;
     })
   );
-}
-
-/**
- * Create a route skeleton component
- * Useful for creating route-specific loading states
- */
-export function createRouteSkeleton(config: {
-  title?: string;
-  description?: string;
-  children?: ReactNode;
-}): () => JSX.Element {
-  return function RouteSkeleton() {
-    return (
-      <div className="space-y-6">
-        {(config.title || config.description) && (
-          <div className="space-y-2">
-            {config.title && (
-              <div className="h-9 w-48 animate-pulse rounded bg-muted" />
-            )}
-            {config.description && (
-              <div className="h-5 w-96 animate-pulse rounded bg-muted/60" />
-            )}
-          </div>
-        )}
-        {config.children || (
-          <div className="space-y-4">
-            <div className="h-32 w-full animate-pulse rounded-lg bg-muted" />
-            <div className="h-64 w-full animate-pulse rounded-lg bg-muted" />
-          </div>
-        )}
-      </div>
-    );
-  };
 }
