@@ -1,0 +1,43 @@
+# Task ID: 12
+# Title: Production Readiness - Security Review and Launch Checklist
+# Status: pending
+# Dependencies: 8, 9, 10, 11
+# Priority: medium
+# Description: Complete security review, final testing, and pre-launch checklist
+# Details:
+Perform comprehensive security review, validate all tests pass, ensure documentation is complete, and verify production environment is properly configured before launch.
+
+# Test Strategy:
+Complete all items on launch checklist. Get approval from team.
+
+# Subtasks:
+## 1. Security review: Input validation and sanitization [pending]
+### Dependencies: None
+### Description: Review all user inputs for proper validation and sanitization
+### Details:
+Check: Prompt length limits enforced, special characters handled, SQL injection prevention, XSS prevention, prompt injection awareness.
+
+## 2. Security review: API key protection [pending]
+### Dependencies: None
+### Description: Verify Azure OpenAI credentials are properly secured
+### Details:
+Check: Keys stored in Convex environment (not code), no keys in logs, no keys in error messages, keys not exposed to frontend.
+
+## 3. Verify production environment configuration [pending]
+### Dependencies: None
+### Description: Confirm all production environment variables are set correctly
+### Details:
+Verify in Convex production deployment: AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_KEY, AZURE_OPENAI_DEPLOYMENT are all set and valid.
+
+## 4. Run full test suite and verify all pass [pending]
+### Dependencies: None
+### Description: Execute all unit, integration, and E2E tests
+### Details:
+Run: pnpm test for frontend, backend unit tests, E2E test suite. All tests must pass.
+
+## 5. Complete launch checklist and get team approval [pending]
+### Dependencies: None
+### Description: Review final checklist with team and get sign-off to launch
+### Details:
+Checklist: All tests pass, documentation complete, security review done, monitoring set up, rollback plan documented, team trained.
+

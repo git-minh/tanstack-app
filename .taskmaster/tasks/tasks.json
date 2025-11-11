@@ -830,6 +830,309 @@
         ],
         "priority": "medium",
         "subtasks": []
+      },
+      {
+        "id": 22,
+        "title": "Route-Level Code Splitting",
+        "description": "Implement lazy loading for all authenticated routes to reduce initial bundle size by ~200 KB gzipped",
+        "details": "Split application into route-specific chunks. Currently ALL routes load in main bundle (1,066 KB). Target: Each route as separate chunk (<50 KB each).\n\nSteps:\n1. Convert route components to lazy imports with React.lazy()\n2. Add Suspense boundaries with skeleton loaders (use existing dashboard patterns)\n3. Implement route prefetching for critical paths (dashboard, tasks)\n4. Test progressive loading without blocking\n\nExpected impact: 60% of total bundle size reduction (main: 330 KB → ~80 KB gzipped)",
+        "testStrategy": "Measure bundle sizes before/after. Verify routes load progressively. Test navigation between routes. Run Lighthouse audit.",
+        "status": "done",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create lazy loading pattern and utilities",
+            "description": "Set up reusable lazy loading pattern with proper TypeScript types",
+            "details": "Create apps/web/src/lib/lazy-route.ts with helper function for lazy loading routes. Include proper error boundaries and loading states. Pattern: export const lazyRoute = (importFn) => lazy(importFn);",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22
+          },
+          {
+            "id": 2,
+            "title": "Convert dashboard route to lazy loading",
+            "description": "Update dashboard route with React.lazy and Suspense boundary",
+            "details": "Modify apps/web/src/routes/_authenticated/dashboard.tsx. Use lazy(() => import('@/features/dashboard')). Add Suspense with existing ChartSkeleton pattern. Test dashboard loads progressively.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22
+          },
+          {
+            "id": 3,
+            "title": "Convert tasks, contacts, projects routes to lazy loading",
+            "description": "Update all heavy routes with lazy loading pattern",
+            "details": "Update routes: _authenticated/tasks.tsx (37 KB), _authenticated/contacts.tsx (24 KB), _authenticated/projects.tsx (19 KB). Use lazy imports. Add route-specific skeleton loaders. Test navigation between routes.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22
+          },
+          {
+            "id": 4,
+            "title": "Implement route prefetching for critical paths",
+            "description": "Add prefetch on hover for dashboard and tasks routes",
+            "details": "Use TanStack Router's preload functionality. Prefetch on link hover in sidebar navigation. Preload dashboard on app mount for authenticated users. Test prefetching works without blocking.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22
+          },
+          {
+            "id": 5,
+            "title": "Measure and verify bundle size reduction",
+            "description": "Run production build and analyze bundle composition",
+            "details": "Run: pnpm build. Compare bundle sizes before/after. Verify main.js reduced from 330 KB to ~80 KB gzipped. Verify route chunks are <50 KB each. Document results in PR description.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22
+          },
+          {
+            "id": 6,
+            "title": "Run Lighthouse audit and measure Core Web Vitals",
+            "description": "Verify performance improvements with Lighthouse and Web Vitals",
+            "details": "Run: npx lighthouse https://your-app.com --view. Measure LCP, FID, CLS improvements. Test on 3G throttling. Verify Lighthouse score >90. Document metrics in docs/PERFORMANCE.md.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22
+          }
+        ]
+      },
+      {
+        "id": 23,
+        "title": "Component-Level Code Splitting",
+        "description": "Lazy load heavy components (forms, tables, dialogs) to reduce initial load by ~50 KB gzipped",
+        "details": "Defer loading of non-critical components until they're actually needed.\n\nPriority components to lazy load:\n- Task/Contact/Project form dialogs (react-hook-form + Zod schemas)\n- TanStack Table components (37 KB + 24 KB + 19 KB)\n- AI generation dialog (only when button clicked)\n- Global search dialog (Cmd+K)\n\nPattern: const Component = lazy(() => import('@/features/...')); \nWrap with Suspense and skeleton loader.\n\nExpected impact: 15% bundle reduction, faster perceived performance",
+        "testStrategy": "Verify components load on-demand. Test loading states. Measure Time to Interactive (TTI). Profile with React DevTools.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Lazy load form dialogs (Task, Contact, Project)",
+            "description": "Convert form dialog components to lazy loading",
+            "details": "Update: TaskFormDialog, ContactFormDialog, ProjectFormDialog. Pattern: const Dialog = lazy(() => import('@/features/tasks/components/task-form-dialog')). Only load when create/edit button clicked. Add loading spinner while form loads.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 23
+          },
+          {
+            "id": 2,
+            "title": "Lazy load TanStack Table components",
+            "description": "Convert table components to lazy loading (37 KB + 24 KB + 19 KB)",
+            "details": "Update: TasksTable, ContactsTable, ProjectsTable. Use lazy imports with Suspense. Add table skeleton loaders (rows with shimmer effect). Test table pagination and filtering still work.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 23
+          },
+          {
+            "id": 3,
+            "title": "Lazy load AI generation dialog",
+            "description": "Defer GenerateDialog loading until button clicked",
+            "details": "Update dashboard.tsx GenerateDialog import. Use lazy loading. Only load when 'Generate Project with AI' button clicked. Add small loading state on first open.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 23
+          },
+          {
+            "id": 4,
+            "title": "Lazy load global search dialog (Cmd+K)",
+            "description": "Defer GlobalSearch component until keyboard shortcut triggered",
+            "details": "Update global-search.tsx. Use lazy loading. Only load when Cmd/Ctrl+K pressed. Add 50ms delay indicator if needed. Test search functionality works correctly.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 23
+          },
+          {
+            "id": 5,
+            "title": "Create loading skeletons and test all lazy components",
+            "description": "Add proper loading states and verify lazy loading works",
+            "details": "Create skeleton components for forms and dialogs. Test each lazy loaded component renders correctly. Measure TTI improvement. Verify no JavaScript errors in console.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 23
+          }
+        ]
+      },
+      {
+        "id": 24,
+        "title": "Icon Optimization",
+        "description": "Replace lucide-react bulk imports with dynamic imports to save ~20 KB gzipped",
+        "details": "Currently importing 100+ icons from lucide-react upfront. Switch to granular imports.\n\nBefore: import { Check, X, Plus } from 'lucide-react';\nAfter: import Check from 'lucide-react/dist/esm/icons/check';\n\nOr use dynamic imports for non-critical icons:\nconst Icon = lazy(() => import('lucide-react/dist/esm/icons/settings'));\n\nExpected impact: 6% bundle reduction, faster initial parse",
+        "testStrategy": "Search codebase for lucide-react imports. Replace systematically. Verify icons still render. Measure bundle size reduction.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Audit all lucide-react imports across codebase",
+            "description": "Find all icon imports and categorize by usage frequency",
+            "details": "Run: grep -r \"from 'lucide-react'\" apps/web/src. List all imported icons. Categorize: critical (used immediately), deferred (below fold), dynamic (conditionally rendered). Create spreadsheet or markdown file.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 24
+          },
+          {
+            "id": 2,
+            "title": "Replace bulk imports with granular imports for critical icons",
+            "description": "Update imports for icons used in initial render",
+            "details": "Replace: import { Check, X, Plus } from 'lucide-react'. With: import Check from 'lucide-react/dist/esm/icons/check'. Focus on icons in layouts, navigation, and above-the-fold content.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 24
+          },
+          {
+            "id": 3,
+            "title": "Implement dynamic imports for non-critical icons",
+            "description": "Use lazy loading for icons in dialogs, modals, and below-fold content",
+            "details": "For icons in forms, dialogs, settings: const SettingsIcon = lazy(() => import('lucide-react/dist/esm/icons/settings')). Wrap with Suspense or show fallback square while loading.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 24
+          },
+          {
+            "id": 4,
+            "title": "Verify icons render correctly and measure bundle reduction",
+            "description": "Test all pages and measure icon optimization impact",
+            "details": "Test every route to ensure icons display correctly. Check dialogs, forms, and interactive elements. Run pnpm build and compare bundle sizes. Target: ~20 KB reduction. Document savings.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 24
+          }
+        ]
+      },
+      {
+        "id": 25,
+        "title": "Vendor Bundle Optimization",
+        "description": "Reduce vendor chunks by 40% through selective loading and alternatives",
+        "details": "Current vendor sizes:\n- vendor-forms: 258 KB (react-hook-form + Zod)\n- vendor-charts: 243 KB (Recharts)\n- vendor-auth: 186 KB (Better-Auth)\n- vendor-ui: 100 KB (Radix UI)\n\nStrategies:\n1. Lazy load form libraries (only complex forms need RHF + Zod)\n2. Audit Recharts usage (already lazy loaded, but 243 KB is huge)\n3. Split auth bundle (only load on /login route)\n4. Remove unused Radix components and variants\n5. Split date-fns into separate chunk\n\nExpected impact: 30% additional reduction, faster route transitions",
+        "testStrategy": "Analyze bundle composition. Test form functionality. Verify chart loads correctly. Measure vendor chunk sizes.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Analyze and lazy load form libraries (258 KB)",
+            "description": "Split react-hook-form and Zod into separate chunks, load only for complex forms",
+            "details": "Identify simple vs complex forms. Simple forms (login, search): use native useState. Complex forms (task/project creation): keep RHF + Zod but lazy load. Update Vite config to create vendor-forms chunk only loaded when needed.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 25
+          },
+          {
+            "id": 2,
+            "title": "Audit Recharts usage and consider lighter alternatives",
+            "description": "Evaluate if 243 KB Recharts is necessary or can be replaced",
+            "details": "Verify Recharts is already lazy loaded (good!). Count chart types used. Research alternatives: Chart.js (50 KB), visx (80 KB). Document decision: keep if critical, replace if savings worth migration effort.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 25
+          },
+          {
+            "id": 3,
+            "title": "Split auth bundle to only load on login route",
+            "description": "Ensure Better-Auth (186 KB) only loads when needed",
+            "details": "Update Vite config manualChunks. Create vendor-auth chunk. Verify auth components only load on _auth routes. Test authentication still works correctly. Measure bundle size improvement for authenticated routes.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 25
+          },
+          {
+            "id": 4,
+            "title": "Remove unused Radix UI components and variants",
+            "description": "Audit and remove rarely-used UI primitives (100 KB → ~70 KB)",
+            "details": "Search for unused Radix components: Tabs, RadioGroup, ToggleGroup, etc. Remove imports and component files if unused. Check if all component variants are needed. Update manual chunks to optimize Radix bundle.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 25
+          },
+          {
+            "id": 5,
+            "title": "Extract date-fns and optimize Vite manual chunks",
+            "description": "Create separate chunk for date utilities and optimize all vendor chunks",
+            "details": "Add date-fns to manual chunks in vite.config.ts. Optimize chunk splitting for AI generation features. Create chunks: vendor-dates, vendor-ai-generation. Test all chunks load correctly. Verify chunk sizes are 20-50 KB ideal range.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 25
+          },
+          {
+            "id": 6,
+            "title": "Measure vendor bundle optimization results",
+            "description": "Verify 40% vendor chunk reduction achieved",
+            "details": "Run production build. Compare before/after: vendor-forms (258→180 KB), vendor-charts (243 KB, already optimized), vendor-auth (186→130 KB), vendor-ui (100→70 KB). Document total savings and impact on load times.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 25
+          }
+        ]
+      },
+      {
+        "id": 26,
+        "title": "React Rendering Optimization",
+        "description": "Implement memoization and virtual scrolling to improve runtime performance",
+        "details": "Optimize React rendering to reduce unnecessary re-renders and improve perceived performance.\n\nKey optimizations:\n1. Wrap expensive table components with React.memo\n2. Implement virtual scrolling for tables with >50 rows (@tanstack/react-virtual)\n3. Memoize table columns and data transformations (useMemo)\n4. Debounce search/filter inputs (300ms)\n5. Throttle table updates (150ms)\n6. Split large contexts (LayoutProvider, ThemeProvider)\n7. Profile components with React DevTools Profiler\n\nExpected impact: Smoother interactions, faster table rendering, reduced CPU usage",
+        "testStrategy": "Profile before/after with React DevTools. Test with large datasets (100+ items). Measure FPS during scrolling. Verify no functionality broken.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 27,
+        "title": "Data Fetching Optimization",
+        "description": "Optimize Convex queries with indexes, caching, and selective field loading",
+        "details": "Improve data fetching performance with React Query + Convex.\n\nOptimizations:\n1. Verify all queries have proper indexes (by_userId, compound indexes)\n2. Configure staleTime: 5min for infrequently changing data\n3. Set cacheTime: 10min for expensive queries\n4. Implement optimistic updates for mutations\n5. Use selective field queries (don't over-fetch)\n6. Add route-level data prefetching\n7. Profile slow queries in Convex dashboard\n\nExpected impact: Faster page transitions, reduced server load, better perceived performance",
+        "testStrategy": "Profile query performance in Convex dashboard. Test with network throttling. Verify cache invalidation works. Measure LCP improvement.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 28,
+        "title": "Build Configuration Optimization",
+        "description": "Enhance Vite config for optimal chunking and compression",
+        "details": "Improve build output for better caching and loading.\n\nEnhancements:\n1. Create manual chunks for heavy features (AI generation, tables)\n2. Extract date-fns into separate chunk\n3. Split TanStack Router/Query into core chunk\n4. Optimize chunk sizes (20-50 KB ideal)\n5. Enable CSS minification and tree shaking\n6. Configure Brotli compression on Cloudflare Workers\n7. Add preload/prefetch hints for critical chunks\n\nExpected impact: Better caching, faster repeat visits, optimal resource loading",
+        "testStrategy": "Analyze build output. Test cache invalidation. Measure repeat visit performance. Verify production builds.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 29,
+        "title": "Performance Monitoring and CI Integration",
+        "description": "Implement continuous performance monitoring to prevent regressions",
+        "details": "Set up automated performance tracking and budgets.\n\nImplementation:\n1. Add web-vitals package to track Core Web Vitals\n2. Send metrics to Sentry performance monitoring\n3. Add Lighthouse CI to CircleCI pipeline\n4. Set performance budgets (main bundle <150 KB gzipped)\n5. Fail CI builds if budgets exceeded\n6. Add bundlesize or size-limit package\n7. Create docs/PERFORMANCE.md with metrics\n\nExpected impact: Prevent performance regressions, continuous improvement, data-driven optimization",
+        "testStrategy": "Verify Web Vitals tracking in Sentry. Test Lighthouse CI integration. Confirm budget enforcement. Review performance dashboard.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 30,
+        "title": "CSS and Style Optimization",
+        "description": "Reduce CSS bundle size through Tailwind optimization and critical CSS extraction",
+        "details": "Optimize CSS loading and reduce bundle size.\n\nOptimizations:\n1. Audit used Tailwind classes and purge unused\n2. Disable unused Tailwind features and plugins\n3. Extract critical CSS for above-the-fold content\n4. Inline critical CSS for first paint\n5. Defer loading of non-critical styles\n6. Analyze index.css for unused styles\n\nExpected impact: Faster First Contentful Paint (FCP), reduced style recalculation",
+        "testStrategy": "Measure CSS bundle size. Test critical CSS extraction. Verify styles render correctly. Profile style recalculation.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "low",
+        "subtasks": []
+      },
+      {
+        "id": 31,
+        "title": "Advanced Performance Optimizations",
+        "description": "Implement service worker caching, SSG, and progressive enhancement",
+        "details": "Advanced techniques for edge performance.\n\nImplementations:\n1. Add Workbox for service worker generation\n2. Cache static assets (CSS, JS, fonts)\n3. Implement runtime caching for API responses\n4. Add offline fallback pages\n5. Implement SSG for marketing pages (pricing, landing)\n6. Optimize SSR hydration performance\n7. Consider partial hydration for heavy components\n\nExpected impact: Offline support, faster repeat visits, better reliability",
+        "testStrategy": "Test offline functionality. Verify cache strategies. Measure hydration time. Test SSG pages load fast.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "low",
+        "subtasks": []
       }
     ],
     "metadata": {
@@ -840,7 +1143,7 @@
       "source": "AI-PRD.md - Comprehensive Product Requirements Document",
       "created": "2025-11-09T15:28:04.519Z",
       "description": "Tasks for master context",
-      "updated": "2025-11-10T14:24:20.327Z"
+      "updated": "2025-11-11T14:17:29.444Z"
     }
   }
 }

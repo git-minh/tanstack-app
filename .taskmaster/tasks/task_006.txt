@@ -1,0 +1,37 @@
+# Task ID: 6
+# Title: Testing - Frontend Component Tests
+# Status: done
+# Dependencies: 3
+# Priority: medium
+# Description: Write unit and integration tests for AI generation dialog component
+# Details:
+Create test suite for GenerateDialog component covering rendering, form validation, user interactions, loading states, and error handling. Use React Testing Library and Vitest.
+
+# Test Strategy:
+Achieve >80% component coverage. Test all user interaction flows.
+
+# Subtasks:
+## 1. Test dialog rendering and form elements [done]
+### Dependencies: None
+### Description: Test that dialog renders correctly with all form elements present
+### Details:
+Test: title appears, description appears, textarea is present, buttons are present, help text is visible.
+
+## 2. Test form validation rules [done]
+### Dependencies: None
+### Description: Test minimum/maximum character validation and error messages
+### Details:
+Test: empty submission shows error, <20 chars shows min error, >2000 chars shows max error, valid input passes.
+
+## 3. Test loading state transitions [done]
+### Dependencies: None
+### Description: Test that loading UI appears during submission
+### Details:
+Test: form hides during loading, spinner appears, loading message displays, buttons are disabled.
+
+## 4. Test success and error flows [done]
+### Dependencies: None
+### Description: Test dialog behavior on successful and failed generation
+### Details:
+Test: successful generation closes dialog and resets form, error keeps dialog open, error displays error state.
+

@@ -1,0 +1,43 @@
+# Task ID: 3
+# Title: Frontend - AI Generation Dialog Component
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Create the modal dialog component for AI project generation with form and loading states
+# Details:
+Build a React component using shadcn/ui Dialog that accepts project descriptions via textarea. Include form validation with React Hook Form + Zod, loading states with spinner, and proper error handling. Follow existing dialog patterns from task-form-dialog.tsx.
+
+# Test Strategy:
+Component tests for rendering, form validation, loading states, and error display. Integration tests for dialog open/close behavior.
+
+# Subtasks:
+## 1. Create feature directory structure [done]
+### Dependencies: None
+### Description: Set up ai-generation feature folder with components, data, and hooks subdirectories
+### Details:
+Create: apps/web/src/features/ai-generation/components/, apps/web/src/features/ai-generation/data/, apps/web/src/features/ai-generation/hooks/
+
+## 2. Create Zod schema for form validation [done]
+### Dependencies: None
+### Description: Define generateProjectFormSchema in data/schema.ts with proper validation rules
+### Details:
+Schema: prompt field, string type, min 20 chars, max 2000 chars. Export TypeScript type. Include helpful error messages.
+
+## 3. Build GenerateDialog component with form [done]
+### Dependencies: None
+### Description: Create dialog component with textarea, buttons, and React Hook Form integration
+### Details:
+Use shadcn Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription. Add Textarea (8 rows), Label, help text. Integrate useForm with zodResolver. Add Cancel and Generate buttons.
+
+## 4. Implement loading state UI [done]
+### Dependencies: None
+### Description: Add loading spinner and progress message when AI is generating
+### Details:
+Show Loader2 icon with spin animation. Display messages: 'AI is analyzing your project...' and 'This usually takes 10-30 seconds'. Replace form content during loading.
+
+## 5. Add error handling and success feedback [done]
+### Dependencies: None
+### Description: Implement toast notifications for success and error states
+### Details:
+Use sonner toast.success for successful generation (show counts). Use toast.error for failures (show error message). Keep dialog open on error, close on success after 500ms.
+

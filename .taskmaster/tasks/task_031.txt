@@ -1,0 +1,22 @@
+# Task ID: 31
+# Title: Advanced Performance Optimizations
+# Status: pending
+# Dependencies: None
+# Priority: low
+# Description: Implement service worker caching, SSG, and progressive enhancement
+# Details:
+Advanced techniques for edge performance.
+
+Implementations:
+1. Add Workbox for service worker generation
+2. Cache static assets (CSS, JS, fonts)
+3. Implement runtime caching for API responses
+4. Add offline fallback pages
+5. Implement SSG for marketing pages (pricing, landing)
+6. Optimize SSR hydration performance
+7. Consider partial hydration for heavy components
+
+Expected impact: Offline support, faster repeat visits, better reliability
+
+# Test Strategy:
+Test offline functionality. Verify cache strategies. Measure hydration time. Test SSG pages load fast.

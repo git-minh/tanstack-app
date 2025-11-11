@@ -1,0 +1,31 @@
+# Task ID: 11
+# Title: Performance Optimization - Response Time Monitoring
+# Status: pending
+# Dependencies: 1
+# Priority: low
+# Description: Implement monitoring and logging for AI generation performance
+# Details:
+Add timing logs to track API call duration, parsing time, and batch creation time. Log all requests for debugging and optimization. Monitor for performance issues.
+
+# Test Strategy:
+Review logs to identify bottlenecks. Verify all stages are timed correctly.
+
+# Subtasks:
+## 1. Add timing instrumentation to action [pending]
+### Dependencies: None
+### Description: Add console.log statements with timestamps for each major step
+### Details:
+Log: Start time, API call start/end, parsing start/end, project creation, task creation, contact creation, total time.
+
+## 2. Implement request/response logging [pending]
+### Dependencies: None
+### Description: Log all AI requests and responses for debugging
+### Details:
+Log: User prompt, AI response (truncated if large), success/failure, error messages, generated item counts.
+
+## 3. Add performance alerts for slow requests [pending]
+### Dependencies: None
+### Description: Set up monitoring for requests exceeding 30 seconds
+### Details:
+Log warnings for slow AI calls. Track P50, P95, P99 response times. Consider adding Sentry or similar for alerting.
+

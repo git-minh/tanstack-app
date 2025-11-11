@@ -1,0 +1,11 @@
+# Task ID: 19
+# Title: Production Deployment
+# Status: pending
+# Dependencies: 18
+# Priority: medium
+# Description: Deploy all changes to production with proper environment configuration
+# Details:
+Set Convex environment variables for Firecrawl using npx convex env set. Set Cloudflare environment variables for Sentry and Autumn using npx wrangler secret put. Verify CircleCI pipeline succeeds. Test all integrations in production. Monitor Sentry and Convex dashboards for errors. Ensure all API keys valid. Time estimate: 30 minutes.
+
+# Test Strategy:
+Production smoke test: verify app deployed, all integrations working, no errors in monitoring dashboards, performance acceptable
