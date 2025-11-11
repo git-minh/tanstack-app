@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react'
 import { Link, useLocation, useRouter } from '@tanstack/react-router'
-import { ChevronRight } from 'lucide-react'
+import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right'
 import {
   Collapsible,
   CollapsibleContent,

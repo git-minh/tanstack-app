@@ -1,4 +1,9 @@
-import { LayoutDashboard, ListTodo, CheckSquare, Users, FolderKanban, CreditCard } from 'lucide-react'
+import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard'
+import ListTodo from 'lucide-react/dist/esm/icons/list-todo'
+import CheckSquare from 'lucide-react/dist/esm/icons/check-square'
+import Users from 'lucide-react/dist/esm/icons/users'
+import FolderKanban from 'lucide-react/dist/esm/icons/folder-kanban'
+import CreditCard from 'lucide-react/dist/esm/icons/credit-card'
 import { type SidebarData } from '../types'
 
 /**
