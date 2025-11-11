@@ -960,7 +960,7 @@
         "description": "Replace lucide-react bulk imports with dynamic imports to save ~20 KB gzipped",
         "details": "Currently importing 100+ icons from lucide-react upfront. Switch to granular imports.\n\nBefore: import { Check, X, Plus } from 'lucide-react';\nAfter: import Check from 'lucide-react/dist/esm/icons/check';\n\nOr use dynamic imports for non-critical icons:\nconst Icon = lazy(() => import('lucide-react/dist/esm/icons/settings'));\n\nExpected impact: 6% bundle reduction, faster initial parse",
         "testStrategy": "Search codebase for lucide-react imports. Replace systematically. Verify icons still render. Measure bundle size reduction.",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [],
         "priority": "high",
         "subtasks": [
@@ -996,7 +996,7 @@
             "title": "Verify icons render correctly and measure bundle reduction",
             "description": "Test all pages and measure icon optimization impact",
             "details": "Test every route to ensure icons display correctly. Check dialogs, forms, and interactive elements. Run pnpm build and compare bundle sizes. Target: ~20 KB reduction. Document savings.",
-            "status": "in-progress",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 24
           }
@@ -1143,7 +1143,7 @@
       "source": "AI-PRD.md - Comprehensive Product Requirements Document",
       "created": "2025-11-09T15:28:04.519Z",
       "description": "Tasks for master context",
-      "updated": "2025-11-11T15:25:40.833Z"
+      "updated": "2025-11-11T15:27:06.249Z"
     }
   }
 }
