@@ -176,7 +176,11 @@ jobs:
           destination: backend-coverage
 
   build:
-    executor: node-executor
+    # Use medium+ for more memory (3GB instead of 2GB)
+    docker:
+      - image: cimg/node:20.19
+    working_directory: ~/project
+    resource_class: medium+
     steps:
       - attach_workspace:
           at: ~/project
@@ -197,6 +201,7 @@ jobs:
           command: |
             export VITE_CONVEX_URL="${VITE_CONVEX_URL}"
             export VITE_CONVEX_SITE_URL="${VITE_CONVEX_SITE_URL}"
+            export NODE_OPTIONS="--max-old-space-size=2560"
             pnpm build
 
       # Save Turborepo cache
