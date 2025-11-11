@@ -23,7 +23,14 @@ const ContactFormDialog = lazy(() =>
 	import("./components/contact-form-dialog").then(m => ({ default: m.ContactFormDialog }))
 );
 import { ContactsSkeleton } from "./components/contacts-skeleton";
-import { UserPlus, Filter, Users, UserCheck, UserX, Building, Mail, Search } from "lucide-react";
+import UserPlus from "lucide-react/dist/esm/icons/user-plus";
+import Filter from "lucide-react/dist/esm/icons/filter";
+import Users from "lucide-react/dist/esm/icons/users";
+import UserCheck from "lucide-react/dist/esm/icons/user-check";
+import UserX from "lucide-react/dist/esm/icons/user-x";
+import Building from "lucide-react/dist/esm/icons/building";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import Search from "lucide-react/dist/esm/icons/search";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { Contact } from "./data/schema";
