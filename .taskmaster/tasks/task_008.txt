@@ -1,0 +1,37 @@
+# Task ID: 8
+# Title: Testing - Manual QA with Diverse Examples
+# Status: pending
+# Dependencies: 7
+# Priority: low
+# Description: Perform manual testing with various real-world project descriptions
+# Details:
+Test the AI generation feature with 10+ diverse project types to ensure quality and appropriate task breakdown. Document results and edge cases discovered.
+
+# Test Strategy:
+Create test matrix with different project types, sizes, and complexity levels.
+
+# Subtasks:
+## 1. Test software development projects [pending]
+### Dependencies: None
+### Description: Test with web app, mobile app, and API projects
+### Details:
+Examples: SaaS application, mobile fitness app, REST API for e-commerce, microservices architecture.
+
+## 2. Test non-technical projects [pending]
+### Dependencies: None
+### Description: Test with marketing, event planning, and business projects
+### Details:
+Examples: Product launch campaign, conference organization, business process improvement, hiring workflow.
+
+## 3. Test edge cases and unusual inputs [pending]
+### Dependencies: None
+### Description: Test with minimal descriptions, vague prompts, and special characters
+### Details:
+Test: 20-character minimum, vague description ('do something'), special characters, non-English (if supported), very detailed description (2000 chars).
+
+## 4. Create test report and document findings [pending]
+### Dependencies: None
+### Description: Compile manual testing results into comprehensive report
+### Details:
+Document: Success rate, common issues found, quality of generated content, user experience feedback, recommendations for improvements.
+

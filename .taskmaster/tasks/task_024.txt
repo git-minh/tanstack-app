@@ -1,0 +1,45 @@
+# Task ID: 24
+# Title: Icon Optimization
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Replace lucide-react bulk imports with dynamic imports to save ~20 KB gzipped
+# Details:
+Currently importing 100+ icons from lucide-react upfront. Switch to granular imports.
+
+Before: import { Check, X, Plus } from 'lucide-react';
+After: import Check from 'lucide-react/dist/esm/icons/check';
+
+Or use dynamic imports for non-critical icons:
+const Icon = lazy(() => import('lucide-react/dist/esm/icons/settings'));
+
+Expected impact: 6% bundle reduction, faster initial parse
+
+# Test Strategy:
+Search codebase for lucide-react imports. Replace systematically. Verify icons still render. Measure bundle size reduction.
+
+# Subtasks:
+## 1. Audit all lucide-react imports across codebase [pending]
+### Dependencies: None
+### Description: Find all icon imports and categorize by usage frequency
+### Details:
+Run: grep -r "from 'lucide-react'" apps/web/src. List all imported icons. Categorize: critical (used immediately), deferred (below fold), dynamic (conditionally rendered). Create spreadsheet or markdown file.
+
+## 2. Replace bulk imports with granular imports for critical icons [pending]
+### Dependencies: None
+### Description: Update imports for icons used in initial render
+### Details:
+Replace: import { Check, X, Plus } from 'lucide-react'. With: import Check from 'lucide-react/dist/esm/icons/check'. Focus on icons in layouts, navigation, and above-the-fold content.
+
+## 3. Implement dynamic imports for non-critical icons [pending]
+### Dependencies: None
+### Description: Use lazy loading for icons in dialogs, modals, and below-fold content
+### Details:
+For icons in forms, dialogs, settings: const SettingsIcon = lazy(() => import('lucide-react/dist/esm/icons/settings')). Wrap with Suspense or show fallback square while loading.
+
+## 4. Verify icons render correctly and measure bundle reduction [pending]
+### Dependencies: None
+### Description: Test all pages and measure icon optimization impact
+### Details:
+Test every route to ensure icons display correctly. Check dialogs, forms, and interactive elements. Run pnpm build and compare bundle sizes. Target: ~20 KB reduction. Document savings.
+

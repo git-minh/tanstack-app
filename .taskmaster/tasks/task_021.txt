@@ -1,0 +1,11 @@
+# Task ID: 21
+# Title: Vibe Apps Submission and Social Media Promotion
+# Status: pending
+# Dependencies: 20
+# Priority: medium
+# Description: Submit app to Vibe Apps directory and promote on social media before deadline
+# Details:
+Submit to Vibe Apps with compelling name, tagline, description highlighting all integrations. Add tags: tanstackstart, convex, ai, saas, cloudflare. Include GitHub URL, live demo URL, YouTube video link. Submit before Nov 17 12:00 PM PT. Post on Twitter/X and LinkedIn tagging all sponsors. Share in developer communities. Time estimate: 45 minutes total (15 min submission + 30 min social).
+
+# Test Strategy:
+Verify submission confirmation received, social posts published with all sponsor tags, links working correctly

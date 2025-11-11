@@ -1,0 +1,31 @@
+# Task ID: 2
+# Title: Backend - Environment Configuration
+# Status: done
+# Dependencies: None
+# Priority: critical
+# Description: Set up Azure OpenAI environment variables in Convex
+# Details:
+Configure the three required environment variables for Azure OpenAI access: AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_KEY, and AZURE_OPENAI_DEPLOYMENT. These must be set via Convex CLI for production and optionally in local .env for development.
+
+# Test Strategy:
+Verify variables are accessible in Convex action. Test with both production and development configurations.
+
+# Subtasks:
+## 1. Set production environment variables via Convex CLI [done]
+### Dependencies: None
+### Description: Run npx convex env set commands for all three Azure OpenAI variables
+### Details:
+Commands: npx convex env set AZURE_OPENAI_ENDPOINT, npx convex env set AZURE_OPENAI_KEY, npx convex env set AZURE_OPENAI_DEPLOYMENT. Use actual Azure resource values.
+
+## 2. Add development .env configuration (optional) [done]
+### Dependencies: None
+### Description: Create .env file in packages/backend for local development
+### Details:
+Add AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_KEY, AZURE_OPENAI_DEPLOYMENT to packages/backend/.env.local. Document in ENVIRONMENT.md.
+
+## 3. Document environment setup in docs/ENVIRONMENT.md [done]
+### Dependencies: None
+### Description: Add Azure OpenAI configuration section to environment documentation
+### Details:
+Document all three variables, how to obtain them from Azure portal, and setup steps. Include troubleshooting section.
+

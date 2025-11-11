@@ -1,0 +1,22 @@
+# Task ID: 29
+# Title: Performance Monitoring and CI Integration
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Implement continuous performance monitoring to prevent regressions
+# Details:
+Set up automated performance tracking and budgets.
+
+Implementation:
+1. Add web-vitals package to track Core Web Vitals
+2. Send metrics to Sentry performance monitoring
+3. Add Lighthouse CI to CircleCI pipeline
+4. Set performance budgets (main bundle <150 KB gzipped)
+5. Fail CI builds if budgets exceeded
+6. Add bundlesize or size-limit package
+7. Create docs/PERFORMANCE.md with metrics
+
+Expected impact: Prevent performance regressions, continuous improvement, data-driven optimization
+
+# Test Strategy:
+Verify Web Vitals tracking in Sentry. Test Lighthouse CI integration. Confirm budget enforcement. Review performance dashboard.

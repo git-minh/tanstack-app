@@ -1,0 +1,67 @@
+# Task ID: 1
+# Title: Backend - Azure OpenAI Integration Action
+# Status: done
+# Dependencies: 2
+# Priority: critical
+# Description: Create Convex action to integrate with Azure OpenAI GPT-5 API for project generation
+# Details:
+Implement the core Convex action (ai.ts) that calls Azure OpenAI API with structured prompts, parses responses, and orchestrates batch creation of projects, tasks, and contacts. This is the foundation of the entire AI generation feature.
+
+# Test Strategy:
+Unit tests for API call logic, response parsing, and error handling. Mock Azure OpenAI responses for testing.
+
+# Subtasks:
+## 1. Create ai.ts file with generateProject action structure [done]
+### Dependencies: None
+### Description: Set up the basic Convex action file with proper imports and action definition
+### Details:
+Import action, v from convex. Define generateProject action with prompt argument. Add user authentication check using ctx.auth.getUserIdentity().
+
+## 2. Implement Azure OpenAI API call function [done]
+### Dependencies: None
+### Description: Create callAzureOpenAI helper function that makes HTTP requests to Azure OpenAI
+### Details:
+Use native fetch to call Azure OpenAI endpoint. Include proper headers (api-key, Content-Type). Handle response_format: json_object for structured output. Set temperature: 0.7, max_tokens: 4000.
+
+## 3. Design and implement AI prompt templates [done]
+### Dependencies: None
+### Description: Create system and user prompt templates for project generation
+### Details:
+System prompt: Define AI role as project management expert. Specify JSON schema for output. Include generation rules for projects, tasks, contacts. User prompt: Include user description, current date, timezone context.
+
+## 4. Implement response parsing with Zod validation [done]
+### Dependencies: None
+### Description: Create parseAndValidateAIResponse function with strict schema validation
+### Details:
+Define Zod schema matching AI output structure. Parse JSON string. Validate all required fields. Handle validation errors gracefully with clear messages.
+
+## 5. Implement batch creation logic with hierarchy handling [done]
+### Dependencies: None
+### Description: Create project, then tasks (respecting parent-child), then contacts in sequence
+### Details:
+1. Call api.projects.create with project data. 2. Create parent tasks first, store IDs in Map. 3. Create subtasks with parentTaskId references. 4. Create all contacts. 5. Link all tasks to project via projectId.
+
+## 6. Add comprehensive error handling and recovery [done]
+### Dependencies: None
+### Description: Implement try-catch blocks, error messages, and partial failure handling
+### Details:
+Wrap API calls in try-catch. Log errors for debugging. Track created item IDs for rollback. Return meaningful error messages to frontend. Handle rate limits and timeouts.
+
+## 7. Implement rollback/cleanup mechanism for partial failures [done]
+### Dependencies: None
+### Description: Create cleanup logic to remove partially created items when generation fails midway
+### Details:
+Track all created IDs (projectId, taskIds[], contactIds[]) during batch creation. Implement deleteCreatedItems() helper that removes all items if an error occurs. Wrap batch creation in try-catch and call cleanup on failure. Test with simulated failures at different stages.
+
+## 8. Create ai-schema.ts for AI response validation [done]
+### Dependencies: None
+### Description: Define Zod schemas for validating Azure OpenAI responses in a separate schema file
+### Details:
+Create packages/backend/convex/ai-schema.ts. Define schemas: aiProjectResponseSchema (includes project, tasks[], contacts[]). Define individual schemas: projectSchema, taskSchema, contactSchema. Export TypeScript types for use in ai.ts. This separates validation logic from action logic for better maintainability.
+
+## 9. Define standardized error response format [done]
+### Dependencies: None
+### Description: Create consistent error response structure for frontend error handling
+### Details:
+Define error response type: { success: false, error: { code: string, message: string, details?: any } }. Create helper function formatError(error: Error): ErrorResponse. Map different error types (API errors, validation errors, auth errors) to specific error codes. Document error codes for frontend consumption. Ensure all thrown errors follow this format.
+

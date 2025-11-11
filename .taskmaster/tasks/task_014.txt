@@ -1,0 +1,37 @@
+# Task ID: 14
+# Title: Firecrawl Web Scraping Integration
+# Status: done
+# Dependencies: 13
+# Priority: medium
+# Description: Integrate Firecrawl to scrape websites and enhance AI project generation with web content
+# Details:
+Install @firecrawl/firecrawl-node. Create scrapeUrl Convex action. Add "Import from URL" input to GenerateDialog. Implement URL validation and scraping flow. Append scraped markdown to AI prompts. Handle errors gracefully. Configure FIRECRAWL_API_KEY. Time estimate: 1.5-2 hours. Priority 2 for hackathon - highest impact for differentiation.
+
+# Test Strategy:
+Test scraping GitHub READMEs, documentation sites, and blog posts. Verify scraped content enhances AI generation quality
+
+# Subtasks:
+## 1. Install Firecrawl package in backend [done]
+### Dependencies: None
+### Description: Add @firecrawl/firecrawl-node to backend dependencies
+### Details:
+Run: cd packages/backend && pnpm add @firecrawl/firecrawl-node
+
+## 2. Create scrapeUrl Convex action [done]
+### Dependencies: 14.1
+### Description: Add Firecrawl scraping action to packages/backend/convex/ai.ts
+### Details:
+Create action scrapeUrl with url argument. Initialize FirecrawlApp with FIRECRAWL_API_KEY from env. Call scrapeUrl with formats: ['markdown', 'html']. Return markdown content. Handle errors (invalid URL, timeout, rate limit). Add 10,000 char limit on scraped content
+
+## 3. Add URL input field to GenerateDialog [done]
+### Dependencies: 14.2
+### Description: Update GenerateDialog component to include optional URL import feature
+### Details:
+Add Input field for URL above the prompt textarea in apps/web/src/features/ai-generation/components/generate-dialog.tsx. Add label "Import from URL (optional)". Implement URL validation using Zod (must be valid HTTP/HTTPS). Add loading state indicator for scraping. Show character count preview after scraping
+
+## 4. Integrate Firecrawl into AI generation flow [done]
+### Dependencies: 14.3
+### Description: Connect URL scraping to AI generation and test end-to-end
+### Details:
+When URL provided, call scrapeUrl action before generateProject. Append scraped markdown to user prompt with context like "Content from [url]: \n\n[scraped content]". Handle scraping errors gracefully with toast notifications. Test with GitHub READMEs, docs sites, blog posts. Configure FIRECRAWL_API_KEY in Convex environment
+
