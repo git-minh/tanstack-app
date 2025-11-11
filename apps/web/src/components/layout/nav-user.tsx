@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ChevronsUpDown, LogOut } from 'lucide-react'
+import ChevronsUpDown from 'lucide-react/dist/esm/icons/chevrons-up-down'
+import LogOut from 'lucide-react/dist/esm/icons/log-out'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
