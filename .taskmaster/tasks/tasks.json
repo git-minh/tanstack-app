@@ -1183,7 +1183,7 @@
         "description": "Integrate credit checks and deductions into existing AI project generation and URL scraping features",
         "details": "Modify convex/ai.ts generateProject action to check for 15 credits before execution and deduct after success. Modify scrapeUrl action to check for 5 credits and deduct after scrape. Update generate-dialog.tsx to show credit cost preview and disable button if insufficient credits.",
         "testStrategy": "Test generation with sufficient credits, test blocking when insufficient, verify credit deduction accuracy",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           32
         ],
@@ -1196,7 +1196,7 @@
         "description": "Create database schema for chat sessions and messages with proper indexes",
         "details": "Update convex/schema.ts to add chatSessions table (userId, displayId, title, createdAt, updatedAt, messageCount) and chatMessages table (sessionId, userId, role, content, tokens, creditsUsed, createdAt). Add indexes: by_userId, by_displayId, by_sessionId, by_userId_and_updatedAt. Update convex/counters.ts to add 'chatSessions': 'CH' prefix mapping.",
         "testStrategy": "Verify schema compiles, test display ID generation for chat sessions, verify indexes are created",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           32
         ],
@@ -1209,7 +1209,7 @@
         "description": "Implement chat session management, message storage, AI chat action, and context integration",
         "details": "Create convex/chatSessions.ts with createSession, getSessions, getSession, deleteSession, updateSessionTitle. Create convex/chatMessages.ts with getMessages, saveMessage. Create convex/chat.ts with sendChatMessage action (credit validation, Azure OpenAI call, context inclusion). Create convex/chatContext.ts to fetch user's projects and tasks for AI context.",
         "testStrategy": "Test CRUD operations for sessions and messages, test AI response generation, verify context inclusion works, test credit deduction",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           34
         ],
@@ -1220,7 +1220,7 @@
             "title": "Create chat session management (chatSessions.ts)",
             "description": "Implement CRUD operations for chat sessions",
             "details": "Create convex/chatSessions.ts with: createSession mutation (generate displayId, set initial title), getSessions query (list user's sessions, paginated, sorted by updatedAt), getSession query (fetch single session by ID or displayId), deleteSession mutation, updateSessionTitle mutation for renaming.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 35
           },
@@ -1229,7 +1229,7 @@
             "title": "Create message storage (chatMessages.ts)",
             "description": "Implement message queries and mutations",
             "details": "Create convex/chatMessages.ts with: getMessages query (fetch all messages for a session, ordered by createdAt), saveMessage mutation (save user or assistant message with role, content, tokens, creditsUsed), deleteMessage mutation (for message removal if needed).",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "35.1"
             ],
@@ -1240,7 +1240,7 @@
             "title": "Create user context aggregation (chatContext.ts)",
             "description": "Build helper to fetch user's projects and tasks for AI context",
             "details": "Create convex/chatContext.ts with getUserContext internal query that: fetches user's recent projects (last 5 active), fetches user's pending/in-progress tasks, formats data as structured context string, returns formatted context for system message inclusion. Keep context concise (<2000 chars).",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 35
           },
@@ -1249,7 +1249,7 @@
             "title": "Implement sendChatMessage action",
             "description": "Create main AI chat action with Azure OpenAI integration",
             "details": "Create convex/chat.ts with sendChatMessage action: 1) Check user credits >= 3, 2) Get conversation history (last 10 messages), 3) Optionally get user context if includeContext=true, 4) Build messages array for Azure OpenAI, 5) Call Azure OpenAI API with o1-mini model, 6) Save user message and assistant response via chatMessages mutations, 7) Deduct 3 credits via credits mutation, 8) Update session updatedAt timestamp, 9) Return response + new credit balance.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "35.2",
               "35.3"
@@ -1420,7 +1420,7 @@
       "source": "AI-PRD.md - Comprehensive Product Requirements Document",
       "created": "2025-11-09T15:28:04.519Z",
       "description": "Tasks for master context",
-      "updated": "2025-11-14T14:52:05.792Z"
+      "updated": "2025-11-14T15:16:00.652Z"
     }
   }
 }

@@ -93,4 +93,26 @@ export default defineSchema({
 		creditsTotal: v.number(), // Total credits for current tier (100 for free)
 		lastCreditReset: v.number(), // Timestamp of last monthly credit reset
 	}).index("by_userId", ["userId"]),
+	chatSessions: defineTable({
+		userId: v.string(),
+		displayId: v.string(),
+		title: v.string(),
+		createdAt: v.number(),
+		updatedAt: v.number(),
+		messageCount: v.number(),
+	})
+		.index("by_userId", ["userId"])
+		.index("by_displayId", ["displayId"])
+		.index("by_userId_and_updatedAt", ["userId", "updatedAt"]),
+	chatMessages: defineTable({
+		sessionId: v.id("chatSessions"),
+		userId: v.string(),
+		role: v.string(), // "user" or "assistant"
+		content: v.string(),
+		tokens: v.optional(v.number()),
+		creditsUsed: v.optional(v.number()),
+		createdAt: v.number(),
+	})
+		.index("by_sessionId", ["sessionId"])
+		.index("by_userId", ["userId"]),
 });

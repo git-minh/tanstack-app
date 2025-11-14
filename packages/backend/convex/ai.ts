@@ -5,6 +5,7 @@ import { v } from "convex/values";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { parseAIResponse } from "./ai_schema";
+import { CREDIT_COSTS } from "./credits";
 
 /**
  * Azure OpenAI API response type
@@ -380,6 +381,24 @@ async function callAzureOpenAI(
 }
 
 /**
+ * Scrape URL response types
+ */
+type ScrapeUrlSuccessResponse = {
+  success: true;
+  url: string;
+  markdown: string;
+  originalLength: number;
+  truncated: boolean;
+};
+
+type ScrapeUrlErrorResponse = {
+  success: false;
+  error: string;
+};
+
+type ScrapeUrlResponse = ScrapeUrlSuccessResponse | ScrapeUrlErrorResponse;
+
+/**
  * Scrape a URL and return its content as markdown
  *
  * Uses Firecrawl API to extract clean markdown content from web pages.
@@ -389,8 +408,28 @@ export const scrapeUrl = action({
   args: {
     url: v.string(),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args): Promise<ScrapeUrlResponse> => {
     try {
+      // 1. Authenticate user (Task #33)
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) {
+        return {
+          success: false,
+          error: "Unauthorized: Must be logged in to scrape URLs",
+        };
+      }
+
+      // 2. Check credits before scraping (Task #33)
+      const creditCheck = await ctx.runQuery(api.credits.checkCredits, {
+        amount: CREDIT_COSTS.URL_SCRAPE,
+      });
+      if (!creditCheck.hasEnough) {
+        return {
+          success: false,
+          error: `Insufficient credits. This operation requires ${CREDIT_COSTS.URL_SCRAPE} credits but you only have ${creditCheck.creditsRemaining}. Upgrade to Pro for unlimited credits.`,
+        };
+      }
+
       // Validate URL format
       let parsedUrl: URL;
       try {
@@ -434,6 +473,12 @@ export const scrapeUrl = action({
         url: args.url,
         contentLength: markdown.length,
         truncated: markdown.length > 20000,
+      });
+
+      // Deduct credits after successful scrape (Task #33)
+      await ctx.runMutation(api.credits.deductCredits, {
+        amount: CREDIT_COSTS.URL_SCRAPE,
+        reason: `URL scrape: ${args.url}`,
       });
 
       return {
@@ -504,7 +549,17 @@ export const generateProject = action({
         throw new Error("Unauthorized: Must be logged in to generate projects");
       }
 
-      // 2. Check usage limits before generating
+      // 2. Check credits before generating (Task #33)
+      const creditCheck = await ctx.runQuery(api.credits.checkCredits, {
+        amount: CREDIT_COSTS.AI_GENERATION,
+      });
+      if (!creditCheck.hasEnough) {
+        throw new Error(
+          `Insufficient credits. This operation requires ${CREDIT_COSTS.AI_GENERATION} credits but you only have ${creditCheck.creditsRemaining}. Upgrade to Pro for unlimited credits.`
+        );
+      }
+
+      // 3. Check usage limits before generating
       const usage = await ctx.runQuery(api.usage.getUserUsage);
       if (!usage.hasAccess) {
         throw new Error(
@@ -721,6 +776,12 @@ export const generateProject = action({
 
       // Increment usage count after successful generation
       await ctx.runMutation(api.usage.incrementUsageCount);
+
+      // Deduct credits after successful generation (Task #33)
+      await ctx.runMutation(api.credits.deductCredits, {
+        amount: CREDIT_COSTS.AI_GENERATION,
+        reason: `AI project generation: ${project.name}`,
+      });
 
       // Return success summary (Subtask 1.9 ✓)
       return {
