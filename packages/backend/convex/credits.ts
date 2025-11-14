@@ -3,7 +3,6 @@ import { mutation, query } from "./_generated/server";
 import type { QueryCtx, MutationCtx } from "./_generated/server";
 
 const FREE_TIER_CREDITS = 100;
-const PRO_TIER_CREDITS = Infinity;
 
 // Credit costs for different operations
 export const CREDIT_COSTS = {

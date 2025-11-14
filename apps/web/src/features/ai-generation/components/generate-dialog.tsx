@@ -52,7 +52,21 @@ export function GenerateDialog({
 
 	const scrapeUrl = useAction(api.ai.scrapeUrl);
 	const usage = useQuery(api.usage.getUserUsage);
+	const credits = useQuery(api.credits.getUserCredits);
 	const { checkout } = useCustomer();
+
+	// Credit costs
+	const GENERATION_COST = 15;
+	const SCRAPE_COST = 5;
+
+	// Check if user has enough credits
+	const hasEnoughForGeneration = credits
+		? credits.isUnlimited || credits.creditsRemaining >= GENERATION_COST
+		: true; // Assume true while loading
+
+	const hasEnoughForScrape = credits
+		? credits.isUnlimited || credits.creditsRemaining >= SCRAPE_COST
+		: true; // Assume true while loading
 
 	const {
 		register,
@@ -200,6 +214,46 @@ export function GenerateDialog({
 							? "Please wait while we generate your project"
 							: "Describe your project and AI will generate the structure, tasks, and initial setup for you."}
 					</DialogDescription>
+					{credits && !isSubmitting && (
+						<div className="mt-3 p-3 rounded-md bg-muted">
+							<div className="flex items-center justify-between">
+								<div className="flex items-center gap-2">
+									<Sparkles className="h-4 w-4 text-primary" />
+									<span className="text-sm font-medium">Credits</span>
+								</div>
+								<span className="text-sm text-muted-foreground">
+									{credits.isUnlimited
+										? "Unlimited"
+										: `${credits.creditsRemaining} remaining`}
+								</span>
+							</div>
+							<div className="mt-2 pt-2 border-t space-y-1">
+								<div className="flex justify-between text-xs">
+									<span className="text-muted-foreground">AI Generation</span>
+									<span className="font-medium">{GENERATION_COST} credits</span>
+								</div>
+								<div className="flex justify-between text-xs">
+									<span className="text-muted-foreground">URL Scraping</span>
+									<span className="font-medium">{SCRAPE_COST} credits</span>
+								</div>
+							</div>
+							{!credits.isUnlimited && credits.creditsRemaining < GENERATION_COST && (
+								<div className="mt-2 pt-2 border-t">
+									<p className="text-xs text-destructive font-medium mb-2">
+										Insufficient credits. Upgrade to Pro for unlimited credits.
+									</p>
+									<Button
+										size="sm"
+										variant="default"
+										onClick={handleUpgrade}
+										className="w-full"
+									>
+										Upgrade to Pro - $9/month
+									</Button>
+								</div>
+							)}
+						</div>
+					)}
 					{usage && !isSubmitting && (
 						<div className="mt-3 p-3 rounded-md bg-muted">
 							<div className="flex items-center justify-between">
@@ -215,36 +269,6 @@ export function GenerateDialog({
 										: "Unlimited generations"}
 								</span>
 							</div>
-							{usage.tier === "free" && usage.remaining <= 2 && (
-								<div className="mt-2 pt-2 border-t">
-									<p className="text-xs text-muted-foreground mb-2">
-										You're running low on generations. Upgrade to Pro for unlimited AI generations.
-									</p>
-									<Button
-										size="sm"
-										variant="default"
-										onClick={handleUpgrade}
-										className="w-full"
-									>
-										Upgrade to Pro - $9/month
-									</Button>
-								</div>
-							)}
-							{usage.tier === "free" && !usage.hasAccess && (
-								<div className="mt-2 pt-2 border-t">
-									<p className="text-xs text-destructive font-medium mb-2">
-										You've reached your monthly limit. Upgrade to continue generating projects.
-									</p>
-									<Button
-										size="sm"
-										variant="default"
-										onClick={handleUpgrade}
-										className="w-full"
-									>
-										Upgrade to Pro - $9/month
-									</Button>
-								</div>
-							)}
 						</div>
 					)}
 				</DialogHeader>
@@ -288,8 +312,9 @@ export function GenerateDialog({
 											<Button
 												type="button"
 												onClick={handleScrapeUrl}
-												disabled={isScrapingUrl || !urlInput.trim()}
+												disabled={isScrapingUrl || !urlInput.trim() || !hasEnoughForScrape}
 												size="sm"
+												title={!hasEnoughForScrape ? `Requires ${SCRAPE_COST} credits` : ""}
 											>
 												{isScrapingUrl ? (
 													<>
@@ -297,7 +322,7 @@ export function GenerateDialog({
 														Scraping...
 													</>
 												) : (
-													"Scrape"
+													`Scrape (${SCRAPE_COST} credits)`
 												)}
 											</Button>
 										</div>
@@ -361,7 +386,13 @@ export function GenerateDialog({
 							>
 								Cancel
 							</Button>
-							<Button type="submit">Generate</Button>
+							<Button
+								type="submit"
+								disabled={!hasEnoughForGeneration}
+								title={!hasEnoughForGeneration ? `Requires ${GENERATION_COST} credits` : ""}
+							>
+								Generate ({GENERATION_COST} credits)
+							</Button>
 						</div>
 					</form>
 				)}
