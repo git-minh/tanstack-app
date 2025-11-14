@@ -24,12 +24,14 @@ import type * as dashboard from "../dashboard.js";
 import type * as healthCheck from "../healthCheck.js";
 import type * as hierarchy from "../hierarchy.js";
 import type * as http from "../http.js";
+import type * as migrateUserUsage from "../migrateUserUsage.js";
 import type * as privateData from "../privateData.js";
 import type * as projects from "../projects.js";
 import type * as search from "../search.js";
 import type * as tasks from "../tasks.js";
 import type * as todos from "../todos.js";
 import type * as usage from "../usage.js";
+import type * as webhooks_autumn from "../webhooks/autumn.js";
 
 import type {
   ApiFromModules,
@@ -62,12 +64,14 @@ declare const fullApi: ApiFromModules<{
   healthCheck: typeof healthCheck;
   hierarchy: typeof hierarchy;
   http: typeof http;
+  migrateUserUsage: typeof migrateUserUsage;
   privateData: typeof privateData;
   projects: typeof projects;
   search: typeof search;
   tasks: typeof tasks;
   todos: typeof todos;
   usage: typeof usage;
+  "webhooks/autumn": typeof webhooks_autumn;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 

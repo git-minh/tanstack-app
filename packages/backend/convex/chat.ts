@@ -48,7 +48,7 @@ async function callAzureOpenAIStreaming(
 	// Build request with streaming enabled
 	const requestBody = {
 		messages,
-		max_tokens: maxTokens,
+		max_completion_tokens: maxTokens,
 		stream: true, // Enable streaming
 	};
 
