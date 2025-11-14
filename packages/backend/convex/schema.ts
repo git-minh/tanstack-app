@@ -89,5 +89,8 @@ export default defineSchema({
 		aiGenerationCount: v.number(),
 		subscriptionTier: v.string(), // "free" or "pro"
 		lastResetDate: v.number(), // Monthly reset timestamp
+		creditsRemaining: v.number(), // Current available credits
+		creditsTotal: v.number(), // Total credits for current tier (100 for free)
+		lastCreditReset: v.number(), // Timestamp of last monthly credit reset
 	}).index("by_userId", ["userId"]),
 });

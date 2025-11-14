@@ -35,22 +35,35 @@ async function ensureUserUsage(ctx: MutationCtx, userId: string) {
       lastReset.getMonth() !== currentDate.getMonth() ||
       lastReset.getFullYear() !== currentDate.getFullYear()
     ) {
-      await ctx.db.patch(existing._id, {
+      const patchData: any = {
         aiGenerationCount: 0,
         lastResetDate: now,
-      });
-      return { ...existing, aiGenerationCount: 0, lastResetDate: now };
+      };
+
+      // Also reset credits for free tier users
+      if (existing.subscriptionTier === "free") {
+        const creditsTotal = existing.creditsTotal || 100;
+        patchData.creditsRemaining = creditsTotal;
+        patchData.lastCreditReset = now;
+      }
+
+      await ctx.db.patch(existing._id, patchData);
+      return { ...existing, ...patchData };
     }
 
     return existing;
   }
 
   // Create new usage record for user
+  const now = Date.now();
   const id = await ctx.db.insert("userUsage", {
     userId,
     aiGenerationCount: 0,
     subscriptionTier: "free",
-    lastResetDate: Date.now(),
+    lastResetDate: now,
+    creditsRemaining: 100, // Free tier default
+    creditsTotal: 100,
+    lastCreditReset: now,
   });
 
   return {
@@ -58,7 +71,10 @@ async function ensureUserUsage(ctx: MutationCtx, userId: string) {
     userId,
     aiGenerationCount: 0,
     subscriptionTier: "free",
-    lastResetDate: Date.now(),
+    lastResetDate: now,
+    creditsRemaining: 100,
+    creditsTotal: 100,
+    lastCreditReset: now,
   };
 }
 

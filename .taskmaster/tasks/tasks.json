@@ -1008,7 +1008,7 @@
         "description": "Reduce vendor chunks by 40% through selective loading and alternatives",
         "details": "Current vendor sizes:\n- vendor-forms: 258 KB (react-hook-form + Zod)\n- vendor-charts: 243 KB (Recharts)\n- vendor-auth: 186 KB (Better-Auth)\n- vendor-ui: 100 KB (Radix UI)\n\nStrategies:\n1. Lazy load form libraries (only complex forms need RHF + Zod)\n2. Audit Recharts usage (already lazy loaded, but 243 KB is huge)\n3. Split auth bundle (only load on /login route)\n4. Remove unused Radix components and variants\n5. Split date-fns into separate chunk\n\nExpected impact: 30% additional reduction, faster route transitions",
         "testStrategy": "Analyze bundle composition. Test form functionality. Verify chart loads correctly. Measure vendor chunk sizes.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [],
         "priority": "high",
         "subtasks": [
@@ -1017,7 +1017,7 @@
             "title": "Analyze and lazy load form libraries (258 KB)",
             "description": "Split react-hook-form and Zod into separate chunks, load only for complex forms",
             "details": "Identify simple vs complex forms. Simple forms (login, search): use native useState. Complex forms (task/project creation): keep RHF + Zod but lazy load. Update Vite config to create vendor-forms chunk only loaded when needed.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 25
           },
@@ -1026,7 +1026,7 @@
             "title": "Audit Recharts usage and consider lighter alternatives",
             "description": "Evaluate if 243 KB Recharts is necessary or can be replaced",
             "details": "Verify Recharts is already lazy loaded (good!). Count chart types used. Research alternatives: Chart.js (50 KB), visx (80 KB). Document decision: keep if critical, replace if savings worth migration effort.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 25
           },
@@ -1035,7 +1035,7 @@
             "title": "Split auth bundle to only load on login route",
             "description": "Ensure Better-Auth (186 KB) only loads when needed",
             "details": "Update Vite config manualChunks. Create vendor-auth chunk. Verify auth components only load on _auth routes. Test authentication still works correctly. Measure bundle size improvement for authenticated routes.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 25
           },
@@ -1044,7 +1044,7 @@
             "title": "Remove unused Radix UI components and variants",
             "description": "Audit and remove rarely-used UI primitives (100 KB → ~70 KB)",
             "details": "Search for unused Radix components: Tabs, RadioGroup, ToggleGroup, etc. Remove imports and component files if unused. Check if all component variants are needed. Update manual chunks to optimize Radix bundle.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 25
           },
@@ -1053,7 +1053,7 @@
             "title": "Extract date-fns and optimize Vite manual chunks",
             "description": "Create separate chunk for date utilities and optimize all vendor chunks",
             "details": "Add date-fns to manual chunks in vite.config.ts. Optimize chunk splitting for AI generation features. Create chunks: vendor-dates, vendor-ai-generation. Test all chunks load correctly. Verify chunk sizes are 20-50 KB ideal range.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 25
           },
@@ -1062,7 +1062,7 @@
             "title": "Measure vendor bundle optimization results",
             "description": "Verify 40% vendor chunk reduction achieved",
             "details": "Run production build. Compare before/after: vendor-forms (258→180 KB), vendor-charts (243 KB, already optimized), vendor-auth (186→130 KB), vendor-ui (100→70 KB). Document total savings and impact on load times.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 25
           }
@@ -1133,6 +1133,283 @@
         "dependencies": [],
         "priority": "low",
         "subtasks": []
+      },
+      {
+        "id": 32,
+        "title": "Credit System Foundation",
+        "description": "Extend userUsage table with credits, implement credit management backend, initialize credits on signup, and create credit balance UI component",
+        "details": "Update convex/schema.ts to add creditsRemaining, creditsTotal, lastCreditReset. Create convex/credits.ts with getUserCredits query, deductCredits mutation, resetMonthlyCredits mutation. Initialize 100 credits for new users. Build credit-balance.tsx component for navbar with color-coded warnings.",
+        "testStrategy": "Test credit initialization on signup, test atomic deduction, test monthly reset logic, verify UI displays correctly",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Update userUsage schema with credit fields",
+            "description": "Add creditsRemaining, creditsTotal, lastCreditReset to userUsage table in convex/schema.ts",
+            "details": "Modify userUsage table definition to include: creditsRemaining: v.number() (default 100), creditsTotal: v.number() (default 100), lastCreditReset: v.number() (timestamp). Keep existing fields: userId, aiGenerationCount, subscriptionTier.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 32
+          },
+          {
+            "id": 2,
+            "title": "Create credit management backend",
+            "description": "Build convex/credits.ts with queries and mutations for credit operations",
+            "details": "Create getUserCredits query to fetch current balance. Create deductCredits mutation with atomic operations and validation (check balance >= amount). Create resetMonthlyCredits mutation to set creditsRemaining back to creditsTotal. Create checkAndResetCredits helper that auto-resets if month has passed since lastCreditReset.",
+            "status": "done",
+            "dependencies": [
+              "32.1"
+            ],
+            "parentTaskId": 32
+          },
+          {
+            "id": 3,
+            "title": "Build credit balance UI component",
+            "description": "Create credit-balance.tsx component for navbar displaying credits with color-coded warnings",
+            "details": "Create components/features/credits/credit-balance.tsx: Display credits in header/navbar with format \"⭐ X credits\", use useQuery(api.credits.getUserCredits), color-coded warnings (green >50, yellow 20-50, red <20), clickable to show breakdown and \"Buy More\" button, show \"Unlimited\" for Pro tier, include Popover or Tooltip with details.",
+            "status": "done",
+            "dependencies": [
+              "32.2"
+            ],
+            "parentTaskId": 32
+          }
+        ]
+      },
+      {
+        "id": 33,
+        "title": "Update Existing Features with Credits",
+        "description": "Integrate credit checks and deductions into existing AI project generation and URL scraping features",
+        "details": "Modify convex/ai.ts generateProject action to check for 15 credits before execution and deduct after success. Modify scrapeUrl action to check for 5 credits and deduct after scrape. Update generate-dialog.tsx to show credit cost preview and disable button if insufficient credits.",
+        "testStrategy": "Test generation with sufficient credits, test blocking when insufficient, verify credit deduction accuracy",
+        "status": "pending",
+        "dependencies": [
+          32
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 34,
+        "title": "Chat Database Schema",
+        "description": "Create database schema for chat sessions and messages with proper indexes",
+        "details": "Update convex/schema.ts to add chatSessions table (userId, displayId, title, createdAt, updatedAt, messageCount) and chatMessages table (sessionId, userId, role, content, tokens, creditsUsed, createdAt). Add indexes: by_userId, by_displayId, by_sessionId, by_userId_and_updatedAt. Update convex/counters.ts to add 'chatSessions': 'CH' prefix mapping.",
+        "testStrategy": "Verify schema compiles, test display ID generation for chat sessions, verify indexes are created",
+        "status": "pending",
+        "dependencies": [
+          32
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 35,
+        "title": "Chat Backend Logic",
+        "description": "Implement chat session management, message storage, AI chat action, and context integration",
+        "details": "Create convex/chatSessions.ts with createSession, getSessions, getSession, deleteSession, updateSessionTitle. Create convex/chatMessages.ts with getMessages, saveMessage. Create convex/chat.ts with sendChatMessage action (credit validation, Azure OpenAI call, context inclusion). Create convex/chatContext.ts to fetch user's projects and tasks for AI context.",
+        "testStrategy": "Test CRUD operations for sessions and messages, test AI response generation, verify context inclusion works, test credit deduction",
+        "status": "pending",
+        "dependencies": [
+          34
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create chat session management (chatSessions.ts)",
+            "description": "Implement CRUD operations for chat sessions",
+            "details": "Create convex/chatSessions.ts with: createSession mutation (generate displayId, set initial title), getSessions query (list user's sessions, paginated, sorted by updatedAt), getSession query (fetch single session by ID or displayId), deleteSession mutation, updateSessionTitle mutation for renaming.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 35
+          },
+          {
+            "id": 2,
+            "title": "Create message storage (chatMessages.ts)",
+            "description": "Implement message queries and mutations",
+            "details": "Create convex/chatMessages.ts with: getMessages query (fetch all messages for a session, ordered by createdAt), saveMessage mutation (save user or assistant message with role, content, tokens, creditsUsed), deleteMessage mutation (for message removal if needed).",
+            "status": "pending",
+            "dependencies": [
+              "35.1"
+            ],
+            "parentTaskId": 35
+          },
+          {
+            "id": 3,
+            "title": "Create user context aggregation (chatContext.ts)",
+            "description": "Build helper to fetch user's projects and tasks for AI context",
+            "details": "Create convex/chatContext.ts with getUserContext internal query that: fetches user's recent projects (last 5 active), fetches user's pending/in-progress tasks, formats data as structured context string, returns formatted context for system message inclusion. Keep context concise (<2000 chars).",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 35
+          },
+          {
+            "id": 4,
+            "title": "Implement sendChatMessage action",
+            "description": "Create main AI chat action with Azure OpenAI integration",
+            "details": "Create convex/chat.ts with sendChatMessage action: 1) Check user credits >= 3, 2) Get conversation history (last 10 messages), 3) Optionally get user context if includeContext=true, 4) Build messages array for Azure OpenAI, 5) Call Azure OpenAI API with o1-mini model, 6) Save user message and assistant response via chatMessages mutations, 7) Deduct 3 credits via credits mutation, 8) Update session updatedAt timestamp, 9) Return response + new credit balance.",
+            "status": "pending",
+            "dependencies": [
+              "35.2",
+              "35.3"
+            ],
+            "parentTaskId": 35
+          }
+        ]
+      },
+      {
+        "id": 36,
+        "title": "Chat Frontend UI",
+        "description": "Build complete chat interface with session sidebar, message area, input component, and empty state",
+        "details": "Create routes/_authenticated/chat.tsx with sidebar layout. Build components/features/chat/chat-session-list.tsx (new chat button, session switching, rename/delete). Build chat-messages.tsx (role-based styling, auto-scroll). Build chat-input.tsx (auto-resize textarea, credit indicator, context toggle). Build chat-empty-state.tsx with suggested prompts.",
+        "testStrategy": "Test session creation/switching, test message sending, verify UI responsive on mobile, test keyboard shortcuts",
+        "status": "pending",
+        "dependencies": [
+          35
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create chat route with layout",
+            "description": "Build main chat page route with sidebar layout structure",
+            "details": "Create routes/_authenticated/chat.tsx with two-column layout: left sidebar (30% width) for session list, right main area (70%) for active chat. Use ResizablePanel from shadcn/ui for adjustable split. Add state management for activeSessionId. Handle empty state when no session selected.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 36
+          },
+          {
+            "id": 2,
+            "title": "Build chat session list component",
+            "description": "Create session sidebar with new chat button, session items, and actions",
+            "details": "Create components/features/chat/chat-session-list.tsx: Display list of sessions using useSuspenseQuery(api.chatSessions.getSessions), \"New Chat\" button at top, clickable session items showing title and timestamp, hover actions for rename and delete, highlight active session, handle empty state with prompt to start first chat.",
+            "status": "pending",
+            "dependencies": [
+              "36.1"
+            ],
+            "parentTaskId": 36
+          },
+          {
+            "id": 3,
+            "title": "Build chat messages area component",
+            "description": "Create message display area with role-based styling and auto-scroll",
+            "details": "Create components/features/chat/chat-messages.tsx: Fetch messages with useSuspenseQuery(api.chatMessages.getMessages, {sessionId}), display messages in scrollable container, user messages right-aligned with blue background, assistant messages left-aligned with gray background, auto-scroll to bottom on new messages, show timestamps on hover, loading skeleton while fetching.",
+            "status": "pending",
+            "dependencies": [
+              "36.1"
+            ],
+            "parentTaskId": 36
+          },
+          {
+            "id": 4,
+            "title": "Build chat input component",
+            "description": "Create message input with auto-resize, credit indicator, and context toggle",
+            "details": "Create components/features/chat/chat-input.tsx: Auto-resizing Textarea (max 5 lines), Send button with Loader2 icon when loading, disabled when no credits or empty text, credit cost indicator \"3 credits per message\", keyboard shortcuts (Enter to send, Shift+Enter for newline), checkbox for \"Include my projects/tasks as context\", use useAction(api.chat.sendChatMessage) for sending, show error toasts on failure.",
+            "status": "pending",
+            "dependencies": [
+              "36.1"
+            ],
+            "parentTaskId": 36
+          },
+          {
+            "id": 5,
+            "title": "Create chat empty state component",
+            "description": "Build empty state with suggested prompts and quick start guide",
+            "details": "Create components/features/chat/chat-empty-state.tsx: Display when no session is selected, show welcome message \"Start a new conversation\", suggested prompt buttons: \"Help me plan a project\", \"What should I work on next?\", \"Explain my current tasks\", clicking a prompt creates new session and sends message, include brief explanation of context toggle feature, visually appealing with icon and centered layout.",
+            "status": "pending",
+            "dependencies": [
+              "36.1"
+            ],
+            "parentTaskId": 36
+          }
+        ]
+      },
+      {
+        "id": 37,
+        "title": "Streaming Responses Implementation",
+        "description": "Implement polling-based streaming for real-time message display as tokens arrive",
+        "details": "Create convex/chatStreaming.ts with startStreamingMessage, appendStreamChunk, finalizeStreamMessage mutations. Update chat action to batch-update message every 50ms or 10 tokens during generation. Update chat-messages.tsx to poll for updates and display partial content with typing indicator.",
+        "testStrategy": "Test streaming with various message lengths, verify no duplicate tokens, test interruption handling, measure latency",
+        "status": "pending",
+        "dependencies": [
+          36
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create streaming mutations",
+            "description": "Build mutations for managing streaming message state",
+            "details": "Create convex/chatStreaming.ts with: startStreamingMessage mutation (creates placeholder message with isStreaming=true flag), appendStreamChunk mutation (appends tokens to message content), finalizeStreamMessage mutation (marks message as complete, sets isStreaming=false, adds final token count). All mutations validate user owns the session.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 37
+          },
+          {
+            "id": 2,
+            "title": "Update chat action for streaming",
+            "description": "Modify sendChatMessage action to support token-by-token streaming",
+            "details": "Update convex/chat.ts sendChatMessage action: 1) Call startStreamingMessage to create placeholder, 2) Use Azure OpenAI streaming API (stream: true), 3) Accumulate tokens in batches (every 10 tokens or 50ms), 4) Call appendStreamChunk mutation for each batch, 5) After stream completes, call finalizeStreamMessage, 6) Handle errors and cleanup incomplete streams, 7) Return messageId for frontend polling.",
+            "status": "pending",
+            "dependencies": [
+              "37.1"
+            ],
+            "parentTaskId": 37
+          },
+          {
+            "id": 3,
+            "title": "Implement frontend streaming polling",
+            "description": "Add polling logic to chat-messages.tsx for real-time updates",
+            "details": "Update components/features/chat/chat-messages.tsx: Detect messages with isStreaming=true flag, poll for updates every 100ms using useQuery with refetchInterval, display partial content with typing indicator (...), stop polling when isStreaming=false, show \"Generating...\" status while streaming, auto-scroll to bottom as content updates, handle interrupted streams gracefully.",
+            "status": "pending",
+            "dependencies": [
+              "37.2"
+            ],
+            "parentTaskId": 37
+          }
+        ]
+      },
+      {
+        "id": 38,
+        "title": "Credit Purchase Integration",
+        "description": "Integrate Autumn for credit purchases with packages and Pro plan",
+        "details": "Update routes/_authenticated/pricing.tsx with credit packages (500/$5, 1000/$9, 5000/$40). Create components/features/credits/purchase-credits-dialog.tsx with package selection and Autumn checkout integration. Create convex/webhooks/autumn.ts to handle purchase events and add credits. Implement Pro plan check for unlimited credits.",
+        "testStrategy": "Test purchase flow end-to-end, verify credits added after payment, test Pro plan unlimited credits, test webhook reliability",
+        "status": "pending",
+        "dependencies": [
+          32
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 39,
+        "title": "Integration and Polish",
+        "description": "Integrate chat into navigation, dashboard, and add credit warnings with mobile responsiveness",
+        "details": "Update components/layout/data/sidebar-data.tsx to add 'Chat AI' navigation with MessageSquare icon. Update routes/_authenticated/dashboard.tsx to add 'Quick Chat' card showing recent sessions. Implement credit warning toasts when balance drops below 20. Create blocking dialog for insufficient credits with 'Buy More' CTA. Ensure mobile responsiveness with collapsible session sidebar.",
+        "testStrategy": "Test navigation works, verify dashboard integration, test warnings and blocking dialogs, verify mobile UI",
+        "status": "pending",
+        "dependencies": [
+          36,
+          38
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 40,
+        "title": "Chat AI Testing and Quality Assurance",
+        "description": "Comprehensive testing of chat functionality, credit system, and edge cases",
+        "details": "Test complete chat flow: create session, send messages, verify credit deduction. Test context inclusion with user projects and tasks. Verify monthly credit reset logic. Test insufficient credit scenarios and purchase flow. Test edge cases: long messages (>2000 chars), empty sessions, concurrent sends, credit race conditions. Verify streaming works correctly. Test mobile responsiveness thoroughly.",
+        "testStrategy": "Execute comprehensive test matrix, document bugs found, verify fixes, perform regression testing",
+        "status": "pending",
+        "dependencies": [
+          37,
+          39
+        ],
+        "priority": "high",
+        "subtasks": []
       }
     ],
     "metadata": {
@@ -1143,7 +1420,7 @@
       "source": "AI-PRD.md - Comprehensive Product Requirements Document",
       "created": "2025-11-09T15:28:04.519Z",
       "description": "Tasks for master context",
-      "updated": "2025-11-11T15:27:06.249Z"
+      "updated": "2025-11-14T14:52:05.792Z"
     }
   }
 }
