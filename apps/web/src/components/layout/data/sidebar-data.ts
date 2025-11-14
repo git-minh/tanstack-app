@@ -4,6 +4,7 @@ import CheckSquare from 'lucide-react/dist/esm/icons/check-square'
 import Users from 'lucide-react/dist/esm/icons/users'
 import FolderKanban from 'lucide-react/dist/esm/icons/folder-kanban'
 import CreditCard from 'lucide-react/dist/esm/icons/credit-card'
+import MessageSquare from 'lucide-react/dist/esm/icons/message-square'
 import { type SidebarData } from '../types'
 
 /**
@@ -29,6 +30,11 @@ export function getSidebarData(user: {
             title: 'Dashboard',
             url: '/dashboard',
             icon: LayoutDashboard,
+          },
+          {
+            title: 'Chat',
+            url: '/chat',
+            icon: MessageSquare,
           },
           {
             title: 'Projects',
