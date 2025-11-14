@@ -4,21 +4,32 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@tanstack/backend/convex/_generated/api";
 import type { Id } from "@tanstack/backend/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
-import { Bot, User } from "lucide-react";
+import { Bot, User, Loader2 } from "lucide-react";
 
 interface ChatMessagesProps {
 	sessionId: Id<"chatSessions">;
 }
 
 export function ChatMessages({ sessionId }: ChatMessagesProps) {
-	const { data: messages } = useSuspenseQuery(
-		convexQuery(api.chatMessages.getMessages, { sessionId })
-	);
+	// Check if any message is currently streaming (Task #37.3)
+	const hasStreamingMessage = (messages: any[]) => {
+		return messages.some((msg) => msg.isStreaming === true);
+	};
+
+	// Poll every 100ms if there's a streaming message (Task #37.3)
+	const { data: messages } = useSuspenseQuery({
+		...convexQuery(api.chatMessages.getMessages, { sessionId }),
+		refetchInterval: (query) => {
+			const data = query.state.data;
+			// Poll at 100ms when streaming, otherwise disable polling
+			return data && hasStreamingMessage(data) ? 100 : false;
+		},
+	});
 
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 
-	// Auto-scroll to bottom when messages change
+	// Auto-scroll to bottom when messages change (including streaming updates)
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 	}, [messages]);
@@ -40,6 +51,7 @@ export function ChatMessages({ sessionId }: ChatMessagesProps) {
 		<div ref={containerRef} className="h-full overflow-y-auto p-6 space-y-4">
 			{messages.map((message) => {
 				const isUser = message.role === "user";
+				const isStreaming = message.isStreaming === true; // Task #37.3: Detect streaming messages
 				const timestamp = new Date(message.createdAt).toLocaleTimeString(
 					"en-US",
 					{
@@ -88,17 +100,31 @@ export function ChatMessages({ sessionId }: ChatMessagesProps) {
 										: "bg-muted text-foreground"
 								)}
 							>
-								{message.content}
+								{/* Display content with streaming indicator (Task #37.3) */}
+								{message.content || (isStreaming && (
+									<span className="text-muted-foreground italic">
+										Generating...
+									</span>
+								))}
+								{/* Typing indicator for streaming messages (Task #37.3) */}
+								{isStreaming && message.content && (
+									<span className="inline-flex items-center ml-1">
+										<Loader2 className="h-3 w-3 animate-spin" />
+									</span>
+								)}
 							</div>
 
-							{/* Timestamp (shows on hover) */}
+							{/* Timestamp and status (shows on hover) */}
 							<div
 								className={cn(
 									"text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity px-1"
 								)}
 							>
 								{timestamp}
-								{message.creditsUsed && (
+								{isStreaming && (
+									<span className="ml-2 text-blue-500">· Streaming...</span>
+								)}
+								{message.creditsUsed && !isStreaming && (
 									<span className="ml-2">· {message.creditsUsed} credits</span>
 								)}
 							</div>

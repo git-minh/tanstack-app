@@ -16,6 +16,7 @@ import type * as chat from "../chat.js";
 import type * as chatContext from "../chatContext.js";
 import type * as chatMessages from "../chatMessages.js";
 import type * as chatSessions from "../chatSessions.js";
+import type * as chatStreaming from "../chatStreaming.js";
 import type * as contacts from "../contacts.js";
 import type * as counters from "../counters.js";
 import type * as credits from "../credits.js";
@@ -53,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   chatContext: typeof chatContext;
   chatMessages: typeof chatMessages;
   chatSessions: typeof chatSessions;
+  chatStreaming: typeof chatStreaming;
   contacts: typeof contacts;
   counters: typeof counters;
   credits: typeof credits;

@@ -112,6 +112,7 @@ export default defineSchema({
 		tokens: v.optional(v.number()),
 		creditsUsed: v.optional(v.number()),
 		createdAt: v.number(),
+		isStreaming: v.optional(v.boolean()),
 	})
 		.index("by_sessionId", ["sessionId"])
 		.index("by_userId", ["userId"]),
