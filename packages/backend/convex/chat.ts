@@ -5,6 +5,7 @@ import { v } from "convex/values";
 import { api } from "./_generated/api";
 import { internal } from "./_generated/api";
 import { CREDIT_COSTS } from "./credits";
+import type { Id } from "./_generated/dataModel";
 
 // Azure OpenAI configuration
 const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT;
@@ -19,38 +20,36 @@ if (!AZURE_OPENAI_ENDPOINT || !AZURE_OPENAI_KEY || !AZURE_OPENAI_DEPLOYMENT) {
 }
 
 /**
- * Azure OpenAI API response type
+ * Azure OpenAI streaming chunk type
  */
-interface AzureOpenAIResponse {
+interface AzureOpenAIStreamChunk {
 	choices: Array<{
-		message: {
-			content: string;
+		delta: {
+			content?: string;
 		};
+		finish_reason?: string | null;
 	}>;
-	usage?: {
-		total_tokens: number;
-		prompt_tokens: number;
-		completion_tokens: number;
-	};
 }
 
 /**
- * Call Azure OpenAI API for chat completions
+ * Call Azure OpenAI API for chat completions with streaming support
  */
-async function callAzureOpenAI(
+async function callAzureOpenAIStreaming(
 	messages: Array<{ role: "user" | "assistant" | "system"; content: string }>,
+	onChunk: (chunk: string) => Promise<void>,
 	options: {
 		maxTokens?: number;
 	} = {}
-): Promise<AzureOpenAIResponse> {
+): Promise<{ totalTokens: number }> {
 	const { maxTokens = 4000 } = options;
 
 	const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2024-08-01-preview`;
 
-	// Build request for o1-mini model
+	// Build request with streaming enabled
 	const requestBody = {
 		messages,
-		max_completion_tokens: maxTokens,
+		max_tokens: maxTokens,
+		stream: true, // Enable streaming
 	};
 
 	try {
@@ -70,13 +69,66 @@ async function callAzureOpenAI(
 			);
 		}
 
-		const data = (await response.json()) as AzureOpenAIResponse;
-
-		if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-			throw new Error("Invalid response structure from Azure OpenAI");
+		if (!response.body) {
+			throw new Error("Response body is null");
 		}
 
-		return data;
+		// Process the streaming response
+		const reader = response.body.getReader();
+		const decoder = new TextDecoder();
+		let buffer = "";
+		let totalTokensEstimate = 0;
+
+		while (true) {
+			const { done, value } = await reader.read();
+
+			if (done) {
+				break;
+			}
+
+			// Decode the chunk
+			buffer += decoder.decode(value, { stream: true });
+
+			// Process complete lines
+			const lines = buffer.split("\n");
+			buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+			for (const line of lines) {
+				const trimmedLine = line.trim();
+
+				// Skip empty lines and comments
+				if (!trimmedLine || trimmedLine.startsWith(":")) {
+					continue;
+				}
+
+				// Remove "data: " prefix
+				if (trimmedLine.startsWith("data: ")) {
+					const data = trimmedLine.slice(6);
+
+					// Check for end of stream
+					if (data === "[DONE]") {
+						continue;
+					}
+
+					try {
+						const parsed = JSON.parse(data) as AzureOpenAIStreamChunk;
+
+						// Extract content from delta
+						const content = parsed.choices[0]?.delta?.content;
+						if (content) {
+							await onChunk(content);
+							// Rough estimate: ~4 characters per token
+							totalTokensEstimate += Math.ceil(content.length / 4);
+						}
+					} catch (parseError) {
+						console.error("Failed to parse streaming chunk:", parseError);
+						// Continue processing other chunks
+					}
+				}
+			}
+		}
+
+		return { totalTokens: totalTokensEstimate };
 	} catch (error) {
 		if (error instanceof Error) {
 			throw new Error(`Failed to call Azure OpenAI: ${error.message}`);
@@ -90,7 +142,7 @@ async function callAzureOpenAI(
  */
 type SendChatMessageSuccessResponse = {
 	success: true;
-	message: string;
+	messageId: Id<"chatMessages">; // Return messageId for frontend polling
 	tokensUsed: number;
 	creditsRemaining: number;
 	sessionId: string;
@@ -106,7 +158,7 @@ type SendChatMessageResponse =
 	| SendChatMessageErrorResponse;
 
 /**
- * Send a chat message and get AI response
+ * Send a chat message and get AI response with streaming support (Task #37.2)
  */
 export const sendChatMessage = action({
 	args: {
@@ -115,6 +167,8 @@ export const sendChatMessage = action({
 		includeContext: v.optional(v.boolean()),
 	},
 	handler: async (ctx, args): Promise<SendChatMessageResponse> => {
+		let assistantMessageId: Id<"chatMessages"> | null = null;
+
 		try {
 			// 1. Authenticate user
 			const identity = await ctx.auth.getUserIdentity();
@@ -122,7 +176,7 @@ export const sendChatMessage = action({
 				throw new Error("Unauthorized: Must be logged in to chat");
 			}
 
-			// 2. Check credits (Task #35.4 step 1)
+			// 2. Check credits
 			const creditCheck = await ctx.runQuery(api.credits.checkCredits, {
 				amount: CREDIT_COSTS.CHAT_MESSAGE,
 			});
@@ -142,7 +196,16 @@ export const sendChatMessage = action({
 				throw new Error("Session not found");
 			}
 
-			// 4. Get conversation history (last 10 messages) (Task #35.4 step 2)
+			// 4. Save user message first
+			await ctx.runMutation(api.chatMessages.saveMessage, {
+				sessionId: args.sessionId,
+				role: "user",
+				content: args.message,
+				tokens: 0,
+				creditsUsed: 0,
+			});
+
+			// 5. Get conversation history (last 10 messages)
 			const conversationHistory = await ctx.runQuery(
 				api.chatMessages.getMessages,
 				{
@@ -151,7 +214,7 @@ export const sendChatMessage = action({
 				}
 			);
 
-			// 5. Optionally get user context (Task #35.4 step 3)
+			// 6. Optionally get user context
 			let userContext = "";
 			if (args.includeContext) {
 				const contextData = await ctx.runQuery(
@@ -163,92 +226,140 @@ export const sendChatMessage = action({
 				userContext = contextData.context;
 			}
 
-			// 6. Build messages array for Azure OpenAI (Task #35.4 step 4)
+			// 7. Build messages array for Azure OpenAI
 			const messages: Array<{
 				role: "user" | "assistant" | "system";
 				content: string;
 			}> = [];
 
-			// Add system message with optional context
+			// Add system message
 			const systemPrompt = `You are a helpful AI assistant for a task and project management application. You can help users with their projects, tasks, contacts, and general questions.
 
 ${userContext ? `\n${userContext}\n` : ""}
 
 Be concise, helpful, and professional. When referencing specific items, use their display IDs (e.g., TD-000001, PR-000001).`;
 
-			// For o1-mini, combine system message with conversation
-			// Start with system context
-			let combinedUserMessage = systemPrompt + "\n\n---\n\n";
+			messages.push({
+				role: "system",
+				content: systemPrompt,
+			});
 
-			// Add conversation history
-			if (conversationHistory.length > 0) {
-				combinedUserMessage += "Previous conversation:\n\n";
-				for (const msg of conversationHistory) {
-					combinedUserMessage += `${msg.role === "user" ? "User" : "Assistant"}: ${msg.content}\n\n`;
-				}
-				combinedUserMessage += "---\n\n";
+			// Add conversation history (exclude the just-added user message)
+			const historyMessages = conversationHistory.slice(0, -1);
+			for (const msg of historyMessages) {
+				messages.push({
+					role: msg.role as "user" | "assistant",
+					content: msg.content,
+				});
 			}
 
 			// Add current user message
-			combinedUserMessage += `Current user message: ${args.message}`;
-
 			messages.push({
 				role: "user",
-				content: combinedUserMessage,
-			});
-
-			// 7. Call Azure OpenAI API (Task #35.4 step 5)
-			console.log("Calling Azure OpenAI for chat...");
-			const aiResponse = await callAzureOpenAI(messages, {
-				maxTokens: 2000,
-			});
-
-			if (!aiResponse.choices[0]?.message?.content) {
-				throw new Error("AI response is missing content");
-			}
-
-			const assistantMessage = aiResponse.choices[0].message.content;
-			const tokensUsed = aiResponse.usage?.total_tokens ?? 0;
-
-			console.log("AI response received:", {
-				length: assistantMessage.length,
-				tokens: tokensUsed,
-			});
-
-			// 8. Save user message (Task #35.4 step 6)
-			await ctx.runMutation(api.chatMessages.saveMessage, {
-				sessionId: args.sessionId,
-				role: "user",
 				content: args.message,
-				tokens: 0, // We don't track individual message tokens
-				creditsUsed: 0,
 			});
 
-			// 9. Save assistant response (Task #35.4 step 6)
-			await ctx.runMutation(api.chatMessages.saveMessage, {
-				sessionId: args.sessionId,
-				role: "assistant",
-				content: assistantMessage,
-				tokens: tokensUsed,
+			// 8. Create streaming placeholder message (Task #37.2 step 1)
+			assistantMessageId = await ctx.runMutation(
+				internal.chatStreaming.startStreamingMessage,
+				{
+					sessionId: args.sessionId,
+					role: "assistant",
+				}
+			);
+
+			console.log(
+				"Started streaming message:",
+				assistantMessageId,
+				"for session:",
+				session.displayId
+			);
+
+			// 9. Set up batching logic (every 10 tokens or 50ms) (Task #37.2 step 3-4)
+			let batchBuffer = "";
+			let tokenCount = 0;
+			let lastUpdateTime = Date.now();
+			const BATCH_TOKEN_COUNT = 10;
+			const BATCH_TIME_MS = 50;
+
+			const flushBatch = async () => {
+				if (batchBuffer && assistantMessageId) {
+					await ctx.runMutation(internal.chatStreaming.appendStreamChunk, {
+						messageId: assistantMessageId,
+						chunk: batchBuffer,
+					});
+					batchBuffer = "";
+				}
+			};
+
+			// 10. Call Azure OpenAI with streaming (Task #37.2 step 2)
+			console.log("Calling Azure OpenAI with streaming...");
+			const result = await callAzureOpenAIStreaming(
+				messages,
+				async (chunk: string) => {
+					// Accumulate chunks
+					batchBuffer += chunk;
+					tokenCount++;
+
+					const now = Date.now();
+					const timeSinceLastUpdate = now - lastUpdateTime;
+
+					// Flush batch if we hit token count or time threshold
+					if (tokenCount >= BATCH_TOKEN_COUNT || timeSinceLastUpdate >= BATCH_TIME_MS) {
+						await flushBatch();
+						lastUpdateTime = now;
+						tokenCount = 0;
+					}
+				},
+				{
+					maxTokens: 2000,
+				}
+			);
+
+			// 11. Flush any remaining content
+			await flushBatch();
+
+			console.log("Streaming complete. Total tokens:", result.totalTokens);
+
+			// 12. Finalize the streaming message (Task #37.2 step 5)
+			await ctx.runMutation(internal.chatStreaming.finalizeStreamMessage, {
+				messageId: assistantMessageId,
+				tokens: result.totalTokens,
 				creditsUsed: CREDIT_COSTS.CHAT_MESSAGE,
 			});
 
-			// 10. Deduct credits (Task #35.4 step 7)
-			const creditResult: any = await ctx.runMutation(api.credits.deductCredits, {
-				amount: CREDIT_COSTS.CHAT_MESSAGE,
-				reason: `Chat message in session ${session.displayId}`,
-			});
+			// 13. Deduct credits
+			const creditResult: any = await ctx.runMutation(
+				api.credits.deductCredits,
+				{
+					amount: CREDIT_COSTS.CHAT_MESSAGE,
+					reason: `Chat message in session ${session.displayId}`,
+				}
+			);
 
-			// 11. Return response with credit balance (Task #35.4 step 9)
+			// 14. Return response with messageId for frontend polling (Task #37.2 step 7)
 			return {
 				success: true,
-				message: assistantMessage,
-				tokensUsed,
+				messageId: assistantMessageId!, // Non-null assertion: guaranteed to exist at this point
+				tokensUsed: result.totalTokens,
 				creditsRemaining: creditResult.creditsRemaining,
 				sessionId: args.sessionId,
 			};
 		} catch (error) {
 			console.error("Chat message failed:", error);
+
+			// Cleanup: If we created a streaming message, mark it as failed
+			if (assistantMessageId) {
+				try {
+					await ctx.runMutation(internal.chatStreaming.finalizeStreamMessage, {
+						messageId: assistantMessageId,
+						tokens: 0,
+						creditsUsed: 0,
+					});
+				} catch (cleanupError) {
+					console.error("Failed to cleanup streaming message:", cleanupError);
+				}
+			}
 
 			return {
 				success: false,
