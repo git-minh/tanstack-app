@@ -1376,7 +1376,7 @@
         "description": "Integrate Autumn for credit purchases with packages and Pro plan",
         "details": "Update routes/_authenticated/pricing.tsx with credit packages (500/$5, 1000/$9, 5000/$40). Create components/features/credits/purchase-credits-dialog.tsx with package selection and Autumn checkout integration. Create convex/webhooks/autumn.ts to handle purchase events and add credits. Implement Pro plan check for unlimited credits.",
         "testStrategy": "Test purchase flow end-to-end, verify credits added after payment, test Pro plan unlimited credits, test webhook reliability",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           32
         ],
@@ -1420,7 +1420,7 @@
       "source": "AI-PRD.md - Comprehensive Product Requirements Document",
       "created": "2025-11-09T15:28:04.519Z",
       "description": "Tasks for master context",
-      "updated": "2025-11-14T16:48:36.100Z"
+      "updated": "2025-11-14T16:55:49.475Z"
     }
   }
 }
