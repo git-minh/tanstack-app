@@ -1389,7 +1389,7 @@
         "description": "Integrate chat into navigation, dashboard, and add credit warnings with mobile responsiveness",
         "details": "Update components/layout/data/sidebar-data.tsx to add 'Chat AI' navigation with MessageSquare icon. Update routes/_authenticated/dashboard.tsx to add 'Quick Chat' card showing recent sessions. Implement credit warning toasts when balance drops below 20. Create blocking dialog for insufficient credits with 'Buy More' CTA. Ensure mobile responsiveness with collapsible session sidebar.",
         "testStrategy": "Test navigation works, verify dashboard integration, test warnings and blocking dialogs, verify mobile UI",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           36,
           38
@@ -1420,7 +1420,7 @@
       "source": "AI-PRD.md - Comprehensive Product Requirements Document",
       "created": "2025-11-09T15:28:04.519Z",
       "description": "Tasks for master context",
-      "updated": "2025-11-14T16:55:49.475Z"
+      "updated": "2025-11-15T00:40:55.129Z"
     }
   }
 }

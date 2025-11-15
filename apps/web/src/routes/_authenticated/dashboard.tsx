@@ -17,6 +17,7 @@ import type {
 // Lazy load heavy components for better code splitting
 const ActivityChart = lazy(() => import("@/components/features/dashboard/activity-chart"));
 const RecentActivityTable = lazy(() => import("@/components/features/dashboard/recent-activity-table"));
+const QuickChatCard = lazy(() => import("@/components/features/dashboard/quick-chat-card").then(m => ({ default: m.QuickChatCard })));
 // Lazy load GenerateDialog - only loads when "Generate Project with AI" button is clicked
 const GenerateDialog = lazy(() =>
 	import("@/features/ai-generation").then(m => ({ default: m.GenerateDialog }))
@@ -121,6 +122,11 @@ function DashboardContent() {
 			{/* Stats load first (fast) */}
 			<StatCards data={data.stats} />
 
+			{/* Quick Chat card - shows recent AI conversations */}
+			<Suspense fallback={<CardSkeleton />}>
+				<QuickChatCard />
+			</Suspense>
+
 			{/* Chart loads progressively with lazy loading (saves 1.3MB) */}
 			<Suspense fallback={<ChartSkeleton />}>
 				<ActivityChart data={data.chartData} />
@@ -164,6 +170,30 @@ function TableSkeleton() {
 							<div className="flex-1 space-y-2">
 								<div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
 								<div className="h-3 w-1/2 animate-pulse rounded bg-muted/60" />
+							</div>
+						</div>
+					))}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+/**
+ * Skeleton for card loading state
+ */
+function CardSkeleton() {
+	return (
+		<div className="rounded-lg border bg-card">
+			<div className="p-6">
+				<div className="mb-4 h-6 w-32 animate-pulse rounded bg-muted" />
+				<div className="space-y-3">
+					{[...Array(3)].map((_, i) => (
+						<div key={i} className="flex items-start gap-3 rounded-lg border p-3">
+							<div className="h-4 w-4 animate-pulse rounded bg-muted" />
+							<div className="flex-1 space-y-2">
+								<div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+								<div className="h-3 w-1/3 animate-pulse rounded bg-muted/60" />
 							</div>
 						</div>
 					))}
