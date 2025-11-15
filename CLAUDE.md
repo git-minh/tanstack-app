@@ -807,6 +807,220 @@ const { data: roots } = useSuspenseQuery(
 
 These implementations serve as reference patterns for building production-ready features in this codebase.
 
+#### Chat AI Page (Streaming Chat Pattern)
+Location: `apps/web/src/routes/_authenticated/chat.tsx`
+
+**Features:**
+- Real-time AI chat assistant with Azure OpenAI integration
+- Session management with persistent history
+- Streaming responses with polling-based updates
+- Mobile-responsive layout with Sheet/drawer pattern
+- Context-aware chat (includes user projects and tasks)
+- Credit-based usage with warnings and blocking
+
+**Key Components:**
+- `features/chat/chat-session-list.tsx` - Session sidebar with create/rename/delete
+- `features/chat/chat-messages.tsx` - Message display with streaming support
+- `features/chat/chat-input.tsx` - Auto-resize input with credit indicator
+- `features/chat/chat-empty-state.tsx` - Welcome screen with suggested prompts
+- Backend: `convex/chat.ts`, `convex/chatSessions.ts`, `convex/chatMessages.ts`, `convex/chatStreaming.ts`
+
+**Streaming Pattern:**
+```typescript
+// Backend: convex/chatStreaming.ts
+export const startStreamingMessage = mutation({
+  handler: async (ctx, { sessionId }) => {
+    return await ctx.db.insert("chatMessages", {
+      sessionId,
+      role: "assistant",
+      content: "",
+      isStreaming: true,
+      // ...
+    });
+  },
+});
+
+export const appendStreamChunk = mutation({
+  handler: async (ctx, { messageId, chunk }) => {
+    const message = await ctx.db.get(messageId);
+    await ctx.db.patch(messageId, {
+      content: message.content + chunk,
+    });
+  },
+});
+
+// Frontend: Polling for updates
+const { data: messages } = useSuspenseQuery(
+  convexQuery(api.chatMessages.getMessages, { sessionId }),
+  {
+    // Poll every 100ms for streaming messages
+    refetchInterval: messages.some(m => m.isStreaming) ? 100 : false,
+  }
+);
+```
+
+### Credit System & Billing
+
+**Architecture:**
+The app uses a credit-based system for AI operations with Autumn for payment processing.
+
+**Credit Costs** (`packages/backend/convex/credits.ts`):
+- Chat message: **3 credits**
+- AI project generation: **15 credits**
+- URL scraping: **5 credits**
+
+**Tiers:**
+- **Free**: 100 credits/month (resets monthly)
+- **Pro**: Unlimited credits ($9/month via Autumn)
+
+**Backend Pattern:**
+```typescript
+import { deductCredits, CREDIT_COSTS } from "./credits";
+
+export const myAction = action({
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    // Deduct credits before operation
+    await ctx.runMutation(api.credits.deductCredits, {
+      amount: CREDIT_COSTS.CHAT_MESSAGE,
+      reason: "Chat message",
+    });
+
+    // Perform operation...
+
+    return result;
+  },
+});
+```
+
+**Frontend Pattern:**
+```typescript
+// Check credits before action
+import { useCreditsCheck } from "@/hooks/use-credits-check";
+import { InsufficientCreditsDialog } from "@/components/features/credits/insufficient-credits-dialog";
+
+function MyComponent() {
+  const {
+    hasEnoughCredits,
+    creditsAvailable,
+    insufficientDialogOpen,
+    setInsufficientDialogOpen,
+    setCreditsNeeded,
+    setFeatureName,
+  } = useCreditsCheck();
+
+  const handleAction = async () => {
+    if (!hasEnoughCredits(15)) {
+      setCreditsNeeded(15);
+      setFeatureName("AI generation");
+      setInsufficientDialogOpen(true);
+      return;
+    }
+
+    // Proceed with action...
+  };
+
+  return (
+    <>
+      <Button onClick={handleAction}>Generate</Button>
+      <InsufficientCreditsDialog
+        open={insufficientDialogOpen}
+        onOpenChange={setInsufficientDialogOpen}
+        creditsNeeded={15}
+        creditsAvailable={creditsAvailable}
+        featureName="AI generation"
+      />
+    </>
+  );
+}
+```
+
+**Automatic Warnings:**
+Credit warnings are shown automatically via `useCreditWarnings()` hook (integrated in `_authenticated.tsx`):
+- < 20 credits: Warning toast (5s)
+- < 10 credits: Very low warning (7s)
+- < 5 credits: Critical error (10s)
+
+**Credit Purchase:**
+```typescript
+// Purchase flow via Autumn (apps/web/src/routes/_authenticated/pricing.tsx)
+// Packages: 500/$5, 1000/$9, 5000/$40
+// Webhook: packages/backend/convex/webhooks/autumn.ts
+// Auto-adds credits on successful payment
+```
+
+### AI Project Generation
+
+**Architecture:**
+Azure OpenAI GPT-4 integration for intelligent project generation from text descriptions.
+
+**Backend** (`packages/backend/convex/ai.ts`):
+```typescript
+export const generateProject = action({
+  handler: async (ctx, { prompt }) => {
+    // 1. Deduct 15 credits
+    await ctx.runMutation(api.credits.deductCredits, {
+      amount: CREDIT_COSTS.AI_GENERATION,
+    });
+
+    // 2. Optional: Scrape URL if provided
+    if (url) {
+      const scraped = await scrapeUrl(url);
+      prompt += `\n\nContent from ${url}:\n${scraped}`;
+    }
+
+    // 3. Call Azure OpenAI with structured prompts
+    const response = await callAzureOpenAI(prompt);
+
+    // 4. Parse and validate response (Zod schema)
+    const validated = parseAndValidateAIResponse(response);
+
+    // 5. Create project, tasks, contacts atomically
+    const projectId = await createProjectWithHierarchy(ctx, validated);
+
+    return { projectId, summary: { ... } };
+  },
+});
+```
+
+**Frontend** (`apps/web/src/features/ai-generation/`):
+- `generate-dialog.tsx` - Modal with prompt textarea and URL scraping
+- Form validation: 20-2000 chars
+- Loading states with progress messages
+- Success/error handling with toasts
+- Integrated on dashboard with "Generate Project with AI" button
+
+**Firecrawl Integration:**
+URL scraping for enhanced context (scrapes READMEs, docs, blogs):
+```typescript
+// Backend: convex/ai.ts
+import Firecrawl from '@firecrawl/firecrawl-node';
+
+const app = new Firecrawl({ apiKey: process.env.FIRECRAWL_API_KEY });
+const result = await app.scrapeUrl(url, { formats: ['markdown'] });
+// Append scraped content to AI prompt
+```
+
+**Environment Variables:**
+```bash
+# Backend (Convex)
+npx convex env set AZURE_OPENAI_ENDPOINT <endpoint>
+npx convex env set AZURE_OPENAI_KEY <key>
+npx convex env set AZURE_OPENAI_DEPLOYMENT <deployment-name>
+npx convex env set FIRECRAWL_API_KEY <key>
+
+# Frontend
+VITE_SENTRY_DSN=<sentry-dsn>  # Error tracking
+VITE_AUTUMN_API_KEY=<key>     # Billing
+```
+
+**Error Handling:**
+- Sentry integration for production error tracking (`apps/web/src/router.tsx`)
+- Source map uploads via `sentryVitePlugin` in `vite.config.ts`
+- Browser tracing and session replay enabled
+
 ## Task Master AI Instructions
 **Import Task Master's development workflow commands and guidelines, treat as if import is in the main CLAUDE.md file.**
 @./.taskmaster/CLAUDE.md
