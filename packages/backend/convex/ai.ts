@@ -318,7 +318,7 @@ async function callAzureOpenAI(
   } = options;
 
   // Construct Azure OpenAI endpoint URL with API version
-  const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2024-08-01-preview`;
+  const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2025-01-01-preview`;
 
   // Build request body based on model type
   const requestBody: Record<string, unknown> = {
