@@ -43,7 +43,7 @@ async function callAzureOpenAIStreaming(
 ): Promise<{ totalTokens: number }> {
 	const { maxTokens = 4000 } = options;
 
-	const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2024-08-01-preview`;
+	const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2025-01-01-preview`;
 
 	// Build request with streaming enabled
 	const requestBody = {
