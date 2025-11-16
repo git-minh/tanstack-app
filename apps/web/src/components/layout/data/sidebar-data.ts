@@ -5,6 +5,7 @@ import Users from 'lucide-react/dist/esm/icons/users'
 import FolderKanban from 'lucide-react/dist/esm/icons/folder-kanban'
 import CreditCard from 'lucide-react/dist/esm/icons/credit-card'
 import MessageSquare from 'lucide-react/dist/esm/icons/message-square'
+import Palette from 'lucide-react/dist/esm/icons/palette'
 import { type SidebarData } from '../types'
 
 /**
@@ -40,6 +41,11 @@ export function getSidebarData(user: {
             title: 'Projects',
             url: '/projects',
             icon: FolderKanban,
+          },
+          {
+            title: 'Design References',
+            url: '/design-references',
+            icon: Palette,
           },
           {
             title: 'Tasks',
