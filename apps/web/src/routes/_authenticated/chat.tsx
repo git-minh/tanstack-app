@@ -15,7 +15,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@/components/ui/sheet";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import Menu from "lucide-react/dist/esm/icons/menu";
 import { ChatSessionList } from "@/components/features/chat/chat-session-list";
 import { ChatMessages } from "@/components/features/chat/chat-messages";
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/chat")({
 });
 
 function ChatRoute() {
-	const isMobile = useMobile();
+	const isMobile = useIsMobile();
 	const [activeSessionId, setActiveSessionId] = useState<
 		Id<"chatSessions"> | null
 	>(null);
