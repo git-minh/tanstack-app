@@ -1,0 +1,55 @@
+# Task ID: 43
+# Title: AI Website Analysis Action
+# Status: pending
+# Dependencies: 42
+# Priority: high
+# Description: Create AI-powered website analysis using Azure OpenAI
+# Details:
+Create analyzeWebsite Convex action in convex/ai.ts that takes crawled website data and uses Azure OpenAI to extract: UI/UX patterns (layout types, component types, interaction patterns), color palette (primary, secondary, accent with hex codes), typography (font families, sizes, weights, line heights), tech stack detection (React, Vue, Tailwind, etc.), and component inventory. Design comprehensive system prompt for design analysis. Implement Zod schema for response validation. Integrate credit system (deduct 10 credits per analysis). Add timing logs and comprehensive error handling. Estimated time: 2.5 hours.
+
+# Test Strategy:
+Test analysis on 5 different sites (minimal, corporate, creative styles), verify all fields populated correctly, test color extraction accuracy, verify credit deduction, measure analysis time (<60s total)
+
+# Subtasks:
+## 1. Design comprehensive system prompt for website analysis [pending]
+### Dependencies: None
+### Description: Create detailed AI system prompt that guides analysis extraction
+### Details:
+Write system prompt: 'You are a professional UI/UX designer and front-end architect. Analyze the provided website pages and extract: 1) UI/UX Patterns: layout structures (hero, grid, sidebar, card-based), component types (buttons, forms, modals, navigation, CTAs), interaction patterns (hover effects, transitions, animations, scroll behaviors), 2) Color Palette: primary colors (brand colors, most prominent), secondary colors (supporting colors), accent colors (CTAs, highlights) - extract hex codes from CSS/styles or infer from visuals, 3) Typography: heading font family and characteristics (serif, sans-serif, display), body font family, font sizes used (px or rem), font weights (normal, bold, etc.), line heights, 4) Tech Stack: framework detection (React, Vue, Angular, Svelte, vanilla JS), CSS framework (Tailwind, Bootstrap, Material UI, custom), build tools and libraries detected, 5) Component Inventory: list major reusable components with descriptions, categorize by type (navigation, forms, content, layout). Return structured JSON.'
+
+## 2. Create Zod schema for analysis response validation [pending]
+### Dependencies: None
+### Description: Define strict Zod schema matching expected AI analysis response structure
+### Details:
+Create analysisResponseSchema in convex/ai.ts using Zod: z.object({ uiPatterns: z.array(z.string()), colorPalette: z.object({ primary: z.array(z.string()), secondary: z.array(z.string()), accent: z.array(z.string()) }), typography: z.object({ headingFont: z.string(), bodyFont: z.string(), sizes: z.array(z.string()) }), techStack: z.array(z.string()), components: z.array(z.object({ type: z.string(), description: z.string() })) }). Export TypeScript type AnalysisResponse.
+
+## 3. Implement analyzeWebsite action basic structure [pending]
+### Dependencies: 43.2
+### Description: Create analyzeWebsite Convex action with authentication and credit check
+### Details:
+Create action analyzeWebsite in convex/ai.ts with args: url, tags (optional), style (optional), industry (optional). 1) Call requireAuth to get user identity, 2) Check user has >= 10 credits using api.credits.getUserCredits, throw error if insufficient, 3) Call crawlWebsite action to get pages data, 4) Prepare pages content for AI (combine markdown from all pages, limit to 15,000 chars total). Return basic structure for now.
+
+## 4. Integrate Azure OpenAI for analysis [pending]
+### Dependencies: 43.1, 43.3
+### Description: Call Azure OpenAI API with analysis system prompt and crawled content
+### Details:
+In analyzeWebsite action, after crawling: 1) Build messages array with system prompt (from subtask 1) and user message with combined pages content, 2) Call Azure OpenAI using same pattern as generateProject (endpoint, key, deployment from env), 3) Use response_format: { type: 'json_object' }, temperature: 0.7, max_tokens: 3000, 4) Parse JSON response, 5) Validate with analysisResponseSchema, 6) Handle parsing/validation errors with helpful messages.
+
+## 5. Add UI pattern and component extraction [pending]
+### Dependencies: 43.4
+### Description: Enhance prompt to extract detailed UI patterns and component inventory
+### Details:
+Refine system prompt to guide AI in identifying specific patterns: hero sections (full-width, split, video background), grid layouts (2-col, 3-col, masonry), card designs (outlined, shadowed, elevated), navigation (top nav, sidebar, hamburger menu), forms (inline, multi-step, floating labels), modals (center, slide-in, full-screen). For components, extract: type, description, notable features. Test that AI returns specific, actionable patterns.
+
+## 6. Add color palette and typography extraction [pending]
+### Dependencies: 43.5
+### Description: Enhance AI to accurately extract colors and fonts from website content
+### Details:
+Improve prompt with examples: 'For color palette, extract hex codes like #1a1a2e or named colors. Primary: main brand colors (2-3), Secondary: supporting colors (2-4), Accent: CTA and highlight colors (1-2). For typography, identify font families (e.g., Inter, Roboto, custom), common sizes (16px body, 32px h1, 24px h2), weights (400, 600, 700). Look for patterns in CSS or infer from visual consistency.' Test with sites that have clear design systems.
+
+## 7. Add tech stack detection and finalize with credits [pending]
+### Dependencies: 43.6
+### Description: Implement tech stack detection, integrate credit deduction, add timing logs
+### Details:
+Enhance prompt to detect: React (className, hooks imports), Vue (v-if, v-for), Tailwind (class patterns like flex, grid, bg-), Next.js (Link components), etc. After successful analysis: 1) Deduct 10 credits via api.credits.deductCredits, 2) Add timing logs (start time, crawl time, analysis time, total time), 3) Log analysis request (url, user, success/failure) for monitoring, 4) Return complete analysis object. Test with 5 different sites and verify accuracy.
+

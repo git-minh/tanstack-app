@@ -1,0 +1,50 @@
+# Task ID: 42
+# Title: Multi-Page Website Crawling Enhancement
+# Status: done
+# Dependencies: 41
+# Priority: high
+# Implementation: packages/backend/convex/ai.ts:879-1007
+# Description: Enhance Firecrawl integration to crawl multiple pages per website
+# Details:
+Create or update crawlWebsite action in convex/ai.ts to use Firecrawl's crawlUrl API instead of scrapeUrl. Configure to crawl 10-20 pages per website (configurable limit). Implement intelligent page selection prioritizing home, about, pricing, features pages while filtering out privacy, terms, cookies pages. Add rate limiting (max 5 crawls per hour per user) tracked in userUsage table. Implement comprehensive error handling for timeout, failed pages, invalid URLs. Return both markdown and HTML formats. Estimated time: 2 hours.
+
+# Test Strategy:
+Test crawling 5 different websites, verify 10+ pages returned, test rate limiting enforcement, verify error handling for protected sites, measure crawl time (<30s)
+
+# Subtasks:
+## 1. Research Firecrawl crawlUrl API and configuration [done]
+### Dependencies: None
+### Description: Review Firecrawl documentation for crawlUrl API, understand configuration options and limitations
+### Details:
+Read Firecrawl documentation for crawlUrl method. Understand parameters: limit (max pages), scrapeOptions (formats array), crawlOptions (crawlEntireDomain boolean, allowSubdomains boolean, allowExternalLinks boolean). Note differences from scrapeUrl. Research timeout settings, rate limits, error responses. Document API patterns in code comments.
+
+## 2. Create crawlWebsite Convex action with basic structure [done]
+### Dependencies: 42.1
+### Description: Implement crawlWebsite action in convex/ai.ts with Firecrawl crawlUrl integration
+### Details:
+Create new action crawlWebsite in packages/backend/convex/ai.ts. Accept arguments: url (string), limit (optional, default 10). Initialize FirecrawlApp with FIRECRAWL_API_KEY from env. Call app.crawlUrl(url, { limit, scrapeOptions: { formats: ['markdown', 'html'], onlyMainContent: true } }). Return crawl result with pages array. Add basic try-catch error handling.
+
+## 3. Implement intelligent page selection and filtering [done]
+### Dependencies: 42.2
+### Description: Add logic to prioritize important pages and filter out irrelevant ones
+### Details:
+Create helper function filterPages(pages) that: 1) Prioritizes pages with URLs containing: '/', '/about', '/pricing', '/features', '/product', '/services'. 2) Filters out pages containing: '/privacy', '/terms', '/cookies', '/legal', '/404', '/error'. 3) Uses URL pattern matching with regex. 4) Limits result to configured max (10-20 pages). 5) Returns filtered and sorted pages array.
+
+## 4. Add rate limiting for website crawls [done]
+### Dependencies: 42.2
+### Description: Implement rate limiting to max 5 crawls per hour per user using userUsage table
+### Details:
+Add websiteCrawlsThisHour field to userUsage schema (array of timestamps). In crawlWebsite action, before crawling: 1) Get userUsage record, 2) Filter timestamps to last hour only, 3) Check if count >= 5, throw error 'Rate limit exceeded: max 5 website crawls per hour', 4) Add current timestamp to array, 5) Update userUsage record. Include rate limit info in error message.
+
+## 5. Add comprehensive error handling [done]
+### Dependencies: 42.3, 42.4
+### Description: Handle timeout, failed pages, invalid URLs, and Firecrawl API errors
+### Details:
+Wrap crawlUrl call in try-catch. Handle specific errors: 1) Timeout (30s): return partial results if available, 2) Invalid URL: validate URL format before crawling, throw 'Invalid URL format', 3) Failed pages: log failures but continue with successful pages, 4) Firecrawl API errors: catch and re-throw with user-friendly message. Add timing logs. Return structured response with success/error status and crawled pages.
+
+## 6. Test crawling with 5 diverse websites [done]
+### Dependencies: 42.5
+### Description: Test crawlWebsite action with different site types and verify functionality
+### Details:
+Test with: 1) SaaS site (linear.app), 2) E-commerce (shopify.com/examples), 3) Documentation (docs.convex.dev), 4) Marketing (tailwindcss.com), 5) Portfolio site. For each: verify 10+ pages returned, check markdown and HTML formats present, verify filtering works (no privacy/terms pages), measure crawl time (should be <30s), test rate limiting by making 6 requests. Document results.
+

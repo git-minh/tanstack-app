@@ -1410,17 +1410,763 @@
         ],
         "priority": "high",
         "subtasks": []
+      },
+      {
+        "id": 41,
+        "title": "Database Schema for Design References",
+        "description": "Create designReferences table with comprehensive analysis and prompt storage",
+        "details": "Update convex/schema.ts to add designReferences table with fields: userId, displayId, url, siteName, description, analysis object (uiPatterns, colorPalette, typography, techStack, components), clonePrompts object (fullPage, components[], designSystem), tags[], style, industry, thumbnail, createdAt, updatedAt. Add indexes: by_userId, by_displayId, by_userId_and_style. Update convex/counters.ts to add 'designReferences': 'DR' prefix mapping for display ID generation. Estimated time: 1 hour.",
+        "testStrategy": "Verify schema compiles, test display ID generation (DR-000001), verify indexes created in Convex dashboard, test schema accepts all field types",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define designReferences table schema",
+            "description": "Add designReferences table definition to convex/schema.ts with all required fields",
+            "details": "Define table with fields: userId (string), displayId (string), url (string), siteName (string), description (optional string), analysis object with nested structure (uiPatterns array, colorPalette object with primary/secondary/accent arrays, typography object with headingFont/bodyFont/sizes, techStack array, components array of objects), clonePrompts object (fullPage string, components array, designSystem string), tags array, style string, industry optional string, thumbnail optional string, createdAt number, updatedAt number. Use v.object(), v.array(), v.optional() appropriately.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 41
+          },
+          {
+            "id": 2,
+            "title": "Add table indexes for efficient querying",
+            "description": "Add indexes to designReferences table for user queries, displayId lookup, and style filtering",
+            "details": "Add three indexes using .index() method: by_userId on userId field for listing user's references, by_displayId on displayId for unique lookups (DR-000001), by_userId_and_style on [userId, style] for filtered queries. Verify index syntax matches existing patterns in schema.ts.",
+            "status": "done",
+            "dependencies": [
+              1
+            ],
+            "parentTaskId": 41
+          },
+          {
+            "id": 3,
+            "title": "Update counters.ts with DR prefix mapping",
+            "description": "Add designReferences counter prefix to generate display IDs like DR-000001",
+            "details": "Open packages/backend/convex/counters.ts and add 'designReferences': 'DR' to the prefixes object in generateDisplayId function. Follow existing pattern used for tasks (TD), contacts (CT), projects (PR), chatSessions (CH).",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 41
+          },
+          {
+            "id": 4,
+            "title": "Test schema compilation and verify in Convex dashboard",
+            "description": "Run dev server and verify schema compiles, indexes created, displayId generation works",
+            "details": "Run pnpm dev to trigger Convex schema push. Check terminal for compilation errors. Open Convex dashboard and verify designReferences table exists with all fields and 3 indexes. Test generateDisplayId with 'designReferences' parameter returns DR-000001 format.",
+            "status": "done",
+            "dependencies": [
+              1,
+              2,
+              3
+            ],
+            "parentTaskId": 41
+          }
+        ]
+      },
+      {
+        "id": 42,
+        "title": "Multi-Page Website Crawling Enhancement",
+        "description": "Enhance Firecrawl integration to crawl multiple pages per website",
+        "details": "Create or update crawlWebsite action in convex/ai.ts to use Firecrawl's crawlUrl API instead of scrapeUrl. Configure to crawl 10-20 pages per website (configurable limit). Implement intelligent page selection prioritizing home, about, pricing, features pages while filtering out privacy, terms, cookies pages. Add rate limiting (max 5 crawls per hour per user) tracked in userUsage table. Implement comprehensive error handling for timeout, failed pages, invalid URLs. Return both markdown and HTML formats. Estimated time: 2 hours.",
+        "testStrategy": "Test crawling 5 different websites, verify 10+ pages returned, test rate limiting enforcement, verify error handling for protected sites, measure crawl time (<30s)",
+        "status": "done",
+        "dependencies": [
+          41
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Research Firecrawl crawlUrl API and configuration",
+            "description": "Review Firecrawl documentation for crawlUrl API, understand configuration options and limitations",
+            "details": "Read Firecrawl documentation for crawlUrl method. Understand parameters: limit (max pages), scrapeOptions (formats array), crawlOptions (maxDepth, allowBackwardLinks). Note differences from scrapeUrl. Research timeout settings, rate limits, error responses. Document API patterns in code comments.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 42
+          },
+          {
+            "id": 2,
+            "title": "Create crawlWebsite Convex action with basic structure",
+            "description": "Implement crawlWebsite action in convex/ai.ts with Firecrawl crawlUrl integration",
+            "details": "Create new action crawlWebsite in packages/backend/convex/ai.ts. Accept arguments: url (string), limit (optional, default 10). Initialize FirecrawlApp with FIRECRAWL_API_KEY from env. Call app.crawlUrl(url, { limit, scrapeOptions: { formats: ['markdown', 'html'], onlyMainContent: true } }). Return crawl result with pages array. Add basic try-catch error handling.",
+            "status": "done",
+            "dependencies": [
+              1
+            ],
+            "parentTaskId": 42
+          },
+          {
+            "id": 3,
+            "title": "Implement intelligent page selection and filtering",
+            "description": "Add logic to prioritize important pages and filter out irrelevant ones",
+            "details": "Create helper function filterPages(pages) that: 1) Prioritizes pages with URLs containing: '/', '/about', '/pricing', '/features', '/product', '/services'. 2) Filters out pages containing: '/privacy', '/terms', '/cookies', '/legal', '/404', '/error'. 3) Uses URL pattern matching with regex. 4) Limits result to configured max (10-20 pages). 5) Returns filtered and sorted pages array.",
+            "status": "done",
+            "dependencies": [
+              2
+            ],
+            "parentTaskId": 42
+          },
+          {
+            "id": 4,
+            "title": "Add rate limiting for website crawls",
+            "description": "Implement rate limiting to max 5 crawls per hour per user using userUsage table",
+            "details": "Add websiteCrawlsThisHour field to userUsage schema (array of timestamps). In crawlWebsite action, before crawling: 1) Get userUsage record, 2) Filter timestamps to last hour only, 3) Check if count >= 5, throw error 'Rate limit exceeded: max 5 website crawls per hour', 4) Add current timestamp to array, 5) Update userUsage record. Include rate limit info in error message.",
+            "status": "done",
+            "dependencies": [
+              2
+            ],
+            "parentTaskId": 42
+          },
+          {
+            "id": 5,
+            "title": "Add comprehensive error handling",
+            "description": "Handle timeout, failed pages, invalid URLs, and Firecrawl API errors",
+            "details": "Wrap crawlUrl call in try-catch. Handle specific errors: 1) Timeout (30s): return partial results if available, 2) Invalid URL: validate URL format before crawling, throw 'Invalid URL format', 3) Failed pages: log failures but continue with successful pages, 4) Firecrawl API errors: catch and re-throw with user-friendly message. Add timing logs. Return structured response with success/error status and crawled pages.",
+            "status": "done",
+            "dependencies": [
+              3,
+              4
+            ],
+            "parentTaskId": 42
+          },
+          {
+            "id": 6,
+            "title": "Test crawling with 5 diverse websites",
+            "description": "Test crawlWebsite action with different site types and verify functionality",
+            "details": "Test with: 1) SaaS site (linear.app), 2) E-commerce (shopify.com/examples), 3) Documentation (docs.convex.dev), 4) Marketing (tailwindcss.com), 5) Portfolio site. For each: verify 10+ pages returned, check markdown and HTML formats present, verify filtering works (no privacy/terms pages), measure crawl time (should be <30s), test rate limiting by making 6 requests. Document results.",
+            "status": "done",
+            "dependencies": [
+              5
+            ],
+            "parentTaskId": 42
+          }
+        ]
+      },
+      {
+        "id": 43,
+        "title": "AI Website Analysis Action",
+        "description": "Create AI-powered website analysis using Azure OpenAI",
+        "details": "Create analyzeWebsite Convex action in convex/ai.ts that takes crawled website data and uses Azure OpenAI to extract: UI/UX patterns (layout types, component types, interaction patterns), color palette (primary, secondary, accent with hex codes), typography (font families, sizes, weights, line heights), tech stack detection (React, Vue, Tailwind, etc.), and component inventory. Design comprehensive system prompt for design analysis. Implement Zod schema for response validation. Integrate credit system (deduct 10 credits per analysis). Add timing logs and comprehensive error handling. Estimated time: 2.5 hours.",
+        "testStrategy": "Test analysis on 5 different sites (minimal, corporate, creative styles), verify all fields populated correctly, test color extraction accuracy, verify credit deduction, measure analysis time (<60s total)",
+        "status": "done",
+        "dependencies": [
+          42
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design comprehensive system prompt for website analysis",
+            "description": "Create detailed AI system prompt that guides analysis extraction",
+            "details": "Write system prompt: 'You are a professional UI/UX designer and front-end architect. Analyze the provided website pages and extract: 1) UI/UX Patterns: layout structures (hero, grid, sidebar, card-based), component types (buttons, forms, modals, navigation, CTAs), interaction patterns (hover effects, transitions, animations, scroll behaviors), 2) Color Palette: primary colors (brand colors, most prominent), secondary colors (supporting colors), accent colors (CTAs, highlights) - extract hex codes from CSS/styles or infer from visuals, 3) Typography: heading font family and characteristics (serif, sans-serif, display), body font family, font sizes used (px or rem), font weights (normal, bold, etc.), line heights, 4) Tech Stack: framework detection (React, Vue, Angular, Svelte, vanilla JS), CSS framework (Tailwind, Bootstrap, Material UI, custom), build tools and libraries detected, 5) Component Inventory: list major reusable components with descriptions, categorize by type (navigation, forms, content, layout). Return structured JSON.'",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 43
+          },
+          {
+            "id": 2,
+            "title": "Create Zod schema for analysis response validation",
+            "description": "Define strict Zod schema matching expected AI analysis response structure",
+            "details": "Create analysisResponseSchema in convex/ai.ts using Zod: z.object({ uiPatterns: z.array(z.string()), colorPalette: z.object({ primary: z.array(z.string()), secondary: z.array(z.string()), accent: z.array(z.string()) }), typography: z.object({ headingFont: z.string(), bodyFont: z.string(), sizes: z.array(z.string()) }), techStack: z.array(z.string()), components: z.array(z.object({ type: z.string(), description: z.string() })) }). Export TypeScript type AnalysisResponse.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 43
+          },
+          {
+            "id": 3,
+            "title": "Implement analyzeWebsite action basic structure",
+            "description": "Create analyzeWebsite Convex action with authentication and credit check",
+            "details": "Create action analyzeWebsite in convex/ai.ts with args: url, tags (optional), style (optional), industry (optional). 1) Call requireAuth to get user identity, 2) Check user has >= 10 credits using api.credits.getUserCredits, throw error if insufficient, 3) Call crawlWebsite action to get pages data, 4) Prepare pages content for AI (combine markdown from all pages, limit to 15,000 chars total). Return basic structure for now.",
+            "status": "done",
+            "dependencies": [
+              2
+            ],
+            "parentTaskId": 43
+          },
+          {
+            "id": 4,
+            "title": "Integrate Azure OpenAI for analysis",
+            "description": "Call Azure OpenAI API with analysis system prompt and crawled content",
+            "details": "In analyzeWebsite action, after crawling: 1) Build messages array with system prompt (from subtask 1) and user message with combined pages content, 2) Call Azure OpenAI using same pattern as generateProject (endpoint, key, deployment from env), 3) Use response_format: { type: 'json_object' }, temperature: 0.7, max_tokens: 3000, 4) Parse JSON response, 5) Validate with analysisResponseSchema, 6) Handle parsing/validation errors with helpful messages.",
+            "status": "done",
+            "dependencies": [
+              1,
+              3
+            ],
+            "parentTaskId": 43
+          },
+          {
+            "id": 5,
+            "title": "Add UI pattern and component extraction",
+            "description": "Enhance prompt to extract detailed UI patterns and component inventory",
+            "details": "Refine system prompt to guide AI in identifying specific patterns: hero sections (full-width, split, video background), grid layouts (2-col, 3-col, masonry), card designs (outlined, shadowed, elevated), navigation (top nav, sidebar, hamburger menu), forms (inline, multi-step, floating labels), modals (center, slide-in, full-screen). For components, extract: type, description, notable features. Test that AI returns specific, actionable patterns.",
+            "status": "done",
+            "dependencies": [
+              4
+            ],
+            "parentTaskId": 43
+          },
+          {
+            "id": 6,
+            "title": "Add color palette and typography extraction",
+            "description": "Enhance AI to accurately extract colors and fonts from website content",
+            "details": "Improve prompt with examples: 'For color palette, extract hex codes like #1a1a2e or named colors. Primary: main brand colors (2-3), Secondary: supporting colors (2-4), Accent: CTA and highlight colors (1-2). For typography, identify font families (e.g., Inter, Roboto, custom), common sizes (16px body, 32px h1, 24px h2), weights (400, 600, 700). Look for patterns in CSS or infer from visual consistency.' Test with sites that have clear design systems.",
+            "status": "done",
+            "dependencies": [
+              5
+            ],
+            "parentTaskId": 43
+          },
+          {
+            "id": 7,
+            "title": "Add tech stack detection and finalize with credits",
+            "description": "Implement tech stack detection, integrate credit deduction, add timing logs",
+            "details": "Enhance prompt to detect: React (className, hooks imports), Vue (v-if, v-for), Tailwind (class patterns like flex, grid, bg-), Next.js (Link components), etc. After successful analysis: 1) Deduct 10 credits via api.credits.deductCredits, 2) Add timing logs (start time, crawl time, analysis time, total time), 3) Log analysis request (url, user, success/failure) for monitoring, 4) Return complete analysis object. Test with 5 different sites and verify accuracy.",
+            "status": "done",
+            "dependencies": [
+              6
+            ],
+            "parentTaskId": 43
+          }
+        ]
+      },
+      {
+        "id": 44,
+        "title": "Clone Prompt Generation System",
+        "description": "Generate actionable clone prompts from website analysis",
+        "details": "Create generateClonePrompts helper function in convex/ai.ts that takes analysis results and uses Azure OpenAI to generate three types of prompts: 1) Full-page clone (comprehensive recreation guide with all details), 2) Component-specific prompts (individual prompts for hero, CTA, forms, navigation), 3) Design system prompt (color palette, typography, spacing extraction). Each prompt must include exact values (hex colors, pixel sizes, font weights), layout descriptions, and interaction patterns. Implement structured output with Zod validation. Integrate into analyzeWebsite action. Add 2-3 example prompts to system message for quality. Estimated time: 2 hours.",
+        "testStrategy": "Verify all 3 prompt types generated, test prompt specificity (must include exact values), verify prompts are actionable for developers, test with various site styles, measure generation time (<15s)",
+        "status": "pending",
+        "dependencies": [
+          43
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design prompt generation system prompt with examples",
+            "description": "Create system prompt that guides AI in generating specific, actionable clone prompts",
+            "details": "Write system prompt for generating 3 types of clone prompts with exact values (hex colors, pixel sizes, font weights). Include 2-3 example prompts showing desired format.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 44
+          },
+          {
+            "id": 2,
+            "title": "Create Zod schema for clone prompts validation",
+            "description": "Define schema for structured clone prompt output",
+            "details": "Create clonePromptsSchema: z.object({ fullPage: z.string().min(100), components: z.array(z.object({ name, prompt })), designSystem: z.string().min(100) })",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 44
+          },
+          {
+            "id": 3,
+            "title": "Implement generateClonePrompts helper function",
+            "description": "Create function that calls Azure OpenAI to generate clone prompts",
+            "details": "Async function that takes analysis, calls Azure OpenAI, validates response, returns ClonePrompts object",
+            "status": "pending",
+            "dependencies": [
+              1,
+              2
+            ],
+            "parentTaskId": 44
+          },
+          {
+            "id": 4,
+            "title": "Generate full-page and design system prompts",
+            "description": "Ensure comprehensive prompts with exact values",
+            "details": "Full-page: complete recreation top-to-bottom. Design system: colors, typography, spacing, components. Min 200+ chars.",
+            "status": "pending",
+            "dependencies": [
+              3
+            ],
+            "parentTaskId": 44
+          },
+          {
+            "id": 5,
+            "title": "Generate component-specific prompts",
+            "description": "Create individual clone prompts for each major component",
+            "details": "For each component: standalone prompt with specific styles, colors, sizes, layout. Generate 5-8 component prompts per site.",
+            "status": "pending",
+            "dependencies": [
+              4
+            ],
+            "parentTaskId": 44
+          },
+          {
+            "id": 6,
+            "title": "Integrate and test with diverse sites",
+            "description": "Call from analyzeWebsite, test with 5 different style sites",
+            "details": "Test minimal, corporate, creative, SaaS, e-commerce sites. Verify all 3 prompt types, exact values, actionable, 1000+ chars total. <15s generation.",
+            "status": "pending",
+            "dependencies": [
+              5
+            ],
+            "parentTaskId": 44
+          }
+        ]
+      },
+      {
+        "id": 45,
+        "title": "Design Reference CRUD Operations",
+        "description": "Build backend queries and mutations for design reference management",
+        "details": "Create packages/backend/convex/designReferences.ts with complete CRUD: getDesignReferences query (list with pagination, filter by style/tags, sort by updatedAt), getDesignReference query (single by ID or displayId), createDesignReference mutation (save analysis and prompts), updateDesignReference mutation (edit tags, description, style), deleteDesignReference mutation, searchDesignReferences query (search by URL, site name, tags). Implement authentication checks on all operations. Use requireAuth helper pattern. Add comprehensive error handling. Estimated time: 1.5 hours.",
+        "testStrategy": "Test all CRUD operations, verify auth enforcement, test filtering and search, test pagination with 20+ references, verify ownership validation, test error cases",
+        "status": "pending",
+        "dependencies": [
+          41,
+          44
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create designReferences.ts file structure",
+            "description": "Set up Convex file with imports and requireAuth helper",
+            "details": "Create file, import query/mutation/v/Id, add requireAuth helper function",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 45
+          },
+          {
+            "id": 2,
+            "title": "Implement getDesignReferences query",
+            "description": "List user's references with pagination and filtering",
+            "details": "Query with limit, style, tag args. Use by_userId or by_userId_and_style index. Filter and sort by updatedAt.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "parentTaskId": 45
+          },
+          {
+            "id": 3,
+            "title": "Implement getDesignReference query",
+            "description": "Fetch single reference by ID with ownership check",
+            "details": "Query by id, verify ownership, return complete reference",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "parentTaskId": 45
+          },
+          {
+            "id": 4,
+            "title": "Implement createDesignReference mutation",
+            "description": "Save new design reference after analysis",
+            "details": "Generate displayId, insert with all fields, return id",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "parentTaskId": 45
+          },
+          {
+            "id": 5,
+            "title": "Implement update and delete mutations",
+            "description": "Edit tags/description and delete references",
+            "details": "updateDesignReference: verify ownership, patch. deleteDesignReference: verify ownership, delete.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "parentTaskId": 45
+          },
+          {
+            "id": 6,
+            "title": "Implement searchDesignReferences query",
+            "description": "Search by URL, name, or tags",
+            "details": "Case-insensitive search across url, siteName, tags fields",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "parentTaskId": 45
+          },
+          {
+            "id": 7,
+            "title": "Test all CRUD with auth and edge cases",
+            "description": "Comprehensive testing of all operations",
+            "details": "Test create, pagination, filtering, search, update, auth enforcement, delete, missing fields",
+            "status": "pending",
+            "dependencies": [
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "parentTaskId": 45
+          }
+        ]
+      },
+      {
+        "id": 46,
+        "title": "Design References Library Page",
+        "description": "Build complete frontend for browsing and managing design references",
+        "details": "Create routes/_authenticated/design-references.tsx with TanStack Table showing all saved references. Build components: design-references-table.tsx (table with thumbnail, site name, URL, style, tags, actions), design-reference-card.tsx (card view with thumbnail), design-reference-detail.tsx (full analysis display), color-palette-display.tsx (color swatches with hex codes), typography-sample.tsx (font preview), clone-prompt-viewer.tsx (code block with copy button). Implement filtering by style (minimal, corporate, creative), tag filtering, URL search. Add responsive design (desktop: table, mobile: cards). Estimated time: 3 hours.",
+        "testStrategy": "Test table rendering, filtering, search functionality, verify responsive on mobile/tablet, test copy prompt buttons, verify delete confirmation works, test detail view navigation",
+        "status": "pending",
+        "dependencies": [
+          45
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create design-references route with layout",
+            "description": "Build main route file with header and table container",
+            "details": "Create routes/_authenticated/design-references.tsx. Add header with title, description, 'Analyze Website' button. Container for table. State for dialogs.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 46
+          },
+          {
+            "id": 2,
+            "title": "Build design-references-table component with TanStack Table",
+            "description": "Create table with columns for thumbnail, site, URL, style, tags, actions",
+            "details": "Use TanStack Table. Columns: thumbnail (image), siteName, url (link), style (badge), tags (chips), actions (view/edit/delete). Row click navigates to detail.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "parentTaskId": 46
+          },
+          {
+            "id": 3,
+            "title": "Create design-reference-card component for mobile",
+            "description": "Build card view component for responsive mobile layout",
+            "details": "Card with thumbnail top, site name/URL, style indicator, tags, actions. Use for <768px width. Grid layout 1-2 columns.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "parentTaskId": 46
+          },
+          {
+            "id": 4,
+            "title": "Build design-reference-detail component",
+            "description": "Full analysis display component for detail view",
+            "details": "Show complete analysis: UI patterns list, color palette swatches, typography samples, tech stack badges, component inventory, clone prompts viewer. Organize in sections with cards.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "parentTaskId": 46
+          },
+          {
+            "id": 5,
+            "title": "Create color-palette-display component",
+            "description": "Visual color swatch display with hex codes",
+            "details": "Show color squares with hex labels. Group by primary, secondary, accent. Click to copy hex code. Responsive grid layout.",
+            "status": "pending",
+            "dependencies": [
+              4
+            ],
+            "parentTaskId": 46
+          },
+          {
+            "id": 6,
+            "title": "Create typography-sample and clone-prompt-viewer components",
+            "description": "Font preview and prompt display with copy functionality",
+            "details": "Typography: show heading/body fonts with sample text in different sizes. Prompt viewer: code block with syntax highlighting, copy button, tabs for fullPage/components/designSystem.",
+            "status": "pending",
+            "dependencies": [
+              4
+            ],
+            "parentTaskId": 46
+          },
+          {
+            "id": 7,
+            "title": "Implement filtering, search, and responsive design",
+            "description": "Add filters, search bar, and test mobile/tablet layouts",
+            "details": "Filter buttons for style (minimal/corporate/creative). Tag filter chips. Search input for URL/name. Desktop: table view. Mobile: card grid. Tablet: 2-col cards.",
+            "status": "pending",
+            "dependencies": [
+              2,
+              3
+            ],
+            "parentTaskId": 46
+          },
+          {
+            "id": 8,
+            "title": "Test all components and interactions",
+            "description": "Comprehensive UI/UX testing",
+            "details": "Test table sorting, filtering combinations, search, card clicks, detail navigation, copy prompts, delete confirmation, responsive breakpoints, empty states.",
+            "status": "pending",
+            "dependencies": [
+              7
+            ],
+            "parentTaskId": 46
+          }
+        ]
+      },
+      {
+        "id": 47,
+        "title": "Website Analysis Dialog",
+        "description": "Create UI for initiating website analysis",
+        "details": "Create features/design-references/components/analyze-website-dialog.tsx with URL input, optional tags/style/industry inputs, credit cost display (10 credits), form validation (valid HTTP/HTTPS URL). Build multi-step progress UI: 1) Crawling website (10-20s), 2) Analyzing design (15-30s), 3) Generating prompts (10-15s). Use useAction to call analyzeWebsite action. Implement useCreditsCheck hook integration. Handle success (navigate to detail view), insufficient credits (show purchase dialog), errors (toast notifications). Add 'Analyze Website' button to dashboard and /design-references page. Estimated time: 2 hours.",
+        "testStrategy": "Test URL validation, verify credit check blocks when insufficient, test progress UI shows correctly, verify success navigation, test error handling, test from both dashboard and library page",
+        "status": "pending",
+        "dependencies": [
+          43,
+          46
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create analyze-website-dialog component structure",
+            "description": "Build dialog with form inputs and layout",
+            "details": "Create dialog component. URL input (required), tags input (TagInput), style select (minimal/corporate/creative), industry input (optional). Credit cost: '10 credits'. Form validation.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 47
+          },
+          {
+            "id": 2,
+            "title": "Implement URL validation and form inputs",
+            "description": "Add Zod schema validation for URL and form handling",
+            "details": "Zod schema: url must be valid HTTP/HTTPS. Use React Hook Form with zodResolver. Validate on blur and submit. Show error messages below inputs.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "parentTaskId": 47
+          },
+          {
+            "id": 3,
+            "title": "Build multi-step progress UI component",
+            "description": "Create progress indicator for 3 analysis steps",
+            "details": "Progress component with 3 steps: 1) Crawling website (10-20s), 2) Analyzing design (15-30s), 3) Generating prompts (10-15s). Show current step highlighted, spinner, estimated time.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "parentTaskId": 47
+          },
+          {
+            "id": 4,
+            "title": "Integrate useAction and useCreditsCheck hooks",
+            "description": "Connect to backend analyzeWebsite action with credit validation",
+            "details": "Use useAction(api.ai.analyzeWebsite). Use useCreditsCheck hook to verify 10 credits. Disable submit if insufficient. Show loading state during analysis.",
+            "status": "pending",
+            "dependencies": [
+              2,
+              3
+            ],
+            "parentTaskId": 47
+          },
+          {
+            "id": 5,
+            "title": "Implement success, error, and insufficient credits handling",
+            "description": "Handle all analysis outcomes with proper UI feedback",
+            "details": "Success: close dialog, navigate to /design-references/[displayId]. Error: show toast, keep dialog open. Insufficient credits: show InsufficientCreditsDialog with 'Buy More' CTA.",
+            "status": "pending",
+            "dependencies": [
+              4
+            ],
+            "parentTaskId": 47
+          },
+          {
+            "id": 6,
+            "title": "Add Analyze buttons to dashboard and library page",
+            "description": "Integrate dialog trigger in multiple locations",
+            "details": "Dashboard: Add 'Analyze Website' button in header with Sparkles icon. Library page: same button. Both open AnalyzeWebsiteDialog. Pass open/onOpenChange props.",
+            "status": "pending",
+            "dependencies": [
+              5
+            ],
+            "parentTaskId": 47
+          },
+          {
+            "id": 7,
+            "title": "Test complete analysis flow end-to-end",
+            "description": "Test all scenarios and user paths",
+            "details": "Test: valid URL submission, invalid URL error, insufficient credits block, successful analysis and navigation, error handling, progress UI timing, mobile responsiveness, keyboard shortcuts (Esc to close).",
+            "status": "pending",
+            "dependencies": [
+              6
+            ],
+            "parentTaskId": 47
+          }
+        ]
+      },
+      {
+        "id": 48,
+        "title": "AI Generation Integration",
+        "description": "Integrate design references with existing AI project generation",
+        "details": "Update features/ai-generation/components/generate-dialog.tsx to add 'Import Design Reference' feature with dropdown showing saved references. Add prompt type selector (full-page, component, design system) and button to insert selected clone prompt into textarea. Update components/global-search.tsx to include design references in search results (type: 'design-reference'). Add 'Design References' navigation item to sidebar-data.tsx with Palette icon. Update dashboard to add 'Recent Design References' card showing last 3 analyzed sites. Ensure all integrations work seamlessly without breaking existing features. Estimated time: 1.5 hours.",
+        "testStrategy": "Test prompt insertion into AI generation, verify global search finds references, test navigation item works, verify dashboard card displays correctly, test no breaking changes to existing features",
+        "status": "pending",
+        "dependencies": [
+          46,
+          47
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Update generate-dialog with Import Design Reference feature",
+            "description": "Add design reference selector to AI generation dialog",
+            "details": "In generate-dialog.tsx, add section 'Import Design Reference' with: dropdown showing user's saved references (by siteName), prompt type radio group (full-page/component/design-system), 'Insert Prompt' button. Fetch references with useQuery.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 48
+          },
+          {
+            "id": 2,
+            "title": "Implement prompt type selector and insertion logic",
+            "description": "Add UI for choosing prompt type and inserting into textarea",
+            "details": "Radio buttons for prompt type. On 'Insert Prompt' click: get selected reference, extract prompt based on type (fullPage/components[0]/designSystem), append to textarea value with newline separator. Show success toast.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "parentTaskId": 48
+          },
+          {
+            "id": 3,
+            "title": "Update global-search to include design references",
+            "description": "Add design references to Cmd+K search results",
+            "details": "In global-search.tsx, add api.designReferences.searchDesignReferences to search. Map results with type: 'design-reference', show siteName, url, style badge. Navigate to /design-references/[displayId] on select.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 48
+          },
+          {
+            "id": 4,
+            "title": "Add Design References to sidebar navigation",
+            "description": "Add nav item to sidebar-data.tsx",
+            "details": "In sidebar-data.tsx navGroups, add { title: 'Design References', url: '/design-references', icon: Palette } after Projects. Import Palette from lucide-react.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 48
+          },
+          {
+            "id": 5,
+            "title": "Update dashboard with Recent Design References card",
+            "description": "Add card showing last 3 analyzed sites",
+            "details": "In dashboard.tsx, add card 'Recent Design References'. Query last 3 references sorted by createdAt desc. Show thumbnail, site name, style, 'View All' link to /design-references. Empty state if none.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 48
+          },
+          {
+            "id": 6,
+            "title": "Test all integrations without breaking changes",
+            "description": "Verify seamless integration across all features",
+            "details": "Test: import prompt in AI generation works, global search finds references, sidebar nav works, dashboard card displays correctly, no console errors, existing features unchanged, mobile responsive.",
+            "status": "pending",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "parentTaskId": 48
+          }
+        ]
+      },
+      {
+        "id": 49,
+        "title": "Testing and Documentation",
+        "description": "Comprehensive testing and documentation for website analyzer feature",
+        "details": "Write unit tests for analysis response parsing, prompt generation, CRUD operations, credit deduction. Write component tests for analyze dialog validation, table filtering/search, prompt insertion. Perform manual testing with 5 diverse websites (SaaS, e-commerce, portfolio, docs, marketing). Verify color extraction accuracy, typography detection, tech stack identification. Test mobile responsiveness thoroughly. Update CLAUDE.md with Design References section, usage patterns, credit costs. Update docs/ENVIRONMENT.md if needed. Add examples to README. Document troubleshooting for common issues (crawl failures, rate limits). Estimated time: 2 hours.",
+        "testStrategy": "All unit tests pass with >80% coverage, all component tests pass, manual test matrix completed successfully, documentation reviewed for completeness and accuracy, examples tested and working",
+        "status": "pending",
+        "dependencies": [
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Write unit tests for analysis and prompt generation",
+            "description": "Test backend AI functions",
+            "details": "Test analysisResponseSchema validation, clonePromptsSchema validation, parseAnalysisResponse with valid/invalid data, generateClonePrompts with mock responses.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 49
+          },
+          {
+            "id": 2,
+            "title": "Write unit tests for CRUD operations",
+            "description": "Test designReferences queries and mutations",
+            "details": "Test createDesignReference, getDesignReferences filtering, searchDesignReferences, updateDesignReference, deleteDesignReference, auth enforcement.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 49
+          },
+          {
+            "id": 3,
+            "title": "Write component tests for dialog and table",
+            "description": "Test React components",
+            "details": "Test AnalyzeWebsiteDialog: form validation, URL input, credit check, progress UI, error handling. Test DesignReferencesTable: rendering, filtering, search, sorting, row clicks.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 49
+          },
+          {
+            "id": 4,
+            "title": "Perform manual testing with 5 diverse websites",
+            "description": "Test real-world usage with different site types",
+            "details": "Analyze: 1) SaaS (linear.app), 2) E-commerce (shopify themes), 3) Portfolio (awwwards site), 4) Documentation (docs.convex.dev), 5) Marketing (tailwindcss.com). Verify color accuracy, typography detection, tech stack, prompt quality.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 49
+          },
+          {
+            "id": 5,
+            "title": "Test mobile responsiveness thoroughly",
+            "description": "Verify all components work on mobile/tablet",
+            "details": "Test on mobile: library page (card view), detail view (scrollable sections), analysis dialog (full-screen), color swatches (responsive grid), prompt viewer (copy buttons). Test tablet: 2-col layout, sidebar collapse.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 49
+          },
+          {
+            "id": 6,
+            "title": "Update CLAUDE.md with Design References section",
+            "description": "Document feature for future AI assistants",
+            "details": "Add section: 'Design References' under features. Document: usage patterns (analyze, browse, import prompts), credit costs (10 per analysis), integration with AI generation, component locations, troubleshooting (rate limits, crawl failures).",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 49
+          },
+          {
+            "id": 7,
+            "title": "Update docs and add examples",
+            "description": "Complete documentation and add troubleshooting",
+            "details": "Update docs/ENVIRONMENT.md if needed. Add examples to README showing feature. Document common issues: rate limit (5/hour), crawl timeout (30s), invalid URLs, API errors. Add example clone prompts.",
+            "status": "pending",
+            "dependencies": [
+              6
+            ],
+            "parentTaskId": 49
+          }
+        ]
       }
     ],
     "metadata": {
       "version": "1.0.0",
       "createdAt": "2025-01-09",
       "projectName": "AI-Powered Project Generation Feature",
-      "totalTasks": 12,
-      "source": "AI-PRD.md - Comprehensive Product Requirements Document",
+      "totalTasks": 49,
+      "source": "AI-PRD.md + Website Analyzer PRD - Comprehensive Product Requirements Documents",
       "created": "2025-11-09T15:28:04.519Z",
       "description": "Tasks for master context",
-      "updated": "2025-11-15T00:40:55.129Z"
+      "updated": "2025-11-16T14:45:56.244Z"
     }
   }
 }

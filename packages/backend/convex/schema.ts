@@ -92,6 +92,7 @@ export default defineSchema({
 		creditsRemaining: v.number(), // Current available credits
 		creditsTotal: v.number(), // Total credits for current tier (100 for free)
 		lastCreditReset: v.number(), // Timestamp of last monthly credit reset
+		websiteCrawlsThisHour: v.optional(v.array(v.number())), // Timestamps of crawls in last hour
 	}).index("by_userId", ["userId"]),
 	chatSessions: defineTable({
 		userId: v.string(),
@@ -116,4 +117,57 @@ export default defineSchema({
 	})
 		.index("by_sessionId", ["sessionId"])
 		.index("by_userId", ["userId"]),
+	designReferences: defineTable({
+		userId: v.string(),
+		displayId: v.string(),
+		url: v.string(),
+		siteName: v.string(),
+		description: v.optional(v.string()),
+		analysis: v.object({
+			uiPatterns: v.array(v.string()),
+			colorPalette: v.object({
+				primary: v.array(v.string()),
+				secondary: v.array(v.string()),
+				accent: v.array(v.string()),
+			}),
+			typography: v.object({
+				headingFont: v.optional(v.string()),
+				bodyFont: v.optional(v.string()),
+				sizes: v.optional(
+					v.object({
+						h1: v.optional(v.string()),
+						h2: v.optional(v.string()),
+						h3: v.optional(v.string()),
+						body: v.optional(v.string()),
+					})
+				),
+			}),
+			techStack: v.array(v.string()),
+			components: v.array(
+				v.object({
+					name: v.string(),
+					description: v.string(),
+				})
+			),
+		}),
+		clonePrompts: v.object({
+			fullPage: v.string(),
+			components: v.array(
+				v.object({
+					name: v.string(),
+					prompt: v.string(),
+				})
+			),
+			designSystem: v.string(),
+		}),
+		tags: v.array(v.string()),
+		style: v.string(), // "minimal", "corporate", "creative", etc.
+		industry: v.optional(v.string()),
+		thumbnail: v.optional(v.string()),
+		createdAt: v.number(),
+		updatedAt: v.number(),
+	})
+		.index("by_userId", ["userId"])
+		.index("by_displayId", ["displayId"])
+		.index("by_userId_and_style", ["userId", "style"]),
 });

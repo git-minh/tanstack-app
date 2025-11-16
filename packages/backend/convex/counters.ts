@@ -88,13 +88,14 @@ export function formatDisplayId(prefix: string, sequence: number): string {
  */
 export async function generateDisplayId(
 	ctx: MutationCtx,
-	entityType: "tasks" | "contacts" | "projects" | "chatSessions"
+	entityType: "tasks" | "contacts" | "projects" | "chatSessions" | "designReferences"
 ): Promise<string> {
 	const prefixes = {
 		tasks: "TD",
 		contacts: "CT",
 		projects: "PR",
 		chatSessions: "CH",
+		designReferences: "DR",
 	};
 
 	const prefix = prefixes[entityType];
