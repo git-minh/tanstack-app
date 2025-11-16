@@ -4,7 +4,7 @@ import { useAction } from "convex/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@tanstack/backend/convex/_generated/api";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Palette } from "lucide-react";
 import { StatCards } from "@/components/features/dashboard/stat-cards";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -18,9 +18,15 @@ import type {
 const ActivityChart = lazy(() => import("@/components/features/dashboard/activity-chart"));
 const RecentActivityTable = lazy(() => import("@/components/features/dashboard/recent-activity-table"));
 const QuickChatCard = lazy(() => import("@/components/features/dashboard/quick-chat-card").then(m => ({ default: m.QuickChatCard })));
+const RecentDesignReferencesCard = lazy(() => import("@/components/features/dashboard/recent-design-references-card").then(m => ({ default: m.RecentDesignReferencesCard })));
 // Lazy load GenerateDialog - only loads when "Generate Project with AI" button is clicked
 const GenerateDialog = lazy(() =>
 	import("@/features/ai-generation").then(m => ({ default: m.GenerateDialog }))
+);
+
+// Lazy load AnalyzeWebsiteDialog
+const AnalyzeWebsiteDialog = lazy(() =>
+	import("@/features/design-references/components/analyze-website-dialog").then(m => ({ default: m.AnalyzeWebsiteDialog }))
 );
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -29,6 +35,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function DashboardRoute() {
 	const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
+	const [analyzeDialogOpen, setAnalyzeDialogOpen] = useState(false);
 	const generateProject = useAction(api.ai.generateProject);
 	const navigate = useNavigate();
 	const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -83,10 +90,16 @@ function DashboardRoute() {
 							Track your tasks and productivity at a glance
 						</p>
 					</div>
-					<Button onClick={() => setGenerateDialogOpen(true)}>
-						<Sparkles className="mr-2 h-4 w-4" />
-						Generate Project with AI
-					</Button>
+					<div className="flex items-center gap-2">
+						<Button variant="outline" onClick={() => setAnalyzeDialogOpen(true)}>
+							<Palette className="mr-2 h-4 w-4" />
+							Analyze Website
+						</Button>
+						<Button onClick={() => setGenerateDialogOpen(true)}>
+							<Sparkles className="mr-2 h-4 w-4" />
+							Generate Project with AI
+						</Button>
+					</div>
 				</div>
 
 				{/* AuthGuard prevents queries from executing before auth is ready */}
@@ -100,6 +113,13 @@ function DashboardRoute() {
 					open={generateDialogOpen}
 					onOpenChange={setGenerateDialogOpen}
 					onSubmit={handleGenerate}
+				/>
+			</Suspense>
+
+			<Suspense fallback={null}>
+				<AnalyzeWebsiteDialog
+					open={analyzeDialogOpen}
+					onOpenChange={setAnalyzeDialogOpen}
 				/>
 			</Suspense>
 		</ErrorBoundary>
@@ -125,6 +145,11 @@ function DashboardContent() {
 			{/* Quick Chat card - shows recent AI conversations */}
 			<Suspense fallback={<CardSkeleton />}>
 				<QuickChatCard />
+			</Suspense>
+
+			{/* Recent Design References card - shows recent analyzed websites */}
+			<Suspense fallback={<CardSkeleton />}>
+				<RecentDesignReferencesCard />
 			</Suspense>
 
 			{/* Chart loads progressively with lazy loading (saves 1.3MB) */}

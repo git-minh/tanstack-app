@@ -30,6 +30,14 @@ export default defineConfig(({ mode }) => {
 			// Increase chunk size warning limit (we're code splitting intentionally)
 			chunkSizeWarningLimit: 1000,
 			rollupOptions: {
+				// External dependencies for SSR build
+				external: (id) => {
+					// Externalize all @convex-dev/better-auth imports
+					if (id.startsWith('@convex-dev/better-auth')) {
+						return true;
+					}
+					return false;
+				},
 				output: {
 					// Manual chunk splitting for better caching
 					// Only use in non-CI builds to avoid initialization order issues with esbuild

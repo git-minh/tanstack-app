@@ -17,10 +17,16 @@ import type { DesignReference } from "./data/schema";
 // Type for the query result (matches backend return type)
 type DesignReferenceData = DesignReference;
 
-// Lazy load the detail dialog
+// Lazy load dialogs
 const DesignReferenceDetailDialog = lazy(() =>
   import("./components/design-reference-detail-dialog").then((m) => ({
     default: m.DesignReferenceDetailDialog,
+  }))
+);
+
+const AnalyzeWebsiteDialog = lazy(() =>
+  import("./components/analyze-website-dialog").then((m) => ({
+    default: m.AnalyzeWebsiteDialog,
   }))
 );
 
@@ -36,6 +42,7 @@ export function DesignReferences() {
   const [selectedReference, setSelectedReference] =
     useState<DesignReference | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [analyzeDialogOpen, setAnalyzeDialogOpen] = useState(false);
 
   const handleViewReference = (reference: DesignReference) => {
     setSelectedReference(reference);
@@ -77,8 +84,7 @@ export function DesignReferences() {
   };
 
   const handleAnalyzeWebsite = () => {
-    // TODO: Open analyze website dialog (Task 47)
-    toast.info("Analyze website feature coming soon");
+    setAnalyzeDialogOpen(true);
   };
 
   return (
@@ -172,6 +178,13 @@ export function DesignReferences() {
           reference={selectedReference}
           open={detailDialogOpen}
           onOpenChange={setDetailDialogOpen}
+        />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <AnalyzeWebsiteDialog
+          open={analyzeDialogOpen}
+          onOpenChange={setAnalyzeDialogOpen}
         />
       </Suspense>
     </>
