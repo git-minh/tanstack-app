@@ -23,6 +23,7 @@ import type * as counters from "../counters.js";
 import type * as crawl_types from "../crawl_types.js";
 import type * as credits from "../credits.js";
 import type * as dashboard from "../dashboard.js";
+import type * as designReferences from "../designReferences.js";
 import type * as healthCheck from "../healthCheck.js";
 import type * as hierarchy from "../hierarchy.js";
 import type * as http from "../http.js";
@@ -65,6 +66,7 @@ declare const fullApi: ApiFromModules<{
   crawl_types: typeof crawl_types;
   credits: typeof credits;
   dashboard: typeof dashboard;
+  designReferences: typeof designReferences;
   healthCheck: typeof healthCheck;
   hierarchy: typeof hierarchy;
   http: typeof http;

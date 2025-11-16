@@ -1,0 +1,11 @@
+# Task ID: 33
+# Title: Update Existing Features with Credits
+# Status: done
+# Dependencies: 32
+# Priority: high
+# Description: Integrate credit checks and deductions into existing AI project generation and URL scraping features
+# Details:
+Modify convex/ai.ts generateProject action to check for 15 credits before execution and deduct after success. Modify scrapeUrl action to check for 5 credits and deduct after scrape. Update generate-dialog.tsx to show credit cost preview and disable button if insufficient credits.
+
+# Test Strategy:
+Test generation with sufficient credits, test blocking when insufficient, verify credit deduction accuracy

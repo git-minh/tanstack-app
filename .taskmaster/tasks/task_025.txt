@@ -1,6 +1,6 @@
 # Task ID: 25
 # Title: Vendor Bundle Optimization
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Reduce vendor chunks by 40% through selective loading and alternatives
@@ -24,37 +24,37 @@ Expected impact: 30% additional reduction, faster route transitions
 Analyze bundle composition. Test form functionality. Verify chart loads correctly. Measure vendor chunk sizes.
 
 # Subtasks:
-## 1. Analyze and lazy load form libraries (258 KB) [pending]
+## 1. Analyze and lazy load form libraries (258 KB) [done]
 ### Dependencies: None
 ### Description: Split react-hook-form and Zod into separate chunks, load only for complex forms
 ### Details:
 Identify simple vs complex forms. Simple forms (login, search): use native useState. Complex forms (task/project creation): keep RHF + Zod but lazy load. Update Vite config to create vendor-forms chunk only loaded when needed.
 
-## 2. Audit Recharts usage and consider lighter alternatives [pending]
+## 2. Audit Recharts usage and consider lighter alternatives [done]
 ### Dependencies: None
 ### Description: Evaluate if 243 KB Recharts is necessary or can be replaced
 ### Details:
 Verify Recharts is already lazy loaded (good!). Count chart types used. Research alternatives: Chart.js (50 KB), visx (80 KB). Document decision: keep if critical, replace if savings worth migration effort.
 
-## 3. Split auth bundle to only load on login route [pending]
+## 3. Split auth bundle to only load on login route [done]
 ### Dependencies: None
 ### Description: Ensure Better-Auth (186 KB) only loads when needed
 ### Details:
 Update Vite config manualChunks. Create vendor-auth chunk. Verify auth components only load on _auth routes. Test authentication still works correctly. Measure bundle size improvement for authenticated routes.
 
-## 4. Remove unused Radix UI components and variants [pending]
+## 4. Remove unused Radix UI components and variants [done]
 ### Dependencies: None
 ### Description: Audit and remove rarely-used UI primitives (100 KB → ~70 KB)
 ### Details:
 Search for unused Radix components: Tabs, RadioGroup, ToggleGroup, etc. Remove imports and component files if unused. Check if all component variants are needed. Update manual chunks to optimize Radix bundle.
 
-## 5. Extract date-fns and optimize Vite manual chunks [pending]
+## 5. Extract date-fns and optimize Vite manual chunks [done]
 ### Dependencies: None
 ### Description: Create separate chunk for date utilities and optimize all vendor chunks
 ### Details:
 Add date-fns to manual chunks in vite.config.ts. Optimize chunk splitting for AI generation features. Create chunks: vendor-dates, vendor-ai-generation. Test all chunks load correctly. Verify chunk sizes are 20-50 KB ideal range.
 
-## 6. Measure vendor bundle optimization results [pending]
+## 6. Measure vendor bundle optimization results [done]
 ### Dependencies: None
 ### Description: Verify 40% vendor chunk reduction achieved
 ### Details:
