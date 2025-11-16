@@ -11,8 +11,8 @@
 		"enabled": true
 	},
 	"vars": {
-		"VITE_CONVEX_URL": "",
-		"VITE_CONVEX_SITE_URL": ""
+		"VITE_CONVEX_URL": "https://kindred-peccary-620.convex.cloud",
+		"VITE_CONVEX_SITE_URL": "https://kindred-peccary-620.convex.site"
 	}
 	// "kv_namespaces": [
 	//   {
