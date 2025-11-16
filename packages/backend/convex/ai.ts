@@ -27,9 +27,18 @@ import {
 interface AzureOpenAIResponse {
   choices: Array<{
     message: {
-      content: string;
+      content: string | null;
+      refusal?: string | null;
+      role: string;
     };
+    finish_reason: string | null;
+    index: number;
   }>;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
 }
 
 /**
@@ -636,6 +645,11 @@ export const generateProject = action({
       const generatedContent = firstChoice.message.content;
       console.log("AI Response received, length:", generatedContent?.length ?? 0);
       console.log("Content preview:", generatedContent?.substring(0, 200) ?? "null/empty");
+
+      if (!generatedContent) {
+        console.error("AI returned null or empty content");
+        throw new Error("AI response missing content");
+      }
 
       // Parse and validate AI response (Subtask 1.4 ✓, Subtask 1.8 ✓)
       console.log("Parsing and validating AI response...");
@@ -1282,7 +1296,10 @@ async function callAzureOpenAIForAnalysis(content: string): Promise<any> {
     throw new Error('Azure OpenAI environment variables not configured');
   }
 
-  const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2024-08-01-preview`;
+  const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2025-01-01-preview`;
+
+  console.log('Calling Azure OpenAI for website analysis...');
+  console.log('Request URL:', url);
 
   const response = await fetch(url, {
     method: 'POST',
@@ -1293,34 +1310,65 @@ async function callAzureOpenAIForAnalysis(content: string): Promise<any> {
     body: JSON.stringify({
       messages: [
         {
-          role: 'system',
-          content: WEBSITE_ANALYSIS_SYSTEM_PROMPT,
-        },
-        {
           role: 'user',
-          content: `Analyze the following website content and extract design information:\n\n${content}`,
+          content: `${WEBSITE_ANALYSIS_SYSTEM_PROMPT}\n\n---\n\nAnalyze the following website content and extract design information:\n\n${content}\n\n**CRITICAL: You MUST respond with ONLY valid JSON. No explanations, no markdown, no code blocks - just raw JSON that can be parsed directly.**`,
         },
       ],
-      response_format: { type: 'json_object' },
-      temperature: 0.7,
-      max_tokens: 3000,
+      max_completion_tokens: 8000, // Increased for o1 models (reasoning tokens + output)
     }),
   });
 
+  console.log('Response status:', response.status, response.statusText);
+
   if (!response.ok) {
     const errorText = await response.text();
+    console.error('Error response:', errorText);
     throw new Error(`Azure OpenAI API error (${response.status}): ${errorText}`);
   }
 
+  console.log('Parsing response JSON...');
   const data = await response.json() as AzureOpenAIResponse;
+  console.log('Response parsed successfully');
 
-  if (!data.choices?.[0]?.message?.content) {
-    throw new Error('Invalid response from Azure OpenAI: missing content');
+  // Debug: Log the full response structure
+  console.log('Azure OpenAI analysis response:', JSON.stringify(data, null, 2));
+
+  // Validate response structure
+  if (!data.choices || data.choices.length === 0) {
+    console.error('No choices in response:', JSON.stringify(data, null, 2));
+    throw new Error('Invalid response from Azure OpenAI: no choices returned');
   }
 
+  const choice = data.choices[0];
+  console.log('Choice finish_reason:', choice.finish_reason);
+  console.log('Choice message role:', choice.message?.role);
+
+  // Check for refusal
+  if (choice.message?.refusal) {
+    console.error('AI refused to respond:', choice.message.refusal);
+    throw new Error(`Azure OpenAI refused: ${choice.message.refusal}`);
+  }
+
+  // Check for content
+  if (!choice.message?.content) {
+    console.error('No content in message. Full choice:', JSON.stringify(choice, null, 2));
+
+    // Special handling for length finish_reason (o1 models)
+    if (choice.finish_reason === 'length') {
+      throw new Error('Azure OpenAI response incomplete: The AI model ran out of tokens during reasoning. Please try again or simplify the website content.');
+    }
+
+    throw new Error(`Invalid response from Azure OpenAI: no content (finish_reason: ${choice.finish_reason})`);
+  }
+
+  const responseContent = choice.message.content;
+  console.log('Content length:', responseContent.length);
+  console.log('Content preview:', responseContent.substring(0, 500));
+
   try {
-    return JSON.parse(data.choices[0].message.content);
+    return JSON.parse(responseContent);
   } catch (error) {
+    console.error('Failed to parse content:', responseContent);
     throw new Error(`Failed to parse Azure OpenAI response as JSON: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -1337,7 +1385,7 @@ async function generateClonePrompts(analysis: AnalysisResponse): Promise<ClonePr
     throw new Error('Azure OpenAI environment variables not configured');
   }
 
-  const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2024-08-01-preview`;
+  const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2025-01-01-preview`;
 
   // Prepare analysis summary for prompt generation
   const analysisSummary = `
@@ -1372,39 +1420,70 @@ ${analysis.components.map(c => `- ${c.name}: ${c.description}`).join('\n')}
     body: JSON.stringify({
       messages: [
         {
-          role: 'system',
-          content: CLONE_PROMPT_GENERATION_SYSTEM_PROMPT,
-        },
-        {
           role: 'user',
-          content: `Based on the following website analysis, generate comprehensive clone prompts:\n\n${analysisSummary}`,
+          content: `${CLONE_PROMPT_GENERATION_SYSTEM_PROMPT}\n\n---\n\nBased on the following website analysis, generate comprehensive clone prompts:\n\n${analysisSummary}\n\n**CRITICAL: You MUST respond with ONLY valid JSON. No explanations, no markdown, no code blocks - just raw JSON that can be parsed directly.**`,
         },
       ],
-      response_format: { type: 'json_object' },
-      temperature: 0.7,
-      max_tokens: 4000,
+      max_completion_tokens: 12000, // Increased for o1 models (reasoning tokens + output)
     }),
   });
 
+  console.log('Clone prompts response status:', response.status, response.statusText);
+
   if (!response.ok) {
     const errorText = await response.text();
+    console.error('Error response for clone prompts:', errorText);
     throw new Error(`Azure OpenAI API error for clone prompts (${response.status}): ${errorText}`);
   }
 
+  console.log('Parsing clone prompts response JSON...');
   const data = await response.json() as AzureOpenAIResponse;
+  console.log('Clone prompts response parsed successfully');
 
-  if (!data.choices?.[0]?.message?.content) {
-    throw new Error('Invalid response from Azure OpenAI: missing content for clone prompts');
+  // Debug: Log the full response structure
+  console.log('Azure OpenAI clone prompts response:', JSON.stringify(data, null, 2));
+
+  // Validate response structure
+  if (!data.choices || data.choices.length === 0) {
+    console.error('No choices in clone prompts response:', JSON.stringify(data, null, 2));
+    throw new Error('Invalid response from Azure OpenAI: no choices returned for clone prompts');
   }
 
+  const choice = data.choices[0];
+  console.log('Clone prompts choice finish_reason:', choice.finish_reason);
+  console.log('Clone prompts choice message role:', choice.message?.role);
+
+  // Check for refusal
+  if (choice.message?.refusal) {
+    console.error('AI refused to generate clone prompts:', choice.message.refusal);
+    throw new Error(`Azure OpenAI refused clone prompts: ${choice.message.refusal}`);
+  }
+
+  // Check for content
+  if (!choice.message?.content) {
+    console.error('No content in clone prompts message. Full choice:', JSON.stringify(choice, null, 2));
+
+    // Special handling for length finish_reason (o1 models)
+    if (choice.finish_reason === 'length') {
+      throw new Error('Azure OpenAI response incomplete: The AI model ran out of tokens during reasoning. This is a temporary issue - please try again.');
+    }
+
+    throw new Error(`Invalid response from Azure OpenAI: no content for clone prompts (finish_reason: ${choice.finish_reason})`);
+  }
+
+  const responseContent = choice.message.content;
+  console.log('Clone prompts content length:', responseContent.length);
+  console.log('Clone prompts content preview:', responseContent.substring(0, 500));
+
   try {
-    const parsedResponse = JSON.parse(data.choices[0].message.content);
+    const parsedResponse = JSON.parse(responseContent);
 
     // Validate with Zod schema
     const validatedPrompts = clonePromptsSchema.parse(parsedResponse);
 
     return validatedPrompts;
   } catch (error) {
+    console.error('Failed to parse clone prompts content:', responseContent);
     throw new Error(`Failed to parse or validate clone prompts response: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
