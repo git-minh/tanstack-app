@@ -1910,7 +1910,7 @@
         "description": "Create UI for initiating website analysis",
         "details": "Create features/design-references/components/analyze-website-dialog.tsx with URL input, optional tags/style/industry inputs, credit cost display (10 credits), form validation (valid HTTP/HTTPS URL). Build multi-step progress UI: 1) Crawling website (10-20s), 2) Analyzing design (15-30s), 3) Generating prompts (10-15s). Use useAction to call analyzeWebsite action. Implement useCreditsCheck hook integration. Handle success (navigate to detail view), insufficient credits (show purchase dialog), errors (toast notifications). Add 'Analyze Website' button to dashboard and /design-references page. Estimated time: 2 hours.",
         "testStrategy": "Test URL validation, verify credit check blocks when insufficient, test progress UI shows correctly, verify success navigation, test error handling, test from both dashboard and library page",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           43,
           46
@@ -1922,7 +1922,7 @@
             "title": "Create analyze-website-dialog component structure",
             "description": "Build dialog with form inputs and layout",
             "details": "Create dialog component. URL input (required), tags input (TagInput), style select (minimal/corporate/creative), industry input (optional). Credit cost: '10 credits'. Form validation.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 47
           },
@@ -1931,7 +1931,7 @@
             "title": "Implement URL validation and form inputs",
             "description": "Add Zod schema validation for URL and form handling",
             "details": "Zod schema: url must be valid HTTP/HTTPS. Use React Hook Form with zodResolver. Validate on blur and submit. Show error messages below inputs.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1
             ],
@@ -1942,7 +1942,7 @@
             "title": "Build multi-step progress UI component",
             "description": "Create progress indicator for 3 analysis steps",
             "details": "Progress component with 3 steps: 1) Crawling website (10-20s), 2) Analyzing design (15-30s), 3) Generating prompts (10-15s). Show current step highlighted, spinner, estimated time.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1
             ],
@@ -1953,7 +1953,7 @@
             "title": "Integrate useAction and useCreditsCheck hooks",
             "description": "Connect to backend analyzeWebsite action with credit validation",
             "details": "Use useAction(api.ai.analyzeWebsite). Use useCreditsCheck hook to verify 10 credits. Disable submit if insufficient. Show loading state during analysis.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               2,
               3
@@ -1965,7 +1965,7 @@
             "title": "Implement success, error, and insufficient credits handling",
             "description": "Handle all analysis outcomes with proper UI feedback",
             "details": "Success: close dialog, navigate to /design-references/[displayId]. Error: show toast, keep dialog open. Insufficient credits: show InsufficientCreditsDialog with 'Buy More' CTA.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               4
             ],
@@ -1976,7 +1976,7 @@
             "title": "Add Analyze buttons to dashboard and library page",
             "description": "Integrate dialog trigger in multiple locations",
             "details": "Dashboard: Add 'Analyze Website' button in header with Sparkles icon. Library page: same button. Both open AnalyzeWebsiteDialog. Pass open/onOpenChange props.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               5
             ],
@@ -1987,7 +1987,7 @@
             "title": "Test complete analysis flow end-to-end",
             "description": "Test all scenarios and user paths",
             "details": "Test: valid URL submission, invalid URL error, insufficient credits block, successful analysis and navigation, error handling, progress UI timing, mobile responsiveness, keyboard shortcuts (Esc to close).",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               6
             ],
@@ -2001,7 +2001,7 @@
         "description": "Integrate design references with existing AI project generation",
         "details": "Update features/ai-generation/components/generate-dialog.tsx to add 'Import Design Reference' feature with dropdown showing saved references. Add prompt type selector (full-page, component, design system) and button to insert selected clone prompt into textarea. Update components/global-search.tsx to include design references in search results (type: 'design-reference'). Add 'Design References' navigation item to sidebar-data.tsx with Palette icon. Update dashboard to add 'Recent Design References' card showing last 3 analyzed sites. Ensure all integrations work seamlessly without breaking existing features. Estimated time: 1.5 hours.",
         "testStrategy": "Test prompt insertion into AI generation, verify global search finds references, test navigation item works, verify dashboard card displays correctly, test no breaking changes to existing features",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           46,
           47
@@ -2013,7 +2013,7 @@
             "title": "Update generate-dialog with Import Design Reference feature",
             "description": "Add design reference selector to AI generation dialog",
             "details": "In generate-dialog.tsx, add section 'Import Design Reference' with: dropdown showing user's saved references (by siteName), prompt type radio group (full-page/component/design-system), 'Insert Prompt' button. Fetch references with useQuery.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 48
           },
@@ -2022,7 +2022,7 @@
             "title": "Implement prompt type selector and insertion logic",
             "description": "Add UI for choosing prompt type and inserting into textarea",
             "details": "Radio buttons for prompt type. On 'Insert Prompt' click: get selected reference, extract prompt based on type (fullPage/components[0]/designSystem), append to textarea value with newline separator. Show success toast.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1
             ],
@@ -2033,7 +2033,7 @@
             "title": "Update global-search to include design references",
             "description": "Add design references to Cmd+K search results",
             "details": "In global-search.tsx, add api.designReferences.searchDesignReferences to search. Map results with type: 'design-reference', show siteName, url, style badge. Navigate to /design-references/[displayId] on select.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 48
           },
@@ -2042,7 +2042,7 @@
             "title": "Add Design References to sidebar navigation",
             "description": "Add nav item to sidebar-data.tsx",
             "details": "In sidebar-data.tsx navGroups, add { title: 'Design References', url: '/design-references', icon: Palette } after Projects. Import Palette from lucide-react.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 48
           },
@@ -2051,7 +2051,7 @@
             "title": "Update dashboard with Recent Design References card",
             "description": "Add card showing last 3 analyzed sites",
             "details": "In dashboard.tsx, add card 'Recent Design References'. Query last 3 references sorted by createdAt desc. Show thumbnail, site name, style, 'View All' link to /design-references. Empty state if none.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 48
           },
@@ -2060,7 +2060,7 @@
             "title": "Test all integrations without breaking changes",
             "description": "Verify seamless integration across all features",
             "details": "Test: import prompt in AI generation works, global search finds references, sidebar nav works, dashboard card displays correctly, no console errors, existing features unchanged, mobile responsive.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1,
               2,
@@ -2166,7 +2166,7 @@
       "source": "AI-PRD.md + Website Analyzer PRD - Comprehensive Product Requirements Documents",
       "created": "2025-11-09T15:28:04.519Z",
       "description": "Tasks for master context",
-      "updated": "2025-11-16T15:34:01.326Z"
+      "updated": "2025-11-16T16:21:15.020Z"
     }
   }
 }

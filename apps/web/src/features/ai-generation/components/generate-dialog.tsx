@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Link as LinkIcon, X, Sparkles } from "lucide-react";
+import { Loader2, Link as LinkIcon, X, Sparkles, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { useAction, useQuery } from "convex/react";
 import { api } from "@tanstack/backend/convex/_generated/api";
@@ -22,6 +22,14 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
 	generateProjectFormSchema,
 	type GenerateProjectFormValues,
@@ -49,10 +57,14 @@ export function GenerateDialog({
 	const [scrapedContent, setScrapedContent] = useState("");
 	const [isScrapingUrl, setIsScrapingUrl] = useState(false);
 	const [urlOpen, setUrlOpen] = useState(false);
+	const [designRefOpen, setDesignRefOpen] = useState(false);
+	const [selectedDesignRef, setSelectedDesignRef] = useState<string>("");
+	const [promptType, setPromptType] = useState<"fullPage" | "component" | "designSystem">("fullPage");
 
 	const scrapeUrl = useAction(api.ai.scrapeUrl);
 	const usage = useQuery(api.usage.getUserUsage);
 	const credits = useQuery(api.credits.getUserCredits);
+	const designReferences = useQuery(api.designReferences.getDesignReferences);
 	const { checkout } = useCustomer();
 
 	// Credit costs
@@ -114,6 +126,46 @@ export function GenerateDialog({
 	const handleClearScrapedContent = () => {
 		setScrapedContent("");
 		setUrlInput("");
+	};
+
+	const handleInsertPrompt = () => {
+		if (!selectedDesignRef || !designReferences) {
+			toast.error("Please select a design reference");
+			return;
+		}
+
+		// Find the selected reference
+		const reference = designReferences.find((ref) => ref._id === selectedDesignRef);
+		if (!reference) {
+			toast.error("Design reference not found");
+			return;
+		}
+
+		// Get the appropriate prompt based on type
+		let promptToInsert = "";
+		if (promptType === "fullPage") {
+			promptToInsert = reference.clonePrompts.fullPage;
+		} else if (promptType === "component") {
+			// Get the first component prompt
+			if (reference.clonePrompts.components.length > 0) {
+				promptToInsert = reference.clonePrompts.components[0].prompt;
+			} else {
+				toast.error("No component prompts available for this reference");
+				return;
+			}
+		} else {
+			promptToInsert = reference.clonePrompts.designSystem;
+		}
+
+		// Insert into textarea
+		const currentValue = getValues("prompt");
+		const newValue = currentValue
+			? `${currentValue}\n\n---\n\nDesign Reference from ${reference.siteName}:\n\n${promptToInsert}`
+			: `Design Reference from ${reference.siteName}:\n\n${promptToInsert}`;
+
+		setValue("prompt", newValue);
+		clearErrors("prompt");
+		toast.success("Design reference prompt inserted");
 	};
 
 	const handleUpgrade = async () => {
@@ -345,6 +397,99 @@ export function GenerateDialog({
 													{scrapedContent.substring(0, 200)}...
 												</p>
 											</div>
+										)}
+									</CollapsibleContent>
+								</Collapsible>
+
+								{/* Import Design Reference Section */}
+								<Collapsible open={designRefOpen} onOpenChange={setDesignRefOpen}>
+									<div className="flex items-center gap-2">
+										<CollapsibleTrigger asChild>
+											<Button
+												type="button"
+												variant="ghost"
+												size="sm"
+												className="w-full justify-start gap-2 text-sm font-medium"
+											>
+												<Palette className="h-4 w-4" />
+												Import Design Reference (optional)
+											</Button>
+										</CollapsibleTrigger>
+									</div>
+									<CollapsibleContent className="mt-2 space-y-3">
+										{/* Design Reference Selector */}
+										<div className="space-y-2">
+											<Label htmlFor="designRef">Select Reference</Label>
+											<Select
+												value={selectedDesignRef}
+												onValueChange={setSelectedDesignRef}
+											>
+												<SelectTrigger id="designRef">
+													<SelectValue placeholder="Choose a design reference..." />
+												</SelectTrigger>
+												<SelectContent>
+													{designReferences && designReferences.length > 0 ? (
+														designReferences.map((ref) => (
+															<SelectItem key={ref._id} value={ref._id}>
+																{ref.siteName} ({ref.style})
+															</SelectItem>
+														))
+													) : (
+														<SelectItem value="none" disabled>
+															No design references available
+														</SelectItem>
+													)}
+												</SelectContent>
+											</Select>
+										</div>
+
+										{/* Prompt Type Selector */}
+										{selectedDesignRef && (
+											<div className="space-y-2">
+												<Label>Prompt Type</Label>
+												<RadioGroup
+													value={promptType}
+													onValueChange={(value) =>
+														setPromptType(
+															value as "fullPage" | "component" | "designSystem"
+														)
+													}
+												>
+													<div className="flex items-center space-x-2">
+														<RadioGroupItem value="fullPage" id="fullPage" />
+														<Label htmlFor="fullPage" className="font-normal">
+															Full Page Clone
+														</Label>
+													</div>
+													<div className="flex items-center space-x-2">
+														<RadioGroupItem value="component" id="component" />
+														<Label htmlFor="component" className="font-normal">
+															Component Clone
+														</Label>
+													</div>
+													<div className="flex items-center space-x-2">
+														<RadioGroupItem
+															value="designSystem"
+															id="designSystem"
+														/>
+														<Label htmlFor="designSystem" className="font-normal">
+															Design System
+														</Label>
+													</div>
+												</RadioGroup>
+											</div>
+										)}
+
+										{/* Insert Button */}
+										{selectedDesignRef && (
+											<Button
+												type="button"
+												onClick={handleInsertPrompt}
+												className="w-full"
+												variant="secondary"
+											>
+												Insert Prompt
+											</Button>
 										)}
 									</CollapsibleContent>
 								</Collapsible>

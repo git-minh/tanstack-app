@@ -78,12 +78,30 @@ export const searchAll = query({
 			return nameMatch || descMatch || idMatch;
 		});
 
+		// Search design references
+		const designReferences = await ctx.db
+			.query("designReferences")
+			.withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+			.collect();
+
+		const matchingDesignReferences = designReferences.filter((ref) => {
+			const siteNameMatch = ref.siteName.toLowerCase().includes(searchTerm);
+			const urlMatch = ref.url.toLowerCase().includes(searchTerm);
+			const descMatch = ref.description?.toLowerCase().includes(searchTerm);
+			const styleMatch = ref.style.toLowerCase().includes(searchTerm);
+			const industryMatch = ref.industry?.toLowerCase().includes(searchTerm);
+			const tagsMatch = ref.tags?.some((tag: string) => tag.toLowerCase().includes(searchTerm));
+			const idMatch = ref.displayId.toLowerCase().includes(searchTerm);
+			return siteNameMatch || urlMatch || descMatch || styleMatch || industryMatch || tagsMatch || idMatch;
+		});
+
 		return {
 			tasks: matchingTasks.slice(0, 10), // Limit results
 			contacts: matchingContacts.slice(0, 10),
 			todos: matchingTodos.slice(0, 10),
 			projects: matchingProjects.slice(0, 10),
-			total: matchingTasks.length + matchingContacts.length + matchingTodos.length + matchingProjects.length,
+			designReferences: matchingDesignReferences.slice(0, 10),
+			total: matchingTasks.length + matchingContacts.length + matchingTodos.length + matchingProjects.length + matchingDesignReferences.length,
 		};
 	},
 });

@@ -20,6 +20,7 @@ import {
 	Calendar,
 	ArrowRight,
 	FolderKanban,
+	Palette,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -101,6 +102,10 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
 					navigate({ to: "/projects" });
 				}
 				break;
+			case "design-reference":
+				// Navigate to design references page
+				navigate({ to: "/design-references" });
+				break;
 			case "todo":
 				navigate({ to: "/todos" });
 				break;
@@ -115,6 +120,8 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
 				return <Users className="h-4 w-4" />;
 			case "project":
 				return <FolderKanban className="h-4 w-4" />;
+			case "design-reference":
+				return <Palette className="h-4 w-4" />;
 			case "todo":
 				return <ListTodo className="h-4 w-4" />;
 			default:
@@ -161,6 +168,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
 		(searchResults.tasks.length > 0 ||
 			searchResults.contacts.length > 0 ||
 			searchResults.projects.length > 0 ||
+			searchResults.designReferences?.length > 0 ||
 			searchResults.todos.length > 0);
 
 	return (
@@ -190,7 +198,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
 							<Search className="mr-2 h-4 w-4 text-muted-foreground" />
 							<Input
 								ref={inputRef}
-								placeholder="Search tasks, contacts, todos, and projects..."
+								placeholder="Search tasks, projects, contacts, design references..."
 								value={query}
 								onChange={(e) => setQuery(e.target.value)}
 								className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -326,6 +334,51 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
 																)}
 															>
 																{project.priority}
+															</Badge>
+														</div>
+													</div>
+												</div>
+												<ArrowRight className="h-4 w-4 text-muted-foreground" />
+											</button>
+										))}
+									</div>
+								)}
+
+								{/* Design References */}
+								{searchResults.designReferences && searchResults.designReferences.length > 0 && (
+									<div className="mb-4">
+										<div className="mb-2 px-2 text-xs font-semibold text-muted-foreground">
+											DESIGN REFERENCES
+										</div>
+										{searchResults.designReferences.map((ref: any) => (
+											<button
+												key={ref._id}
+												className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-accent"
+												onClick={() =>
+													handleSelect("design-reference", ref._id, ref.displayId)
+												}
+											>
+												<div className="flex items-center space-x-2">
+													{getIcon("design-reference")}
+													<div>
+														<div className="flex items-center space-x-2">
+															<span className="font-medium">
+																{ref.siteName}
+															</span>
+															<Badge
+																variant="outline"
+																className="text-xs"
+															>
+																{ref.displayId}
+															</Badge>
+														</div>
+														<div className="flex items-center space-x-2 text-xs text-muted-foreground">
+															<span className="truncate max-w-[200px]">{ref.url}</span>
+															<Badge
+																variant="outline"
+																className="text-xs"
+															>
+																{ref.style}
 															</Badge>
 														</div>
 													</div>
