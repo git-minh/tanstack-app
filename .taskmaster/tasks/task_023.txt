@@ -1,6 +1,6 @@
 # Task ID: 23
 # Title: Component-Level Code Splitting
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Lazy load heavy components (forms, tables, dialogs) to reduce initial load by ~50 KB gzipped
@@ -22,31 +22,31 @@ Expected impact: 15% bundle reduction, faster perceived performance
 Verify components load on-demand. Test loading states. Measure Time to Interactive (TTI). Profile with React DevTools.
 
 # Subtasks:
-## 1. Lazy load form dialogs (Task, Contact, Project) [pending]
+## 1. Lazy load form dialogs (Task, Contact, Project) [done]
 ### Dependencies: None
 ### Description: Convert form dialog components to lazy loading
 ### Details:
 Update: TaskFormDialog, ContactFormDialog, ProjectFormDialog. Pattern: const Dialog = lazy(() => import('@/features/tasks/components/task-form-dialog')). Only load when create/edit button clicked. Add loading spinner while form loads.
 
-## 2. Lazy load TanStack Table components [pending]
+## 2. Lazy load TanStack Table components [done]
 ### Dependencies: None
 ### Description: Convert table components to lazy loading (37 KB + 24 KB + 19 KB)
 ### Details:
 Update: TasksTable, ContactsTable, ProjectsTable. Use lazy imports with Suspense. Add table skeleton loaders (rows with shimmer effect). Test table pagination and filtering still work.
 
-## 3. Lazy load AI generation dialog [pending]
+## 3. Lazy load AI generation dialog [done]
 ### Dependencies: None
 ### Description: Defer GenerateDialog loading until button clicked
 ### Details:
 Update dashboard.tsx GenerateDialog import. Use lazy loading. Only load when 'Generate Project with AI' button clicked. Add small loading state on first open.
 
-## 4. Lazy load global search dialog (Cmd+K) [pending]
+## 4. Lazy load global search dialog (Cmd+K) [done]
 ### Dependencies: None
 ### Description: Defer GlobalSearch component until keyboard shortcut triggered
 ### Details:
 Update global-search.tsx. Use lazy loading. Only load when Cmd/Ctrl+K pressed. Add 50ms delay indicator if needed. Test search functionality works correctly.
 
-## 5. Create loading skeletons and test all lazy components [pending]
+## 5. Create loading skeletons and test all lazy components [done]
 ### Dependencies: None
 ### Description: Add proper loading states and verify lazy loading works
 ### Details:

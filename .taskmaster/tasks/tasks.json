@@ -1638,7 +1638,7 @@
         "description": "Generate actionable clone prompts from website analysis",
         "details": "Create generateClonePrompts helper function in convex/ai.ts that takes analysis results and uses Azure OpenAI to generate three types of prompts: 1) Full-page clone (comprehensive recreation guide with all details), 2) Component-specific prompts (individual prompts for hero, CTA, forms, navigation), 3) Design system prompt (color palette, typography, spacing extraction). Each prompt must include exact values (hex colors, pixel sizes, font weights), layout descriptions, and interaction patterns. Implement structured output with Zod validation. Integrate into analyzeWebsite action. Add 2-3 example prompts to system message for quality. Estimated time: 2 hours.",
         "testStrategy": "Verify all 3 prompt types generated, test prompt specificity (must include exact values), verify prompts are actionable for developers, test with various site styles, measure generation time (<15s)",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           43
         ],
@@ -1649,7 +1649,7 @@
             "title": "Design prompt generation system prompt with examples",
             "description": "Create system prompt that guides AI in generating specific, actionable clone prompts",
             "details": "Write system prompt for generating 3 types of clone prompts with exact values (hex colors, pixel sizes, font weights). Include 2-3 example prompts showing desired format.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 44
           },
@@ -1658,7 +1658,7 @@
             "title": "Create Zod schema for clone prompts validation",
             "description": "Define schema for structured clone prompt output",
             "details": "Create clonePromptsSchema: z.object({ fullPage: z.string().min(100), components: z.array(z.object({ name, prompt })), designSystem: z.string().min(100) })",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 44
           },
@@ -1667,7 +1667,7 @@
             "title": "Implement generateClonePrompts helper function",
             "description": "Create function that calls Azure OpenAI to generate clone prompts",
             "details": "Async function that takes analysis, calls Azure OpenAI, validates response, returns ClonePrompts object",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1,
               2
@@ -1679,7 +1679,7 @@
             "title": "Generate full-page and design system prompts",
             "description": "Ensure comprehensive prompts with exact values",
             "details": "Full-page: complete recreation top-to-bottom. Design system: colors, typography, spacing, components. Min 200+ chars.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               3
             ],
@@ -1690,7 +1690,7 @@
             "title": "Generate component-specific prompts",
             "description": "Create individual clone prompts for each major component",
             "details": "For each component: standalone prompt with specific styles, colors, sizes, layout. Generate 5-8 component prompts per site.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               4
             ],
@@ -1701,7 +1701,7 @@
             "title": "Integrate and test with diverse sites",
             "description": "Call from analyzeWebsite, test with 5 different style sites",
             "details": "Test minimal, corporate, creative, SaaS, e-commerce sites. Verify all 3 prompt types, exact values, actionable, 1000+ chars total. <15s generation.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               5
             ],
@@ -1715,7 +1715,7 @@
         "description": "Build backend queries and mutations for design reference management",
         "details": "Create packages/backend/convex/designReferences.ts with complete CRUD: getDesignReferences query (list with pagination, filter by style/tags, sort by updatedAt), getDesignReference query (single by ID or displayId), createDesignReference mutation (save analysis and prompts), updateDesignReference mutation (edit tags, description, style), deleteDesignReference mutation, searchDesignReferences query (search by URL, site name, tags). Implement authentication checks on all operations. Use requireAuth helper pattern. Add comprehensive error handling. Estimated time: 1.5 hours.",
         "testStrategy": "Test all CRUD operations, verify auth enforcement, test filtering and search, test pagination with 20+ references, verify ownership validation, test error cases",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           41,
           44
@@ -1727,7 +1727,7 @@
             "title": "Create designReferences.ts file structure",
             "description": "Set up Convex file with imports and requireAuth helper",
             "details": "Create file, import query/mutation/v/Id, add requireAuth helper function",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 45
           },
@@ -1736,7 +1736,7 @@
             "title": "Implement getDesignReferences query",
             "description": "List user's references with pagination and filtering",
             "details": "Query with limit, style, tag args. Use by_userId or by_userId_and_style index. Filter and sort by updatedAt.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1
             ],
@@ -1747,7 +1747,7 @@
             "title": "Implement getDesignReference query",
             "description": "Fetch single reference by ID with ownership check",
             "details": "Query by id, verify ownership, return complete reference",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1
             ],
@@ -1758,7 +1758,7 @@
             "title": "Implement createDesignReference mutation",
             "description": "Save new design reference after analysis",
             "details": "Generate displayId, insert with all fields, return id",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1
             ],
@@ -1769,7 +1769,7 @@
             "title": "Implement update and delete mutations",
             "description": "Edit tags/description and delete references",
             "details": "updateDesignReference: verify ownership, patch. deleteDesignReference: verify ownership, delete.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1
             ],
@@ -1780,7 +1780,7 @@
             "title": "Implement searchDesignReferences query",
             "description": "Search by URL, name, or tags",
             "details": "Case-insensitive search across url, siteName, tags fields",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1
             ],
@@ -1791,7 +1791,7 @@
             "title": "Test all CRUD with auth and edge cases",
             "description": "Comprehensive testing of all operations",
             "details": "Test create, pagination, filtering, search, update, auth enforcement, delete, missing fields",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               2,
               3,
@@ -2166,7 +2166,7 @@
       "source": "AI-PRD.md + Website Analyzer PRD - Comprehensive Product Requirements Documents",
       "created": "2025-11-09T15:28:04.519Z",
       "description": "Tasks for master context",
-      "updated": "2025-11-16T14:45:56.244Z"
+      "updated": "2025-11-16T15:34:01.326Z"
     }
   }
 }

@@ -1,0 +1,31 @@
+# Task ID: 32
+# Title: Credit System Foundation
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Extend userUsage table with credits, implement credit management backend, initialize credits on signup, and create credit balance UI component
+# Details:
+Update convex/schema.ts to add creditsRemaining, creditsTotal, lastCreditReset. Create convex/credits.ts with getUserCredits query, deductCredits mutation, resetMonthlyCredits mutation. Initialize 100 credits for new users. Build credit-balance.tsx component for navbar with color-coded warnings.
+
+# Test Strategy:
+Test credit initialization on signup, test atomic deduction, test monthly reset logic, verify UI displays correctly
+
+# Subtasks:
+## 1. Update userUsage schema with credit fields [done]
+### Dependencies: None
+### Description: Add creditsRemaining, creditsTotal, lastCreditReset to userUsage table in convex/schema.ts
+### Details:
+Modify userUsage table definition to include: creditsRemaining: v.number() (default 100), creditsTotal: v.number() (default 100), lastCreditReset: v.number() (timestamp). Keep existing fields: userId, aiGenerationCount, subscriptionTier.
+
+## 2. Create credit management backend [done]
+### Dependencies: 32.1
+### Description: Build convex/credits.ts with queries and mutations for credit operations
+### Details:
+Create getUserCredits query to fetch current balance. Create deductCredits mutation with atomic operations and validation (check balance >= amount). Create resetMonthlyCredits mutation to set creditsRemaining back to creditsTotal. Create checkAndResetCredits helper that auto-resets if month has passed since lastCreditReset.
+
+## 3. Build credit balance UI component [done]
+### Dependencies: 32.2
+### Description: Create credit-balance.tsx component for navbar displaying credits with color-coded warnings
+### Details:
+Create components/features/credits/credit-balance.tsx: Display credits in header/navbar with format "⭐ X credits", use useQuery(api.credits.getUserCredits), color-coded warnings (green >50, yellow 20-50, red <20), clickable to show breakdown and "Buy More" button, show "Unlimited" for Pro tier, include Popover or Tooltip with details.
+

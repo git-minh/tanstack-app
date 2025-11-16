@@ -9,8 +9,8 @@ Improve data fetching performance with React Query + Convex.
 
 Optimizations:
 1. Verify all queries have proper indexes (by_userId, compound indexes)
-2. Configure staleTime: 5 minutes for infrequently changing data
-3. Set cacheTime: 10 minutes for expensive queries
+2. Configure staleTime: 5min for infrequently changing data
+3. Set cacheTime: 10min for expensive queries
 4. Implement optimistic updates for mutations
 5. Use selective field queries (don't over-fetch)
 6. Add route-level data prefetching

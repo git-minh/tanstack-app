@@ -1,0 +1,11 @@
+# Task ID: 34
+# Title: Chat Database Schema
+# Status: done
+# Dependencies: 32
+# Priority: high
+# Description: Create database schema for chat sessions and messages with proper indexes
+# Details:
+Update convex/schema.ts to add chatSessions table (userId, displayId, title, createdAt, updatedAt, messageCount) and chatMessages table (sessionId, userId, role, content, tokens, creditsUsed, createdAt). Add indexes: by_userId, by_displayId, by_sessionId, by_userId_and_updatedAt. Update convex/counters.ts to add 'chatSessions': 'CH' prefix mapping.
+
+# Test Strategy:
+Verify schema compiles, test display ID generation for chat sessions, verify indexes are created

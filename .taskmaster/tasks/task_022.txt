@@ -1,6 +1,6 @@
 # Task ID: 22
 # Title: Route-Level Code Splitting
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: medium
 # Description: Implement lazy loading for all authenticated routes to reduce initial bundle size by ~200 KB gzipped
@@ -19,37 +19,37 @@ Expected impact: 60% of total bundle size reduction (main: 330 KB → ~80 KB gzi
 Measure bundle sizes before/after. Verify routes load progressively. Test navigation between routes. Run Lighthouse audit.
 
 # Subtasks:
-## 1. Create lazy loading pattern and utilities [pending]
+## 1. Create lazy loading pattern and utilities [done]
 ### Dependencies: None
 ### Description: Set up reusable lazy loading pattern with proper TypeScript types
 ### Details:
 Create apps/web/src/lib/lazy-route.ts with helper function for lazy loading routes. Include proper error boundaries and loading states. Pattern: export const lazyRoute = (importFn) => lazy(importFn);
 
-## 2. Convert dashboard route to lazy loading [pending]
+## 2. Convert dashboard route to lazy loading [done]
 ### Dependencies: None
 ### Description: Update dashboard route with React.lazy and Suspense boundary
 ### Details:
 Modify apps/web/src/routes/_authenticated/dashboard.tsx. Use lazy(() => import('@/features/dashboard')). Add Suspense with existing ChartSkeleton pattern. Test dashboard loads progressively.
 
-## 3. Convert tasks, contacts, projects routes to lazy loading [pending]
+## 3. Convert tasks, contacts, projects routes to lazy loading [done]
 ### Dependencies: None
 ### Description: Update all heavy routes with lazy loading pattern
 ### Details:
 Update routes: _authenticated/tasks.tsx (37 KB), _authenticated/contacts.tsx (24 KB), _authenticated/projects.tsx (19 KB). Use lazy imports. Add route-specific skeleton loaders. Test navigation between routes.
 
-## 4. Implement route prefetching for critical paths [pending]
+## 4. Implement route prefetching for critical paths [done]
 ### Dependencies: None
 ### Description: Add prefetch on hover for dashboard and tasks routes
 ### Details:
 Use TanStack Router's preload functionality. Prefetch on link hover in sidebar navigation. Preload dashboard on app mount for authenticated users. Test prefetching works without blocking.
 
-## 5. Measure and verify bundle size reduction [pending]
+## 5. Measure and verify bundle size reduction [done]
 ### Dependencies: None
 ### Description: Run production build and analyze bundle composition
 ### Details:
 Run: pnpm build. Compare bundle sizes before/after. Verify main.js reduced from 330 KB to ~80 KB gzipped. Verify route chunks are <50 KB each. Document results in PR description.
 
-## 6. Run Lighthouse audit and measure Core Web Vitals [pending]
+## 6. Run Lighthouse audit and measure Core Web Vitals [done]
 ### Dependencies: None
 ### Description: Verify performance improvements with Lighthouse and Web Vitals
 ### Details:

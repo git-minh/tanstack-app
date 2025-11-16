@@ -1,0 +1,37 @@
+# Task ID: 35
+# Title: Chat Backend Logic
+# Status: done
+# Dependencies: 34
+# Priority: high
+# Description: Implement chat session management, message storage, AI chat action, and context integration
+# Details:
+Create convex/chatSessions.ts with createSession, getSessions, getSession, deleteSession, updateSessionTitle. Create convex/chatMessages.ts with getMessages, saveMessage. Create convex/chat.ts with sendChatMessage action (credit validation, Azure OpenAI call, context inclusion). Create convex/chatContext.ts to fetch user's projects and tasks for AI context.
+
+# Test Strategy:
+Test CRUD operations for sessions and messages, test AI response generation, verify context inclusion works, test credit deduction
+
+# Subtasks:
+## 1. Create chat session management (chatSessions.ts) [done]
+### Dependencies: None
+### Description: Implement CRUD operations for chat sessions
+### Details:
+Create convex/chatSessions.ts with: createSession mutation (generate displayId, set initial title), getSessions query (list user's sessions, paginated, sorted by updatedAt), getSession query (fetch single session by ID or displayId), deleteSession mutation, updateSessionTitle mutation for renaming.
+
+## 2. Create message storage (chatMessages.ts) [done]
+### Dependencies: 35.1
+### Description: Implement message queries and mutations
+### Details:
+Create convex/chatMessages.ts with: getMessages query (fetch all messages for a session, ordered by createdAt), saveMessage mutation (save user or assistant message with role, content, tokens, creditsUsed), deleteMessage mutation (for message removal if needed).
+
+## 3. Create user context aggregation (chatContext.ts) [done]
+### Dependencies: None
+### Description: Build helper to fetch user's projects and tasks for AI context
+### Details:
+Create convex/chatContext.ts with getUserContext internal query that: fetches user's recent projects (last 5 active), fetches user's pending/in-progress tasks, formats data as structured context string, returns formatted context for system message inclusion. Keep context concise (<2000 chars).
+
+## 4. Implement sendChatMessage action [done]
+### Dependencies: 35.2, 35.3
+### Description: Create main AI chat action with Azure OpenAI integration
+### Details:
+Create convex/chat.ts with sendChatMessage action: 1) Check user credits >= 3, 2) Get conversation history (last 10 messages), 3) Optionally get user context if includeContext=true, 4) Build messages array for Azure OpenAI, 5) Call Azure OpenAI API with o1-mini model, 6) Save user message and assistant response via chatMessages mutations, 7) Deduct 3 credits via credits mutation, 8) Update session updatedAt timestamp, 9) Return response + new credit balance.
+

@@ -1,0 +1,55 @@
+# Task ID: 47
+# Title: Website Analysis Dialog
+# Status: pending
+# Dependencies: 43, 46
+# Priority: high
+# Description: Create UI for initiating website analysis
+# Details:
+Create features/design-references/components/analyze-website-dialog.tsx with URL input, optional tags/style/industry inputs, credit cost display (10 credits), form validation (valid HTTP/HTTPS URL). Build multi-step progress UI: 1) Crawling website (10-20s), 2) Analyzing design (15-30s), 3) Generating prompts (10-15s). Use useAction to call analyzeWebsite action. Implement useCreditsCheck hook integration. Handle success (navigate to detail view), insufficient credits (show purchase dialog), errors (toast notifications). Add 'Analyze Website' button to dashboard and /design-references page. Estimated time: 2 hours.
+
+# Test Strategy:
+Test URL validation, verify credit check blocks when insufficient, test progress UI shows correctly, verify success navigation, test error handling, test from both dashboard and library page
+
+# Subtasks:
+## 1. Create analyze-website-dialog component structure [pending]
+### Dependencies: None
+### Description: Build dialog with form inputs and layout
+### Details:
+Create dialog component. URL input (required), tags input (TagInput), style select (minimal/corporate/creative), industry input (optional). Credit cost: '10 credits'. Form validation.
+
+## 2. Implement URL validation and form inputs [pending]
+### Dependencies: 47.1
+### Description: Add Zod schema validation for URL and form handling
+### Details:
+Zod schema: url must be valid HTTP/HTTPS. Use React Hook Form with zodResolver. Validate on blur and submit. Show error messages below inputs.
+
+## 3. Build multi-step progress UI component [pending]
+### Dependencies: 47.1
+### Description: Create progress indicator for 3 analysis steps
+### Details:
+Progress component with 3 steps: 1) Crawling website (10-20s), 2) Analyzing design (15-30s), 3) Generating prompts (10-15s). Show current step highlighted, spinner, estimated time.
+
+## 4. Integrate useAction and useCreditsCheck hooks [pending]
+### Dependencies: 47.2, 47.3
+### Description: Connect to backend analyzeWebsite action with credit validation
+### Details:
+Use useAction(api.ai.analyzeWebsite). Use useCreditsCheck hook to verify 10 credits. Disable submit if insufficient. Show loading state during analysis.
+
+## 5. Implement success, error, and insufficient credits handling [pending]
+### Dependencies: 47.4
+### Description: Handle all analysis outcomes with proper UI feedback
+### Details:
+Success: close dialog, navigate to /design-references/[displayId]. Error: show toast, keep dialog open. Insufficient credits: show InsufficientCreditsDialog with 'Buy More' CTA.
+
+## 6. Add Analyze buttons to dashboard and library page [pending]
+### Dependencies: 47.5
+### Description: Integrate dialog trigger in multiple locations
+### Details:
+Dashboard: Add 'Analyze Website' button in header with Sparkles icon. Library page: same button. Both open AnalyzeWebsiteDialog. Pass open/onOpenChange props.
+
+## 7. Test complete analysis flow end-to-end [pending]
+### Dependencies: 47.6
+### Description: Test all scenarios and user paths
+### Details:
+Test: valid URL submission, invalid URL error, insufficient credits block, successful analysis and navigation, error handling, progress UI timing, mobile responsiveness, keyboard shortcuts (Esc to close).
+

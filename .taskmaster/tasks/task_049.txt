@@ -1,0 +1,55 @@
+# Task ID: 49
+# Title: Testing and Documentation
+# Status: pending
+# Dependencies: 42, 43, 44, 45, 46, 47, 48
+# Priority: medium
+# Description: Comprehensive testing and documentation for website analyzer feature
+# Details:
+Write unit tests for analysis response parsing, prompt generation, CRUD operations, credit deduction. Write component tests for analyze dialog validation, table filtering/search, prompt insertion. Perform manual testing with 5 diverse websites (SaaS, e-commerce, portfolio, docs, marketing). Verify color extraction accuracy, typography detection, tech stack identification. Test mobile responsiveness thoroughly. Update CLAUDE.md with Design References section, usage patterns, credit costs. Update docs/ENVIRONMENT.md if needed. Add examples to README. Document troubleshooting for common issues (crawl failures, rate limits). Estimated time: 2 hours.
+
+# Test Strategy:
+All unit tests pass with >80% coverage, all component tests pass, manual test matrix completed successfully, documentation reviewed for completeness and accuracy, examples tested and working
+
+# Subtasks:
+## 1. Write unit tests for analysis and prompt generation [pending]
+### Dependencies: None
+### Description: Test backend AI functions
+### Details:
+Test analysisResponseSchema validation, clonePromptsSchema validation, parseAnalysisResponse with valid/invalid data, generateClonePrompts with mock responses.
+
+## 2. Write unit tests for CRUD operations [pending]
+### Dependencies: None
+### Description: Test designReferences queries and mutations
+### Details:
+Test createDesignReference, getDesignReferences filtering, searchDesignReferences, updateDesignReference, deleteDesignReference, auth enforcement.
+
+## 3. Write component tests for dialog and table [pending]
+### Dependencies: None
+### Description: Test React components
+### Details:
+Test AnalyzeWebsiteDialog: form validation, URL input, credit check, progress UI, error handling. Test DesignReferencesTable: rendering, filtering, search, sorting, row clicks.
+
+## 4. Perform manual testing with 5 diverse websites [pending]
+### Dependencies: None
+### Description: Test real-world usage with different site types
+### Details:
+Analyze: 1) SaaS (linear.app), 2) E-commerce (shopify themes), 3) Portfolio (awwwards site), 4) Documentation (docs.convex.dev), 5) Marketing (tailwindcss.com). Verify color accuracy, typography detection, tech stack, prompt quality.
+
+## 5. Test mobile responsiveness thoroughly [pending]
+### Dependencies: None
+### Description: Verify all components work on mobile/tablet
+### Details:
+Test on mobile: library page (card view), detail view (scrollable sections), analysis dialog (full-screen), color swatches (responsive grid), prompt viewer (copy buttons). Test tablet: 2-col layout, sidebar collapse.
+
+## 6. Update CLAUDE.md with Design References section [pending]
+### Dependencies: None
+### Description: Document feature for future AI assistants
+### Details:
+Add section: 'Design References' under features. Document: usage patterns (analyze, browse, import prompts), credit costs (10 per analysis), integration with AI generation, component locations, troubleshooting (rate limits, crawl failures).
+
+## 7. Update docs and add examples [pending]
+### Dependencies: 49.6
+### Description: Complete documentation and add troubleshooting
+### Details:
+Update docs/ENVIRONMENT.md if needed. Add examples to README showing feature. Document common issues: rate limit (5/hour), crawl timeout (30s), invalid URLs, API errors. Add example clone prompts.
+
