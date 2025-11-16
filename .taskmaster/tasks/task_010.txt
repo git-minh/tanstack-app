@@ -8,7 +8,7 @@
 Update the environment documentation to include Azure OpenAI setup instructions, variable descriptions, and how to obtain credentials from Azure portal.
 
 # Test Strategy:
-Validate that ENVIRONMENT.md includes all three variables with descriptions and examples. Verify setup instructions are step-by-step and complete. Test troubleshooting guide against each documented issue. Ensure a new contributor can follow the guide without ambiguity.
+Follow documentation to verify setup process is clear.
 
 # Subtasks:
 ## 1. Add Azure OpenAI section to ENVIRONMENT.md [pending]
@@ -21,7 +21,7 @@ Add section: 'Azure OpenAI for AI Generation'. Document AZURE_OPENAI_ENDPOINT, A
 ### Dependencies: None
 ### Description: Document how to obtain credentials from Azure
 ### Details:
-Step-by-step: Create Azure OpenAI resource → Deploy model (e.g., GPT-4, GPT-4 Turbo) → Get endpoint URL → Get API key → Configure deployment name.
+Step-by-step: Create Azure OpenAI resource → Deploy GPT-4 or GPT-4o model → Get endpoint URL → Get API key → Configure deployment name.
 
 ## 3. Add troubleshooting guide [pending]
 ### Dependencies: None

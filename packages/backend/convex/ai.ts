@@ -6,6 +6,20 @@ import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { parseAIResponse } from "./ai_schema";
 import { CREDIT_COSTS } from "./credits";
+import type {
+  CrawledPage,
+  ProcessedPage,
+  CrawlWebsiteResponse,
+  CrawlWebsiteErrorResponse
+} from './crawl_types';
+import {
+  analysisResponseSchema,
+  WEBSITE_ANALYSIS_SYSTEM_PROMPT,
+  type AnalysisResponse,
+  clonePromptsSchema,
+  CLONE_PROMPT_GENERATION_SYSTEM_PROMPT,
+  type ClonePrompts
+} from './analysis_schema';
 
 /**
  * Azure OpenAI API response type
@@ -862,3 +876,535 @@ export const generateProject = action({
     }
   },
 });
+
+/**
+ * Crawl a website and return multiple pages
+ *
+ * Uses Firecrawl's crawlUrl API to fetch multiple pages from a website.
+ * Implements intelligent page filtering and rate limiting.
+ */
+export const crawlWebsite = action({
+  args: {
+    url: v.string(),
+    limit: v.optional(v.number()), // Max pages to crawl (default: 10, max: 20)
+  },
+  handler: async (ctx, args): Promise<CrawlWebsiteResponse> => {
+    const startTime = Date.now();
+
+    try {
+      // 1. Authenticate user
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) {
+        return {
+          success: false,
+          error: "Unauthorized: Must be logged in to crawl websites",
+          code: 'AUTH_REQUIRED',
+        };
+      }
+
+      // 2. Validate URL format
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(args.url);
+        if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+          throw new Error('Only HTTP and HTTPS URLs are supported');
+        }
+      } catch (error) {
+        return {
+          success: false,
+          error: `Invalid URL format: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          code: 'INVALID_URL',
+        };
+      }
+
+      // 3. Check rate limiting (5 crawls per hour)
+      const userUsage = await ctx.runQuery(api.credits.getUserUsage);
+      const now = Date.now();
+      const oneHourAgo = now - (60 * 60 * 1000);
+
+      // Filter crawls from last hour
+      const crawlsThisHour = (userUsage?.websiteCrawlsThisHour || [])
+        .filter(timestamp => timestamp > oneHourAgo);
+
+      if (crawlsThisHour.length >= 5) {
+        const oldestCrawl = Math.min(...crawlsThisHour);
+        const minutesUntilReset = Math.ceil((oldestCrawl + 60 * 60 * 1000 - now) / 60000);
+        return {
+          success: false,
+          error: `Rate limit exceeded: You can crawl up to 5 websites per hour. Try again in ${minutesUntilReset} minutes.`,
+          code: 'RATE_LIMIT_EXCEEDED',
+        };
+      }
+
+      // 4. Check for FIRECRAWL_API_KEY
+      const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY;
+      if (!FIRECRAWL_API_KEY) {
+        throw new Error('FIRECRAWL_API_KEY environment variable is not set');
+      }
+
+      // 6. Initialize Firecrawl client
+      const { default: FirecrawlApp } = await import('firecrawl');
+      const firecrawl = new FirecrawlApp({ apiKey: FIRECRAWL_API_KEY });
+
+      console.log('Crawling website:', args.url, 'with limit:', args.limit || 10);
+
+      // 7. Crawl the website
+      const limit = Math.min(args.limit || 10, 20); // Cap at 20 pages
+      const result = await firecrawl.crawl(args.url, {
+        limit,
+        scrapeOptions: {
+          formats: ['markdown', 'html'],
+        },
+      });
+
+      // 8. Filter and prioritize pages
+      const pages = result.data || [];
+      const filteredPages = filterPages(pages, limit);
+
+      console.log('Crawl successful:', {
+        url: args.url,
+        totalPages: pages.length,
+        filteredPages: filteredPages.length,
+        crawlTime: Date.now() - startTime,
+      });
+
+      // Update rate limiting timestamp after successful crawl
+      const updatedCrawls = [...crawlsThisHour, now];
+      await ctx.runMutation(api.credits.updateUserUsage, {
+        websiteCrawlsThisHour: updatedCrawls,
+      });
+
+      return {
+        success: true,
+        url: args.url,
+        pages: filteredPages,
+        totalPages: pages.length,
+        crawlTime: Date.now() - startTime,
+      };
+    } catch (error) {
+      console.error('Website crawling failed:', error);
+
+      // Provide helpful error messages
+      let errorMessage = 'Unknown error occurred while crawling website';
+      let errorCode: CrawlWebsiteErrorResponse['code'] = undefined;
+
+      if (error instanceof Error) {
+        if (error.message.includes('timeout')) {
+          errorMessage = 'The website took too long to respond. Try a simpler website or reduce the page limit.';
+          errorCode = 'TIMEOUT';
+        } else if (error.message.includes('Invalid URL')) {
+          errorMessage = error.message;
+          errorCode = 'INVALID_URL';
+        } else if (error.message.includes('FIRECRAWL_API_KEY')) {
+          errorMessage = 'Website crawling is temporarily unavailable. Please try again later.';
+          errorCode = 'FIRECRAWL_ERROR';
+        } else {
+          errorMessage = `Crawling failed: ${error.message}`;
+          errorCode = 'FIRECRAWL_ERROR';
+        }
+      }
+
+      return {
+        success: false,
+        error: errorMessage,
+        code: errorCode,
+      };
+    }
+  },
+});
+
+/**
+ * Filter and prioritize crawled pages
+ *
+ * Priority order:
+ * 1. Homepage (/)
+ * 2. About, Pricing, Features pages
+ * 3. Product, Services pages
+ * 4. Other pages
+ *
+ * Filters out: privacy, terms, cookies, legal, 404, error pages
+ */
+function filterPages(pages: CrawledPage[], limit: number): ProcessedPage[] {
+  // Define priority patterns
+  const highPriority = [
+    /^\/$/, // Homepage
+    /^\/index/i,
+  ];
+
+  const mediumPriority = [
+    /\/about/i,
+    /\/pricing/i,
+    /\/features/i,
+    /\/product/i,
+    /\/services/i,
+  ];
+
+  // Define filter-out patterns
+  const filterOut = [
+    /\/privacy/i,
+    /\/terms/i,
+    /\/cookies/i,
+    /\/legal/i,
+    /\/404/i,
+    /\/error/i,
+    /\/sitemap/i,
+    /\/robots\.txt/i,
+  ];
+
+  // Process and score pages
+  const processedPages: ProcessedPage[] = pages
+    .filter(page => {
+      // Get URL from page or metadata
+      const pageUrl = page.url || page.metadata?.url;
+      if (!pageUrl) return false;
+
+      // Filter out unwanted pages
+      try {
+        const urlPath = new URL(pageUrl).pathname;
+        return !filterOut.some(pattern => pattern.test(urlPath));
+      } catch {
+        return false; // Invalid URL, filter out
+      }
+    })
+    .map(page => {
+      // Safe to use non-null assertion because filter already checked for URL existence
+      const pageUrl = page.url || page.metadata?.url!;
+      const urlPath = new URL(pageUrl).pathname;
+
+      // Calculate priority
+      let priority = 0;
+      if (highPriority.some(pattern => pattern.test(urlPath))) {
+        priority = 3;
+      } else if (mediumPriority.some(pattern => pattern.test(urlPath))) {
+        priority = 2;
+      } else {
+        priority = 1;
+      }
+
+      return {
+        url: pageUrl,
+        markdown: page.markdown || '',
+        html: page.html || '',
+        title: page.metadata?.title || '',
+        priority,
+      };
+    })
+    .sort((a, b) => b.priority - a.priority) // Sort by priority (high to low)
+    .slice(0, limit); // Limit results
+
+  return processedPages;
+}
+
+/**
+ * Analysis response types
+ */
+interface AnalyzeWebsiteSuccessResponse {
+  success: true;
+  url: string;
+  analysis: AnalysisResponse;
+  clonePrompts: ClonePrompts;
+  pagesAnalyzed: number;
+  analysisTime: number; // milliseconds
+}
+
+interface AnalyzeWebsiteErrorResponse {
+  success: false;
+  error: string;
+  code?: 'AUTH_REQUIRED' | 'INSUFFICIENT_CREDITS' | 'CRAWL_FAILED' | 'AI_SERVICE_ERROR' | 'INVALID_RESPONSE';
+}
+
+type AnalyzeWebsiteResponse = AnalyzeWebsiteSuccessResponse | AnalyzeWebsiteErrorResponse;
+
+/**
+ * Analyze a website and extract design information using AI
+ *
+ * Uses crawlWebsite to fetch pages, then analyzes with Azure OpenAI to extract:
+ * - UI/UX patterns
+ * - Color palette
+ * - Typography
+ * - Tech stack
+ * - Component inventory
+ *
+ * Costs 10 credits per analysis.
+ */
+export const analyzeWebsite = action({
+  args: {
+    url: v.string(),
+    limit: v.optional(v.number()), // Max pages to crawl (default: 10)
+  },
+  handler: async (ctx, args): Promise<AnalyzeWebsiteResponse> => {
+    const startTime = Date.now();
+
+    try {
+      // 1. Authenticate user
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) {
+        return {
+          success: false,
+          error: "Unauthorized: Must be logged in to analyze websites",
+          code: 'AUTH_REQUIRED',
+        };
+      }
+
+      // 2. Check credits (10 credits required)
+      const creditCheck = await ctx.runQuery(api.credits.checkCredits, {
+        amount: CREDIT_COSTS.WEBSITE_ANALYSIS,
+      });
+
+      if (!creditCheck.hasEnough) {
+        return {
+          success: false,
+          error: `Insufficient credits. This operation requires ${CREDIT_COSTS.WEBSITE_ANALYSIS} credits but you only have ${creditCheck.creditsRemaining}. Upgrade to Pro for unlimited credits.`,
+          code: 'INSUFFICIENT_CREDITS',
+        };
+      }
+
+      console.log('Starting website analysis:', args.url);
+
+      // 3. Crawl the website to get pages
+      const crawlResult = await ctx.runAction(api.ai.crawlWebsite, {
+        url: args.url,
+        limit: args.limit || 10,
+      });
+
+      if (!crawlResult.success) {
+        return {
+          success: false,
+          error: `Failed to crawl website: ${crawlResult.error}`,
+          code: 'CRAWL_FAILED',
+        };
+      }
+
+      const pages = crawlResult.pages;
+      console.log(`Crawled ${pages.length} pages, preparing for analysis`);
+
+      // 4. Prepare content for AI analysis
+      // Combine markdown from all pages, limit to 15,000 chars total
+      let combinedContent = pages
+        .map((page, idx) => {
+          return `=== Page ${idx + 1}: ${page.title || page.url} ===\n${page.markdown}`;
+        })
+        .join('\n\n');
+
+      // Truncate if too long
+      if (combinedContent.length > 15000) {
+        combinedContent = combinedContent.substring(0, 15000) + '\n\n[Content truncated to 15,000 characters]';
+      }
+
+      console.log('Content prepared, calling Azure OpenAI for analysis');
+
+      // 5. Call Azure OpenAI for analysis
+      const analysisResult = await callAzureOpenAIForAnalysis(combinedContent);
+
+      // 6. Validate response with Zod schema
+      let analysis: AnalysisResponse;
+      try {
+        analysis = analysisResponseSchema.parse(analysisResult);
+      } catch (error) {
+        console.error('Failed to parse analysis response:', error);
+        throw new Error(`AI returned invalid response format: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+
+      console.log('Analysis validated, generating clone prompts');
+
+      // 7. Generate clone prompts from analysis
+      const clonePrompts = await generateClonePrompts(analysis);
+
+      console.log('Clone prompts generated:', {
+        fullPageLength: clonePrompts.fullPage.length,
+        componentsCount: clonePrompts.components.length,
+        designSystemLength: clonePrompts.designSystem.length,
+      });
+
+      console.log('Analysis complete, deducting credits');
+
+      // 8. Deduct credits after successful analysis
+      await ctx.runMutation(api.credits.deductCredits, {
+        amount: CREDIT_COSTS.WEBSITE_ANALYSIS,
+        reason: `Website analysis: ${args.url}`,
+      });
+
+      const analysisTime = Date.now() - startTime;
+
+      console.log('Website analysis successful:', {
+        url: args.url,
+        pagesAnalyzed: pages.length,
+        analysisTime,
+        uiPatterns: analysis.uiPatterns.length,
+        components: analysis.components.length,
+        clonePromptsComponents: clonePrompts.components.length,
+      });
+
+      return {
+        success: true,
+        url: args.url,
+        analysis,
+        clonePrompts,
+        pagesAnalyzed: pages.length,
+        analysisTime,
+      };
+    } catch (error) {
+      console.error('Website analysis failed:', error);
+
+      let errorMessage = 'Unknown error occurred while analyzing website';
+      let errorCode: AnalyzeWebsiteErrorResponse['code'] = undefined;
+
+      if (error instanceof Error) {
+        if (error.message.includes('Azure OpenAI')) {
+          errorMessage = 'AI analysis service is temporarily unavailable. Please try again later.';
+          errorCode = 'AI_SERVICE_ERROR';
+        } else if (error.message.includes('invalid response')) {
+          errorMessage = 'AI analysis returned unexpected format. Please try again.';
+          errorCode = 'INVALID_RESPONSE';
+        } else {
+          errorMessage = `Analysis failed: ${error.message}`;
+        }
+      }
+
+      return {
+        success: false,
+        error: errorMessage,
+        code: errorCode,
+      };
+    }
+  },
+});
+
+/**
+ * Call Azure OpenAI for website analysis
+ */
+async function callAzureOpenAIForAnalysis(content: string): Promise<any> {
+  const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT;
+  const AZURE_OPENAI_KEY = process.env.AZURE_OPENAI_KEY;
+  const AZURE_OPENAI_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT;
+
+  if (!AZURE_OPENAI_ENDPOINT || !AZURE_OPENAI_KEY || !AZURE_OPENAI_DEPLOYMENT) {
+    throw new Error('Azure OpenAI environment variables not configured');
+  }
+
+  const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2024-08-01-preview`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': AZURE_OPENAI_KEY,
+    },
+    body: JSON.stringify({
+      messages: [
+        {
+          role: 'system',
+          content: WEBSITE_ANALYSIS_SYSTEM_PROMPT,
+        },
+        {
+          role: 'user',
+          content: `Analyze the following website content and extract design information:\n\n${content}`,
+        },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.7,
+      max_tokens: 3000,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Azure OpenAI API error (${response.status}): ${errorText}`);
+  }
+
+  const data = await response.json() as AzureOpenAIResponse;
+
+  if (!data.choices?.[0]?.message?.content) {
+    throw new Error('Invalid response from Azure OpenAI: missing content');
+  }
+
+  try {
+    return JSON.parse(data.choices[0].message.content);
+  } catch (error) {
+    throw new Error(`Failed to parse Azure OpenAI response as JSON: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Generate clone prompts from website analysis using Azure OpenAI
+ */
+async function generateClonePrompts(analysis: AnalysisResponse): Promise<ClonePrompts> {
+  const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT;
+  const AZURE_OPENAI_KEY = process.env.AZURE_OPENAI_KEY;
+  const AZURE_OPENAI_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT;
+
+  if (!AZURE_OPENAI_ENDPOINT || !AZURE_OPENAI_KEY || !AZURE_OPENAI_DEPLOYMENT) {
+    throw new Error('Azure OpenAI environment variables not configured');
+  }
+
+  const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2024-08-01-preview`;
+
+  // Prepare analysis summary for prompt generation
+  const analysisSummary = `
+Website Analysis Summary:
+
+UI/UX Patterns:
+${analysis.uiPatterns.map(p => `- ${p}`).join('\n')}
+
+Color Palette:
+- Primary: ${analysis.colorPalette.primary.join(', ')}
+- Secondary: ${analysis.colorPalette.secondary.join(', ')}
+- Accent: ${analysis.colorPalette.accent.join(', ')}
+
+Typography:
+- Heading Font: ${analysis.typography.headingFont || 'Not specified'}
+- Body Font: ${analysis.typography.bodyFont || 'Not specified'}
+- Sizes: h1(${analysis.typography.sizes?.h1 || 'N/A'}), h2(${analysis.typography.sizes?.h2 || 'N/A'}), h3(${analysis.typography.sizes?.h3 || 'N/A'}), body(${analysis.typography.sizes?.body || 'N/A'})
+
+Tech Stack:
+${analysis.techStack.map(t => `- ${t}`).join('\n')}
+
+Components:
+${analysis.components.map(c => `- ${c.name}: ${c.description}`).join('\n')}
+`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': AZURE_OPENAI_KEY,
+    },
+    body: JSON.stringify({
+      messages: [
+        {
+          role: 'system',
+          content: CLONE_PROMPT_GENERATION_SYSTEM_PROMPT,
+        },
+        {
+          role: 'user',
+          content: `Based on the following website analysis, generate comprehensive clone prompts:\n\n${analysisSummary}`,
+        },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.7,
+      max_tokens: 4000,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Azure OpenAI API error for clone prompts (${response.status}): ${errorText}`);
+  }
+
+  const data = await response.json() as AzureOpenAIResponse;
+
+  if (!data.choices?.[0]?.message?.content) {
+    throw new Error('Invalid response from Azure OpenAI: missing content for clone prompts');
+  }
+
+  try {
+    const parsedResponse = JSON.parse(data.choices[0].message.content);
+
+    // Validate with Zod schema
+    const validatedPrompts = clonePromptsSchema.parse(parsedResponse);
+
+    return validatedPrompts;
+  } catch (error) {
+    throw new Error(`Failed to parse or validate clone prompts response: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}

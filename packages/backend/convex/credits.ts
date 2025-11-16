@@ -9,6 +9,7 @@ export const CREDIT_COSTS = {
 	CHAT_MESSAGE: 3,
 	AI_GENERATION: 15,
 	URL_SCRAPE: 5,
+	WEBSITE_ANALYSIS: 10,
 } as const;
 
 /**
@@ -320,3 +321,43 @@ export async function checkAndResetCredits(
 ) {
 	return await ensureUserUsageWithCredits(ctx, userId);
 }
+
+/**
+ * Get user usage record for authenticated user
+ * Used for rate limiting and other usage tracking
+ */
+export const getUserUsage = query({
+	args: {},
+	handler: async (ctx) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			return null;
+		}
+
+		return await getUserUsageRecord(ctx, identity.subject);
+	},
+});
+
+/**
+ * Update user usage record
+ * Used for updating rate limiting data
+ */
+export const updateUserUsage = mutation({
+	args: {
+		websiteCrawlsThisHour: v.optional(v.array(v.number())),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			throw new Error("Unauthorized");
+		}
+
+		const usage = await ensureUserUsageWithCredits(ctx, identity.subject);
+
+		await ctx.db.patch(usage._id, {
+			...args,
+		});
+
+		return { success: true };
+	},
+});

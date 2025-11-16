@@ -10,6 +10,7 @@
 
 import type * as ai from "../ai.js";
 import type * as ai_schema from "../ai_schema.js";
+import type * as analysis_schema from "../analysis_schema.js";
 import type * as auth from "../auth.js";
 import type * as autumn from "../autumn.js";
 import type * as chat from "../chat.js";
@@ -19,6 +20,7 @@ import type * as chatSessions from "../chatSessions.js";
 import type * as chatStreaming from "../chatStreaming.js";
 import type * as contacts from "../contacts.js";
 import type * as counters from "../counters.js";
+import type * as crawl_types from "../crawl_types.js";
 import type * as credits from "../credits.js";
 import type * as dashboard from "../dashboard.js";
 import type * as healthCheck from "../healthCheck.js";
@@ -50,6 +52,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   ai: typeof ai;
   ai_schema: typeof ai_schema;
+  analysis_schema: typeof analysis_schema;
   auth: typeof auth;
   autumn: typeof autumn;
   chat: typeof chat;
@@ -59,6 +62,7 @@ declare const fullApi: ApiFromModules<{
   chatStreaming: typeof chatStreaming;
   contacts: typeof contacts;
   counters: typeof counters;
+  crawl_types: typeof crawl_types;
   credits: typeof credits;
   dashboard: typeof dashboard;
   healthCheck: typeof healthCheck;

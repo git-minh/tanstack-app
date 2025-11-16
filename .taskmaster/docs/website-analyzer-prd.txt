@@ -1,0 +1,310 @@
+# Website Analysis and Cloning System - PRD
+
+## Overview
+Transform Firecrawl integration from basic single-page scraping into a comprehensive website analysis and cloning system that extracts UI/UX patterns, tech stacks, color palettes, typography, and component inventories to generate actionable clone prompts.
+
+## Problem Statement
+Current Firecrawl usage only scrapes single pages for AI context. Designers and developers often need to analyze entire websites for inspiration, extract design systems, and clone UI patterns. Manual analysis is time-consuming and prone to missing critical details.
+
+## Solution
+Build a website analyzer feature that:
+1. Crawls entire websites (not just single pages)
+2. Extracts comprehensive design information (colors, fonts, layouts, components)
+3. Detects tech stack and architecture patterns
+4. Generates actionable clone prompts for developers/designers
+5. Stores analyzed sites as reusable design references
+
+## Core Features
+
+### 1. Deep Website Crawling
+- Crawl multiple pages per site (10-20 pages configurable)
+- Extract both markdown and HTML for analysis
+- Intelligent page selection (home, about, pricing, product pages)
+- Respect robots.txt and rate limits
+- Error handling for protected/failed pages
+
+### 2. AI-Powered Analysis
+- **UI/UX Patterns**: Identify layout types (hero sections, grids, cards, modals)
+- **Color Palette Extraction**: Extract primary, secondary, accent colors from CSS/styles
+- **Typography Analysis**: Identify font families, sizes, weights, line heights
+- **Component Inventory**: Catalog reusable components (buttons, forms, navigation)
+- **Tech Stack Detection**: Identify frameworks (React, Vue, Tailwind, etc.)
+- **Interaction Patterns**: Detect animations, transitions, micro-interactions
+
+### 3. Clone Prompt Generation
+Generate structured prompts like:
+```
+"Create a hero section with:
+- Dark gradient background (#1a1a2e → #16213e)
+- 64px bold heading with tight letter-spacing
+- Floating card with glassmorphism effect
+- Purple accent CTA button (#7c3aed)
+- Subtle parallax scroll effect"
+```
+
+Output formats:
+- Component-specific prompts (headers, CTAs, forms)
+- Full-page clone prompts
+- Design system prompts (colors + typography + spacing)
+
+### 4. Design Reference Library
+- Store analyzed websites with metadata
+- Categorize by style (minimal, corporate, creative, SaaS)
+- Tag by industry (fintech, e-commerce, productivity)
+- Search and filter references
+- View analysis results and clone prompts
+- Attach screenshots/thumbnails
+- Reuse prompts across projects
+
+### 5. Integration with Existing Features
+- Use clone prompts in AI project generation
+- Append design references to project context
+- Generate tasks based on clone prompts
+- Credit system integration (10 credits per analysis)
+
+## Technical Architecture
+
+### Backend (Convex)
+
+#### Schema Changes
+```typescript
+// convex/schema.ts
+designReferences: defineTable({
+  userId: v.string(),
+  displayId: v.string(), // DR-000001
+  url: v.string(),
+  siteName: v.string(),
+  description: v.optional(v.string()),
+
+  // Analysis results
+  analysis: v.object({
+    uiPatterns: v.array(v.string()),
+    colorPalette: v.object({
+      primary: v.array(v.string()),
+      secondary: v.array(v.string()),
+      accent: v.array(v.string()),
+    }),
+    typography: v.object({
+      headingFont: v.optional(v.string()),
+      bodyFont: v.optional(v.string()),
+      sizes: v.optional(v.object({
+        h1: v.optional(v.string()),
+        h2: v.optional(v.string()),
+        h3: v.optional(v.string()),
+        body: v.optional(v.string()),
+      })),
+    }),
+    techStack: v.array(v.string()),
+    components: v.array(v.object({
+      type: v.string(),
+      description: v.string(),
+    })),
+  }),
+
+  // Generated prompts
+  clonePrompts: v.object({
+    fullPage: v.string(),
+    components: v.array(v.object({
+      name: v.string(),
+      prompt: v.string(),
+    })),
+    designSystem: v.string(),
+  }),
+
+  // Metadata
+  tags: v.array(v.string()), // ["minimal", "saas", "fintech"]
+  style: v.string(), // "minimal" | "corporate" | "creative"
+  industry: v.optional(v.string()),
+  thumbnail: v.optional(v.string()), // URL to screenshot
+
+  createdAt: v.number(),
+  updatedAt: v.number(),
+})
+  .index("by_userId", ["userId"])
+  .index("by_displayId", ["displayId"])
+  .index("by_userId_and_style", ["userId", "style"])
+```
+
+#### New Actions
+- `analyzeWebsite`: Main orchestration action
+  - Crawl site with Firecrawl (10-20 pages)
+  - Call Azure OpenAI for analysis
+  - Generate clone prompts
+  - Save to designReferences table
+  - Deduct 10 credits
+
+- `generateClonePrompts`: AI prompt generation
+  - Structured output for components
+  - Full-page clone prompts
+  - Design system extraction
+
+#### New Queries/Mutations
+- `getDesignReferences`: List user's saved references
+- `getDesignReference`: Get single reference by ID
+- `deleteDesignReference`: Remove reference
+- `updateDesignReference`: Update tags/description
+- `searchDesignReferences`: Search by tags, style, industry
+
+### Frontend (React)
+
+#### New Routes
+- `/design-references` - Main library page
+- `/design-references/:displayId` - Single reference detail view
+- `/design-references/analyze` - New analysis form
+
+#### New Components
+
+**Analysis Components** (`features/design-references/components/`)
+- `analyze-website-dialog.tsx` - Form to input URL and start analysis
+- `analysis-progress.tsx` - Loading state with progress steps
+- `design-reference-card.tsx` - Card showing site thumbnail and summary
+- `design-reference-detail.tsx` - Full analysis results view
+- `clone-prompt-viewer.tsx` - Display and copy generated prompts
+- `color-palette-display.tsx` - Visual color swatch display
+- `typography-sample.tsx` - Font preview component
+
+**Library Components** (`features/design-references/components/`)
+- `design-references-table.tsx` - TanStack Table with filtering
+- `design-reference-filters.tsx` - Filter by style, industry, tags
+- `design-reference-actions.tsx` - Edit, delete, use prompt actions
+
+#### Integration Points
+- Add "Analyze Website" button to dashboard
+- Add "Import Design Reference" to AI generation dialog
+- Show design references in global search (Cmd+K)
+
+### AI Prompts
+
+#### Website Analysis Prompt (System)
+```
+You are a professional UI/UX designer and front-end architect.
+
+Analyze the provided website pages and extract:
+
+1. UI/UX Patterns:
+   - Layout structures (hero, grid, card, sidebar)
+   - Component types (buttons, forms, modals, navigation)
+   - Interaction patterns (hover effects, transitions, animations)
+
+2. Color Palette:
+   - Primary colors (brand colors, most prominent)
+   - Secondary colors (supporting colors)
+   - Accent colors (CTAs, highlights)
+   - Extract hex codes from CSS/styles
+
+3. Typography:
+   - Heading font family and characteristics
+   - Body font family
+   - Font sizes used (px or rem)
+   - Font weights and line heights
+
+4. Tech Stack:
+   - Framework detection (React, Vue, Angular, vanilla JS)
+   - CSS framework (Tailwind, Bootstrap, custom)
+   - Libraries and tools detected
+
+5. Component Inventory:
+   - List reusable components with descriptions
+   - Categorize by type (navigation, forms, content, layout)
+
+Return structured JSON matching the schema.
+```
+
+#### Clone Prompt Generation (User)
+```
+Generate 3 types of clone prompts based on this analysis:
+
+1. Full-Page Clone: Comprehensive prompt to recreate the entire page
+2. Component Prompts: Individual prompts for each major component
+3. Design System: Prompt to recreate color palette, typography, and spacing
+
+Each prompt should:
+- Be actionable and specific
+- Include exact values (colors, sizes, weights)
+- Describe layout and positioning
+- Mention interactions/animations
+- Be suitable for developer or AI implementation
+
+Format as JSON.
+```
+
+## User Flows
+
+### Flow 1: Analyze New Website
+1. User clicks "Analyze Website" on dashboard or `/design-references`
+2. Dialog opens with URL input field
+3. User enters URL (e.g., `https://linear.app`)
+4. Optional: Add tags, style category, industry
+5. Click "Analyze" (checks for 10 credits)
+6. Progress screen shows:
+   - "Crawling website..." (10-20s)
+   - "Analyzing design..." (15-30s)
+   - "Generating prompts..." (10-15s)
+7. Success: Navigate to detail view showing full analysis
+8. User can copy prompts, edit tags, save notes
+
+### Flow 2: Browse Design Library
+1. User navigates to `/design-references`
+2. Table shows all saved references with thumbnails
+3. Filter by style (minimal, corporate, creative)
+4. Search by URL or tags
+5. Click reference to view full analysis
+6. Click "Use in Project" to append prompt to AI generation
+
+### Flow 3: Use Clone Prompt in AI Generation
+1. User opens AI generation dialog
+2. Clicks "Import Design Reference"
+3. Selects saved reference from dropdown
+4. Chooses prompt type (full-page, component, design system)
+5. Prompt appended to textarea
+6. User can edit before generating
+
+## Success Metrics
+- Number of websites analyzed per user
+- Clone prompts used in AI generation
+- User retention (do they analyze multiple sites?)
+- Time saved vs manual analysis
+- Quality of generated prompts (user feedback)
+
+## Credit Costs
+- Analyze website: **10 credits** (includes crawling + AI analysis)
+- View saved references: **Free**
+- Use clone prompts: **Free**
+
+## Security & Privacy
+- Respect robots.txt
+- Rate limit crawling (max 5 sites per hour)
+- Don't store copyrighted images/content
+- Only store analysis metadata and prompts
+- User can delete references anytime
+
+## Future Enhancements (Out of Scope for MVP)
+- Screenshot capture with Puppeteer
+- Responsive design analysis (mobile vs desktop)
+- Accessibility audit integration
+- Compare two websites side-by-side
+- Share references with team members
+- Export prompts as markdown files
+- Browser extension for one-click analysis
+
+## Timeline Estimate
+- Backend schema + actions: **2-3 hours**
+- Frontend UI (analysis dialog + library): **3-4 hours**
+- Integration with AI generation: **1 hour**
+- Testing and polish: **1-2 hours**
+- **Total: 7-10 hours**
+
+## Dependencies
+- Existing Firecrawl integration
+- Azure OpenAI access
+- Credit system
+- Current AI generation feature
+
+## Success Criteria
+- User can analyze any public website
+- Analysis completes in <60 seconds
+- Clone prompts are actionable and specific
+- Design library is searchable and filterable
+- Integration with AI generation works seamlessly
+- Mobile responsive UI
+- No breaking changes to existing features
