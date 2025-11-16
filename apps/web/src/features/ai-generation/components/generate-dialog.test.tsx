@@ -148,7 +148,7 @@ describe("GenerateDialog - Rendering and Form Elements (Subtask 6.1)", () => {
 		);
 
 		expect(
-			screen.getByRole("button", { name: /^generate$/i })
+			screen.getByRole("button", { name: /generate.*credits/i })
 		).toBeInTheDocument();
 	});
 
@@ -190,7 +190,7 @@ describe("GenerateDialog - Form Validation (Subtask 6.2)", () => {
 			/>
 		);
 
-		const generateButton = screen.getByRole("button", { name: /^generate$/i });
+		const generateButton = screen.getByRole("button", { name: /generate.*credits/i });
 		await user.click(generateButton);
 
 		// Should show toast error for empty input
@@ -217,7 +217,7 @@ describe("GenerateDialog - Form Validation (Subtask 6.2)", () => {
 		const textarea = screen.getByLabelText("Project Description");
 		await user.type(textarea, "Too short"); // Only 9 chars
 
-		const generateButton = screen.getByRole("button", { name: /^generate$/i });
+		const generateButton = screen.getByRole("button", { name: /generate.*credits/i });
 		await user.click(generateButton);
 
 		// Should show toast error for input less than 20 chars
@@ -247,7 +247,7 @@ describe("GenerateDialog - Form Validation (Subtask 6.2)", () => {
 		await user.click(textarea);
 		await user.paste(longText);
 
-		const generateButton = screen.getByRole("button", { name: /^generate$/i });
+		const generateButton = screen.getByRole("button", { name: /generate.*credits/i });
 		await user.click(generateButton);
 
 		expect(
@@ -275,7 +275,7 @@ describe("GenerateDialog - Form Validation (Subtask 6.2)", () => {
 		await user.click(textarea);
 		await user.paste(validText);
 
-		const generateButton = screen.getByRole("button", { name: /^generate$/i });
+		const generateButton = screen.getByRole("button", { name: /generate.*credits/i });
 		await user.click(generateButton);
 
 		// Should call onSubmit with the entered text
@@ -312,7 +312,7 @@ describe("GenerateDialog - Loading States (Subtask 6.3)", () => {
 		const textarea = screen.getByLabelText("Project Description");
 		await user.type(textarea, "A valid project description that is long enough");
 
-		const generateButton = screen.getByRole("button", { name: /^generate$/i });
+		const generateButton = screen.getByRole("button", { name: /generate.*credits/i });
 		await user.click(generateButton);
 
 		// Wait for loading state to appear
@@ -351,7 +351,7 @@ describe("GenerateDialog - Loading States (Subtask 6.3)", () => {
 		const textarea = screen.getByLabelText("Project Description");
 		await user.type(textarea, "Valid description with enough characters here");
 
-		const generateButton = screen.getByRole("button", { name: /^generate$/i });
+		const generateButton = screen.getByRole("button", { name: /generate.*credits/i });
 		await user.click(generateButton);
 
 		// Wait for loading state
@@ -388,7 +388,7 @@ describe("GenerateDialog - Loading States (Subtask 6.3)", () => {
 		const textarea = screen.getByLabelText("Project Description");
 		await user.type(textarea, "Valid description with enough characters here");
 
-		const generateButton = screen.getByRole("button", { name: /^generate$/i });
+		const generateButton = screen.getByRole("button", { name: /generate.*credits/i });
 		await user.click(generateButton);
 
 		// Wait for loading state
@@ -399,7 +399,7 @@ describe("GenerateDialog - Loading States (Subtask 6.3)", () => {
 		});
 
 		expect(
-			screen.queryByRole("button", { name: /^generate$/i })
+			screen.queryByRole("button", { name: /generate.*credits/i })
 		).not.toBeInTheDocument();
 
 		// Cleanup
@@ -434,7 +434,7 @@ describe("GenerateDialog - Success and Error Flows (Subtask 6.4)", () => {
 		const textarea = screen.getByLabelText("Project Description");
 		await user.type(textarea, "Create a task management application with teams");
 
-		const generateButton = screen.getByRole("button", { name: /^generate$/i });
+		const generateButton = screen.getByRole("button", { name: /generate.*credits/i });
 		await user.click(generateButton);
 
 		await waitFor(() => {
@@ -471,7 +471,7 @@ describe("GenerateDialog - Success and Error Flows (Subtask 6.4)", () => {
 		const textarea = screen.getByLabelText("Project Description");
 		await user.type(textarea, "Build a simple todo app with authentication");
 
-		const generateButton = screen.getByRole("button", { name: /^generate$/i });
+		const generateButton = screen.getByRole("button", { name: /generate.*credits/i });
 		await user.click(generateButton);
 
 		await waitFor(() => {
@@ -498,7 +498,7 @@ describe("GenerateDialog - Success and Error Flows (Subtask 6.4)", () => {
 		const textarea = screen.getByLabelText("Project Description");
 		await user.type(textarea, "Create an e-commerce platform with payment");
 
-		const generateButton = screen.getByRole("button", { name: /^generate$/i });
+		const generateButton = screen.getByRole("button", { name: /generate.*credits/i });
 		await user.click(generateButton);
 
 		await waitFor(() => {
@@ -530,7 +530,7 @@ describe("GenerateDialog - Success and Error Flows (Subtask 6.4)", () => {
 		const textarea = screen.getByLabelText("Project Description");
 		await user.type(textarea, "Build a blog platform with markdown support");
 
-		const generateButton = screen.getByRole("button", { name: /^generate$/i });
+		const generateButton = screen.getByRole("button", { name: /generate.*credits/i });
 		await user.click(generateButton);
 
 		await waitFor(() => {
@@ -558,7 +558,7 @@ describe("GenerateDialog - Success and Error Flows (Subtask 6.4)", () => {
 		const testText = "A project management system with Gantt charts";
 		await user.type(textarea, testText);
 
-		const generateButton = screen.getByRole("button", { name: /^generate$/i });
+		const generateButton = screen.getByRole("button", { name: /generate.*credits/i });
 		await user.click(generateButton);
 
 		// Wait for success and close
