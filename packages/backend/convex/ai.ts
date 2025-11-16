@@ -1340,6 +1340,10 @@ async function callAzureOpenAIForAnalysis(content: string): Promise<any> {
   }
 
   const choice = data.choices[0];
+  if (!choice) {
+    throw new Error('Invalid response from Azure OpenAI: first choice is undefined');
+  }
+
   console.log('Choice finish_reason:', choice.finish_reason);
   console.log('Choice message role:', choice.message?.role);
 
@@ -1450,6 +1454,10 @@ ${analysis.components.map(c => `- ${c.name}: ${c.description}`).join('\n')}
   }
 
   const choice = data.choices[0];
+  if (!choice) {
+    throw new Error('Invalid response from Azure OpenAI: first choice is undefined for clone prompts');
+  }
+
   console.log('Clone prompts choice finish_reason:', choice.finish_reason);
   console.log('Clone prompts choice message role:', choice.message?.role);
 
