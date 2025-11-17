@@ -9,7 +9,6 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Link } from "@tanstack/react-router";
-import { AlertCircle, Sparkles } from "lucide-react";
 
 interface InsufficientCreditsDialogProps {
 	open: boolean;
@@ -32,14 +31,9 @@ export function InsufficientCreditsDialog({
 		<AlertDialog open={open} onOpenChange={onOpenChange}>
 			<AlertDialogContent className="rounded-none border-2 border-foreground">
 				<AlertDialogHeader>
-					<div className="flex items-center gap-3">
-						<div className="flex h-10 w-10 items-center justify-center border-2 border-destructive bg-destructive/10">
-							<AlertCircle className="h-5 w-5 text-destructive" />
-						</div>
-						<AlertDialogTitle className="text-2xl font-light tracking-tight">
-							Insufficient Credits
-						</AlertDialogTitle>
-					</div>
+					<AlertDialogTitle className="text-[10px] uppercase tracking-widest font-medium">
+						Insufficient Credits
+					</AlertDialogTitle>
 					<div className="space-y-4 pt-4">
 						<p className="text-sm font-light">
 							You don't have enough credits to use {featureName}.

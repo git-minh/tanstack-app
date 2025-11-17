@@ -7,7 +7,6 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Sparkles, CreditCard, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@tanstack/backend/convex/_generated/api";
@@ -68,69 +67,58 @@ export function PurchaseCreditsDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="sm:max-w-md">
+			<DialogContent className="sm:max-w-md rounded-none border-2 border-foreground">
 				<DialogHeader>
-					<DialogTitle className="flex items-center gap-2">
-						<Sparkles className="h-5 w-5 text-primary" />
+					<DialogTitle className="text-[10px] uppercase tracking-widest font-medium">
 						Purchase {pkg.credits.toLocaleString()} Credits
 					</DialogTitle>
-					<DialogDescription>
+					<DialogDescription className="font-light">
 						Add credits to your account for continued AI-powered features.
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="space-y-4 py-4">
+				<div className="space-y-6 py-4">
 					{/* Package Summary */}
-					<div className="rounded-lg border bg-muted/50 p-4 space-y-3">
+					<div className="border-2 border-foreground bg-foreground/5 p-4 space-y-3">
 						<div className="flex justify-between items-center">
-							<span className="text-sm text-muted-foreground">
+							<span className="text-[10px] uppercase tracking-widest text-muted-foreground">
 								Credits
 							</span>
-							<span className="font-semibold">
+							<span className="font-light text-lg">
 								{pkg.credits.toLocaleString()}
 							</span>
 						</div>
-						<div className="flex justify-between items-center">
-							<span className="text-sm text-muted-foreground">Price</span>
-							<span className="text-2xl font-bold">${pkg.price}</span>
+						<div className="flex justify-between items-center border-t border-border pt-3">
+							<span className="text-[10px] uppercase tracking-widest text-muted-foreground">Price</span>
+							<span className="text-2xl font-light">${pkg.price}</span>
 						</div>
 					</div>
 
 					{/* What You Get */}
-					<div className="space-y-2">
-						<h4 className="text-sm font-medium">What you get:</h4>
-						<div className="space-y-2 text-sm text-muted-foreground">
-							<div className="flex items-center gap-2">
-								<CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-								<span>
-									~{Math.floor(pkg.credits / 3)} chat messages
-								</span>
+					<div className="space-y-3">
+						<h4 className="text-[10px] uppercase tracking-widest font-medium">What you get</h4>
+						<div className="space-y-1.5 text-sm font-light border-l-2 border-foreground pl-3">
+							<div>
+								~{Math.floor(pkg.credits / 3)} chat messages
 							</div>
-							<div className="flex items-center gap-2">
-								<CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-								<span>
-									~{Math.floor(pkg.credits / 15)} AI generations
-								</span>
+							<div>
+								~{Math.floor(pkg.credits / 15)} AI generations
 							</div>
-							<div className="flex items-center gap-2">
-								<CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-								<span>~{Math.floor(pkg.credits / 5)} URL scrapes</span>
+							<div>
+								~{Math.floor(pkg.credits / 5)} URL scrapes
 							</div>
-							<div className="flex items-center gap-2">
-								<CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-								<span>Credits never expire</span>
+							<div>
+								Credits never expire
 							</div>
-							<div className="flex items-center gap-2">
-								<CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-								<span>Added immediately after purchase</span>
+							<div>
+								Added immediately after purchase
 							</div>
 						</div>
 					</div>
 
 					{/* Payment Info */}
-					<div className="rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 p-3">
-						<p className="text-xs text-blue-600 dark:text-blue-400">
-							<CreditCard className="h-3 w-3 inline mr-1" />
+					<div className="border border-foreground p-3">
+						<p className="text-xs font-light">
 							Secure payment powered by Autumn. You'll be redirected
 							to complete your purchase.
 						</p>
@@ -142,25 +130,16 @@ export function PurchaseCreditsDialog({
 						variant="outline"
 						onClick={() => onOpenChange(false)}
 						disabled={isLoading}
+						className="rounded-none border-foreground font-light"
 					>
 						Cancel
 					</Button>
 					<Button
 						onClick={handlePurchase}
 						disabled={isLoading}
-						className="w-full sm:w-auto"
+						className="w-full sm:w-auto rounded-none bg-foreground text-background hover:bg-foreground/90 font-light"
 					>
-						{isLoading ? (
-							<>
-								<span className="animate-spin mr-2">⏳</span>
-								Processing...
-							</>
-						) : (
-							<>
-								<CreditCard className="h-4 w-4 mr-2" />
-								Continue to Payment
-							</>
-						)}
+						{isLoading ? "Processing..." : "Continue to Payment"}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

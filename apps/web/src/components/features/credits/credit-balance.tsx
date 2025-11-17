@@ -7,23 +7,12 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Plus, Info } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 export function CreditBalance() {
 	const { data: credits } = useSuspenseQuery(
 		convexQuery(api.credits.getUserCredits, {})
 	);
-
-	// Determine color based on credits remaining
-	const getColorClass = () => {
-		if (credits.isUnlimited) return "text-purple-600 dark:text-purple-400";
-		if (credits.creditsRemaining > 50)
-			return "text-green-600 dark:text-green-400";
-		if (credits.creditsRemaining >= 20)
-			return "text-yellow-600 dark:text-yellow-400";
-		return "text-red-600 dark:text-red-400";
-	};
 
 	const displayText = credits.isUnlimited
 		? "Unlimited"
@@ -35,90 +24,101 @@ export function CreditBalance() {
 				<Button
 					variant="ghost"
 					size="sm"
-					className={`gap-2 ${getColorClass()}`}
+					className="font-light hover:bg-accent"
 				>
-					<Sparkles className="h-4 w-4" />
-					<span className="font-semibold">{displayText}</span>
-					{!credits.isUnlimited && (
-						<span className="text-xs text-muted-foreground">credits</span>
-					)}
+					<span className="text-[10px] uppercase tracking-widest">
+						{displayText}
+					</span>
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent className="w-80" align="end">
-				<div className="space-y-4">
+			<PopoverContent className="w-80 rounded-none border-foreground" align="end">
+				<div className="space-y-6">
+					{/* Header */}
 					<div className="space-y-2">
-						<h4 className="font-semibold leading-none">Credit Balance</h4>
-						<p className="text-sm text-muted-foreground">
+						<h4 className="text-[10px] uppercase tracking-widest font-medium">
+							Credit Balance
+						</h4>
+						<p className="font-light text-sm">
 							{credits.isUnlimited
-								? "You have unlimited credits with your Pro plan."
-								: `You have ${credits.creditsRemaining} of ${credits.creditsTotal} credits remaining this month.`}
+								? "Unlimited credits with Pro plan."
+								: `${credits.creditsRemaining} of ${credits.creditsTotal} credits remaining this month.`}
 						</p>
 					</div>
 
 					{!credits.isUnlimited && (
 						<>
-							<div className="space-y-2">
-								<div className="flex items-center justify-between text-sm">
-									<span className="text-muted-foreground">
+							{/* Pricing Table */}
+							<div className="space-y-1.5 border-t border-border pt-4">
+								<div className="flex items-center justify-between">
+									<span className="text-[10px] uppercase tracking-widest font-light">
 										Chat message
 									</span>
-									<span className="font-medium">3 credits</span>
+									<span className="text-sm font-light">3</span>
 								</div>
-								<div className="flex items-center justify-between text-sm">
-									<span className="text-muted-foreground">
+								<div className="flex items-center justify-between">
+									<span className="text-[10px] uppercase tracking-widest font-light">
 										AI project generation
 									</span>
-									<span className="font-medium">15 credits</span>
+									<span className="text-sm font-light">15</span>
 								</div>
-								<div className="flex items-center justify-between text-sm">
-									<span className="text-muted-foreground">URL scraping</span>
-									<span className="font-medium">5 credits</span>
-								</div>
-							</div>
-
-							<div className="rounded-lg bg-muted p-3 space-y-2">
-								<div className="flex items-start gap-2">
-									<Info className="h-4 w-4 text-muted-foreground mt-0.5" />
-									<p className="text-xs text-muted-foreground">
-										Credits reset monthly on the{" "}
-										{new Date(
-											credits.lastCreditReset
-										).getDate()}th. Upgrade to Pro for unlimited
-										credits.
-									</p>
+								<div className="flex items-center justify-between">
+									<span className="text-[10px] uppercase tracking-widest font-light">
+										URL scraping
+									</span>
+									<span className="text-sm font-light">5</span>
 								</div>
 							</div>
 
+							{/* Reset Info */}
+							<div className="border-t border-border pt-4">
+								<p className="text-[10px] uppercase tracking-widest font-light">
+									Resets monthly on the{" "}
+									{new Date(credits.lastCreditReset).getDate()}th
+								</p>
+							</div>
+
+							{/* Low Credit Warning */}
 							{credits.creditsRemaining < 20 && (
-								<div className="rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 p-3">
-									<p className="text-xs text-red-600 dark:text-red-400 font-medium">
-										⚠️ Running low on credits! Consider upgrading or
-										purchasing more.
+								<div className="border border-foreground p-4">
+									<p className="text-[10px] uppercase tracking-widest font-medium">
+										Low credit balance
+									</p>
+									<p className="text-sm font-light mt-1">
+										Consider upgrading or purchasing additional credits.
 									</p>
 								</div>
 							)}
 
-							<div className="flex gap-2">
-								<Button asChild className="flex-1" size="sm">
+							{/* Actions */}
+							<div className="flex gap-2 border-t border-border pt-4">
+								<Button
+									asChild
+									className="flex-1 rounded-none bg-foreground text-background hover:bg-foreground/90 font-light"
+									size="sm"
+								>
 									<Link to="/pricing">
-										<Plus className="h-4 w-4 mr-1" />
 										Buy Credits
 									</Link>
 								</Button>
-								<Button asChild variant="outline" className="flex-1" size="sm">
-									<Link to="/pricing">Upgrade to Pro</Link>
+								<Button
+									asChild
+									variant="outline"
+									className="flex-1 rounded-none border-foreground font-light"
+									size="sm"
+								>
+									<Link to="/pricing">Upgrade</Link>
 								</Button>
 							</div>
 						</>
 					)}
 
 					{credits.isUnlimited && (
-						<div className="rounded-lg bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900 p-3">
-							<p className="text-sm text-purple-600 dark:text-purple-400 font-medium">
-								✨ Pro Plan Active
+						<div className="border border-foreground p-4">
+							<p className="text-[10px] uppercase tracking-widest font-medium">
+								Pro Plan Active
 							</p>
-							<p className="text-xs text-muted-foreground mt-1">
-								Enjoy unlimited AI generations, chat messages, and URL scraping.
+							<p className="text-sm font-light mt-1">
+								Unlimited AI generations, chat messages, and URL scraping.
 							</p>
 						</div>
 					)}
