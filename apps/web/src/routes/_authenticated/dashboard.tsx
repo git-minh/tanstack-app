@@ -103,173 +103,207 @@ function DashboardContent({ onGenerateClick, onAnalyzeClick }: DashboardContentP
 		convexQuery(api.dashboard.getDashboardData, {})
 	);
 
-	const activeTasksPercentage = data.stats.totalTasks > 0
-		? Math.round((data.stats.activeTasks / data.stats.totalTasks) * 100)
-		: 0;
-
-	// Get most recent activities (limit to 5)
-	const recentActivities = data.recentActivity.slice(0, 5);
-
 	return (
-		<div className="min-h-[calc(100vh-8rem)] flex flex-col">
-			{/* Hero Stats - Ultra Minimal */}
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-foreground border-y-2 border-foreground">
-				{/* Primary Stat - Active Tasks */}
-				<div className="bg-background p-12 md:p-16 border-r-0 md:border-r-2 border-foreground">
-					<div className="space-y-4">
-						<div className="text-[clamp(4rem,15vw,12rem)] font-light leading-none tabular-nums tracking-tighter">
-							{data.stats.activeTasks}
+		<div className="min-h-[calc(100vh-8rem)]">
+			{/* Hero Metrics Grid - Bloomberg Terminal Aesthetic */}
+			<div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-foreground border-y-2 border-foreground dashboard-stagger">
+				{/* Tasks */}
+				<div className="bg-background p-8 lg:p-12 border-r-2 border-foreground" style={{ animationDelay: '0ms' }}>
+					<div className="space-y-3">
+						<div className="text-[clamp(3rem,12vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
+							{data.tasks.total}
 						</div>
-						<div className="space-y-1">
-							<div className="text-sm uppercase tracking-widest font-medium">
-								Active Tasks
-							</div>
-							<div className="text-xs text-muted-foreground">
-								{activeTasksPercentage}% of total workload
-							</div>
+						<div className="text-[7px] uppercase tracking-[0.2em] font-medium opacity-60">
+							TASKS
 						</div>
-					</div>
-				</div>
-
-				{/* Secondary Stat - Completed */}
-				<div className="bg-background p-12 md:p-16 border-r-0 md:border-r-2 border-foreground">
-					<div className="space-y-4">
-						<div className="text-[clamp(4rem,15vw,12rem)] font-light leading-none tabular-nums tracking-tighter">
-							{data.stats.completedTasks}
-						</div>
-						<div className="space-y-1">
-							<div className="text-sm uppercase tracking-widest font-medium">
-								Completed
-							</div>
-							<div className="text-xs text-muted-foreground">
-								{data.stats.completionRate}% completion rate
-							</div>
+						<div className="flex gap-2 flex-wrap text-[10px] uppercase tracking-wider">
+							<span className="tabular-nums">{data.tasks.todo} TODO</span>
+							<span className="opacity-30">·</span>
+							<span className="tabular-nums">{data.tasks.inProgress} ACTIVE</span>
+							<span className="opacity-30">·</span>
+							<span className="tabular-nums">{data.tasks.done} DONE</span>
 						</div>
 					</div>
 				</div>
 
-				{/* Tertiary Stat - Total */}
-				<div className="bg-background p-12 md:p-16">
-					<div className="space-y-4">
-						<div className="text-[clamp(4rem,15vw,12rem)] font-light leading-none tabular-nums tracking-tighter">
-							{data.stats.totalTasks}
+				{/* Projects */}
+				<div className="bg-background p-8 lg:p-12 border-r-0 lg:border-r-2 border-foreground" style={{ animationDelay: '100ms' }}>
+					<div className="space-y-3">
+						<div className="text-[clamp(3rem,12vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
+							{data.projects.total}
 						</div>
-						<div className="space-y-1">
-							<div className="text-sm uppercase tracking-widest font-medium">
-								Total Tasks
-							</div>
-							<div className="text-xs text-muted-foreground">
-								All items tracked
-							</div>
+						<div className="text-[7px] uppercase tracking-[0.2em] font-medium opacity-60">
+							PROJECTS
+						</div>
+						<div className="flex gap-2 flex-wrap text-[10px] uppercase tracking-wider">
+							<span className="tabular-nums">{data.projects.planning} PLAN</span>
+							<span className="opacity-30">·</span>
+							<span className="tabular-nums">{data.projects.active} ACTIVE</span>
+							<span className="opacity-30">·</span>
+							<span className="tabular-nums">{data.projects.completed} DONE</span>
+						</div>
+					</div>
+				</div>
+
+				{/* Contacts */}
+				<div className="bg-background p-8 lg:p-12 border-r-2 border-foreground" style={{ animationDelay: '200ms' }}>
+					<div className="space-y-3">
+						<div className="text-[clamp(3rem,12vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
+							{data.contacts.total}
+						</div>
+						<div className="text-[7px] uppercase tracking-[0.2em] font-medium opacity-60">
+							CONTACTS
+						</div>
+						<div className="flex gap-2 flex-wrap text-[10px] uppercase tracking-wider">
+							<span className="tabular-nums">{data.contacts.byCategory.client} CLIENT</span>
+							<span className="opacity-30">·</span>
+							<span className="tabular-nums">{data.contacts.byCategory.partner} PARTNER</span>
+							<span className="opacity-30">·</span>
+							<span className="tabular-nums">{data.contacts.byCategory.vendor} VENDOR</span>
+						</div>
+					</div>
+				</div>
+
+				{/* Todos */}
+				<div className="bg-background p-8 lg:p-12" style={{ animationDelay: '300ms' }}>
+					<div className="space-y-3">
+						<div className="text-[clamp(3rem,12vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
+							{data.todos.total}
+						</div>
+						<div className="text-[7px] uppercase tracking-[0.2em] font-medium opacity-60">
+							TODOS
+						</div>
+						<div className="flex gap-2 flex-wrap text-[10px] uppercase tracking-wider">
+							<span className="tabular-nums">{data.todos.active} ACTIVE</span>
+							<span className="opacity-30">·</span>
+							<span className="tabular-nums">{data.todos.completed} DONE</span>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			{/* Actions Bar - Minimal */}
+			{/* Actions Bar */}
 			<div className="border-b-2 border-foreground bg-background">
-				<div className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-					<div className="space-y-1">
-						<h2 className="text-lg font-medium">Quick Actions</h2>
-						<p className="text-xs text-muted-foreground">
-							Generate projects or analyze designs
-						</p>
+				<div className="px-6 py-4 flex items-center justify-between gap-4">
+					<div className="text-[7px] uppercase tracking-[0.25em] font-medium opacity-40">
+						QUICK ACTIONS
 					</div>
 					<div className="flex items-center gap-2">
 						<Button
 							onClick={onAnalyzeClick}
 							variant="outline"
 							size="sm"
-							className="rounded-none font-light"
+							className="rounded-none text-[10px] uppercase tracking-wider h-8"
 						>
 							Analyze
 						</Button>
 						<Button
 							onClick={onGenerateClick}
 							size="sm"
-							className="rounded-none bg-foreground text-background hover:bg-foreground/90 font-light group"
+							className="rounded-none bg-foreground text-background hover:bg-foreground/90 text-[10px] uppercase tracking-wider h-8 group"
 						>
-							<Sparkles className="mr-2 h-3.5 w-3.5" />
+							<Sparkles className="mr-1.5 h-3 w-3" />
 							Generate
-							<ArrowRight className="ml-2 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+							<ArrowRight className="ml-1.5 h-3 w-3 transition-transform group-hover:translate-x-0.5" />
 						</Button>
 					</div>
 				</div>
 			</div>
 
-			{/* Recent Activity - Text Only */}
-			<div className="flex-1 p-6 md:p-12">
-				<div className="max-w-4xl">
-					<div className="mb-8 flex items-baseline gap-3">
-						<Activity className="h-5 w-5 mt-1" strokeWidth={1.5} />
-						<h2 className="text-2xl font-light tracking-tight">
-							Recent Activity
-						</h2>
-					</div>
+			{/* Recent Activity - Dense Table */}
+			<div className="p-6 lg:p-12">
+				<div className="mb-6 flex items-baseline gap-3">
+					<Activity className="h-4 w-4 mt-0.5 opacity-40" strokeWidth={1.5} />
+					<h2 className="text-[7px] uppercase tracking-[0.25em] font-medium opacity-60">
+						RECENT ACTIVITY
+					</h2>
+				</div>
 
-					{recentActivities.length === 0 ? (
-						<div className="py-20 text-center">
-							<p className="text-muted-foreground text-sm">
-								No recent activity. Start by creating a task or project.
-							</p>
+				{data.recentActivity.length === 0 ? (
+					<div className="py-20 text-center border-2 border-dashed border-foreground/10">
+						<p className="text-[10px] uppercase tracking-wider opacity-40">
+							No activity yet
+						</p>
+					</div>
+				) : (
+					<div className="border-2 border-foreground overflow-hidden">
+						{/* Table Header */}
+						<div className="grid grid-cols-[80px_1fr_100px_120px] gap-4 px-4 py-2 bg-foreground text-background border-b-2 border-foreground">
+							<div className="text-[8px] uppercase tracking-[0.2em] font-medium">TYPE</div>
+							<div className="text-[8px] uppercase tracking-[0.2em] font-medium">TITLE</div>
+							<div className="text-[8px] uppercase tracking-[0.2em] font-medium">STATUS</div>
+							<div className="text-[8px] uppercase tracking-[0.2em] font-medium text-right">DATE</div>
 						</div>
-					) : (
-						<div className="space-y-px">
-							{recentActivities.map((activity, index) => (
-								<div
-									key={activity._id}
-									className="group py-4 border-b border-border/50 last:border-0 hover:pl-4 transition-all duration-200"
+
+						{/* Table Rows */}
+						<div className="divide-y divide-foreground/10">
+							{data.recentActivity.map((item, index) => (
+								<Link
+									key={item._id}
+									to={
+										item.type === 'task'
+											? '/tasks'
+											: item.type === 'project'
+											? '/projects'
+											: item.type === 'contact'
+											? '/contacts'
+											: '/dashboard'
+									}
+									className="grid grid-cols-[80px_1fr_100px_120px] gap-4 px-4 py-3 hover:bg-foreground/5 transition-colors activity-row"
+									style={{ animationDelay: `${index * 30}ms` }}
 								>
-									<div className="flex items-start justify-between gap-4">
-										<div className="flex-1 space-y-1">
-											<div className="flex items-center gap-3">
-												<span className="text-xs font-medium uppercase tracking-wider text-muted-foreground tabular-nums">
-													{new Date(activity._creationTime).toLocaleDateString('en-US', {
-														month: 'short',
-														day: 'numeric',
-													})}
-												</span>
-												<span className="h-1 w-1 rounded-full bg-muted-foreground" />
-												<span className="text-xs uppercase tracking-wider text-muted-foreground">
-													{activity.type}
-												</span>
-											</div>
-											<p className="text-sm leading-relaxed">
-												{activity.description}
-											</p>
-											{activity.taskTitle && (
-												<Link
-													to={activity.taskId ? `/tasks?taskId=${activity.taskId}` : '/tasks'}
-													className="text-xs text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
-												>
-													{activity.taskTitle}
-													<ArrowRight className="h-3 w-3" />
-												</Link>
-											)}
-										</div>
+									<div className="text-[10px] uppercase tracking-wider font-medium tabular-nums">
+										{item.type}
+										{item.displayId && (
+											<span className="opacity-40 ml-2">{item.displayId.split('-')[0]}</span>
+										)}
 									</div>
-								</div>
+									<div className="text-sm truncate font-light">
+										{item.title}
+									</div>
+									<div className="text-[9px] uppercase tracking-wider opacity-60">
+										{item.status}
+									</div>
+									<div className="text-[10px] tabular-nums text-right opacity-60">
+										{new Date(item._creationTime).toLocaleDateString('en-US', {
+											month: 'short',
+											day: 'numeric',
+											year: 'numeric',
+										})}
+									</div>
+								</Link>
 							))}
 						</div>
-					)}
+					</div>
+				)}
 
-					{recentActivities.length > 0 && (
-						<div className="mt-8 pt-6 border-t border-border/50">
-							<Link
-								to="/tasks"
-								className="text-xs uppercase tracking-widest font-medium hover:text-muted-foreground transition-colors inline-flex items-center gap-2"
-							>
-								View All Tasks
-								<ArrowRight className="h-3.5 w-3.5" />
-							</Link>
-						</div>
-					)}
-				</div>
+				{data.recentActivity.length > 0 && (
+					<div className="mt-6 flex justify-end">
+						<Link
+							to="/tasks"
+							className="text-[9px] uppercase tracking-[0.2em] font-medium hover:opacity-60 transition-opacity inline-flex items-center gap-2"
+						>
+							VIEW ALL
+							<ArrowRight className="h-3 w-3" />
+						</Link>
+					</div>
+				)}
 			</div>
 
-			{/* Inline Styles for Staggered Animations */}
+			{/* Animations */}
 			<style>{`
-				@keyframes slideIn {
+				@keyframes dashboardFadeIn {
+					from {
+						opacity: 0;
+						transform: translateY(20px);
+					}
+					to {
+						opacity: 1;
+						transform: translateY(0);
+					}
+				}
+
+				@keyframes activitySlide {
 					from {
 						opacity: 0;
 						transform: translateX(-10px);
@@ -280,8 +314,14 @@ function DashboardContent({ onGenerateClick, onAnalyzeClick }: DashboardContentP
 					}
 				}
 
-				.group:hover {
-					animation: slideIn 0.2s ease-out;
+				.dashboard-stagger > div {
+					animation: dashboardFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+					opacity: 0;
+				}
+
+				.activity-row {
+					animation: activitySlide 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+					opacity: 0;
 				}
 			`}</style>
 		</div>

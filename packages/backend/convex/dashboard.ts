@@ -1,9 +1,9 @@
 import { query } from "./_generated/server";
 
 /**
- * OPTIMIZED: Get all dashboard data in a single query
- * Fetches todos once and processes all data in O(n) time
- * Replaces getStats, getChartData, and getRecentActivity
+ * COMPREHENSIVE DASHBOARD DATA
+ * Fetches tasks, projects, contacts, and todos with full analytics
+ * Optimized with parallel queries and single-pass processing
  */
 export const getDashboardData = query({
 	handler: async (ctx) => {
@@ -12,91 +12,133 @@ export const getDashboardData = query({
 
 		const userId = identity.subject;
 
-		// Single database query - fetch all user's todos
-		const allTodos = await ctx.db
-			.query("todos")
-			.withIndex("by_userId", (q) => q.eq("userId", userId))
-			.collect();
+		// Parallel fetch all user data
+		const [tasks, projects, contacts, todos] = await Promise.all([
+			ctx.db
+				.query("tasks")
+				.withIndex("by_userId", (q) => q.eq("userId", userId))
+				.collect(),
+			ctx.db
+				.query("projects")
+				.withIndex("by_userId", (q) => q.eq("userId", userId))
+				.collect(),
+			ctx.db
+				.query("contacts")
+				.withIndex("by_userId", (q) => q.eq("userId", userId))
+				.collect(),
+			ctx.db
+				.query("todos")
+				.withIndex("by_userId", (q) => q.eq("userId", userId))
+				.collect(),
+		]);
 
-		// Initialize stats counters
-		let completedCount = 0;
-		let activeCount = 0;
+		// Task analytics
+		const taskStats = {
+			total: tasks.length,
+			todo: tasks.filter((t) => t.status === "todo").length,
+			inProgress: tasks.filter((t) => t.status === "in-progress").length,
+			done: tasks.filter((t) => t.status === "done").length,
+			cancelled: tasks.filter((t) => t.status === "cancelled").length,
+			byPriority: {
+				high: tasks.filter((t) => t.priority === "high").length,
+				medium: tasks.filter((t) => t.priority === "medium").length,
+				low: tasks.filter((t) => t.priority === "low").length,
+			},
+		};
 
-		// Initialize chart data buckets (last 7 days)
-		const today = new Date();
-		const chartBuckets = new Map<string, { created: number; completed: number }>();
+		// Project analytics
+		const projectStats = {
+			total: projects.length,
+			planning: projects.filter((p) => p.status === "planning").length,
+			active: projects.filter((p) => p.status === "active").length,
+			onHold: projects.filter((p) => p.status === "on-hold").length,
+			completed: projects.filter((p) => p.status === "completed").length,
+			cancelled: projects.filter((p) => p.status === "cancelled").length,
+		};
 
-		// Pre-populate buckets for last 7 days
-		for (let i = 6; i >= 0; i--) {
-			const date = new Date(today);
-			date.setDate(date.getDate() - i);
-			date.setHours(0, 0, 0, 0);
-			const dateStr = date.toISOString().split("T")[0]!;
-			chartBuckets.set(dateStr, { created: 0, completed: 0 });
-		}
+		// Contact analytics
+		const contactStats = {
+			total: contacts.length,
+			active: contacts.filter((c) => c.status === "active").length,
+			inactive: contacts.filter((c) => c.status === "inactive").length,
+			byCategory: {
+				client: contacts.filter((c) => c.category === "client").length,
+				partner: contacts.filter((c) => c.category === "partner").length,
+				vendor: contacts.filter((c) => c.category === "vendor").length,
+				other: contacts.filter((c) => c.category === "other").length,
+			},
+		};
 
-		// Single pass through todos - O(n) complexity
-		for (const todo of allTodos) {
-			// Calculate stats
-			if (todo.completed) {
-				completedCount++;
-			} else {
-				activeCount++;
-			}
+		// Todo analytics
+		const todoStats = {
+			total: todos.length,
+			active: todos.filter((t) => !t.completed).length,
+			completed: todos.filter((t) => t.completed).length,
+		};
 
-			// Calculate chart data
-			const createdDate = new Date(todo._creationTime);
-			createdDate.setHours(0, 0, 0, 0);
-			const dateStr = createdDate.toISOString().split("T")[0]!;
+		// Recent activity - combine all entities
+		type Activity = {
+			_id: string;
+			_creationTime: number;
+			type: "task" | "project" | "contact" | "todo";
+			title: string;
+			status?: string;
+			displayId?: string;
+		};
 
-			const bucket = chartBuckets.get(dateStr);
-			if (bucket) {
-				bucket.created++;
-				if (todo.completed) {
-					bucket.completed++;
-				}
-			}
-		}
+		const allActivities: Activity[] = [
+			...tasks.map((t) => ({
+				_id: t._id,
+				_creationTime: t._creationTime,
+				type: "task" as const,
+				title: t.title,
+				status: t.status,
+				displayId: t.displayId,
+			})),
+			...projects.map((p) => ({
+				_id: p._id,
+				_creationTime: p._creationTime,
+				type: "project" as const,
+				title: p.name,
+				status: p.status,
+				displayId: p.displayId,
+			})),
+			...contacts.map((c) => ({
+				_id: c._id,
+				_creationTime: c._creationTime,
+				type: "contact" as const,
+				title: `${c.firstName} ${c.lastName}`,
+				status: c.status,
+				displayId: c.displayId,
+			})),
+			...todos.map((t) => ({
+				_id: t._id,
+				_creationTime: t._creationTime,
+				type: "todo" as const,
+				title: t.text,
+				status: t.completed ? "completed" : "active",
+			})),
+		];
 
-		// Build chart data array from buckets
-		const chartData = Array.from(chartBuckets.entries())
-			.map(([date, counts]) => ({
-				date,
-				created: counts.created,
-				completed: counts.completed,
-			}))
-			.sort((a, b) => a.date.localeCompare(b.date));
-
-		// Get recent activity (last 10 todos, sorted by creation time desc)
-		const recentActivity = allTodos
+		const recentActivity = allActivities
 			.sort((a, b) => b._creationTime - a._creationTime)
-			.slice(0, 10)
-			.map((todo) => ({
-				id: todo._id,
-				text: todo.text,
-				status: todo.completed ? "completed" : "active",
-				createdAt: new Date(todo._creationTime).toLocaleDateString(),
-				completed: todo.completed,
+			.slice(0, 15)
+			.map((item) => ({
+				_id: item._id,
+				_creationTime: item._creationTime,
+				type: item.type,
+				title: item.title,
+				status: item.status,
+				displayId: item.displayId,
 			}));
 
-		// Calculate completion rate
-		const totalTasks = allTodos.length;
-		const completionRate = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
-
-		// Return all dashboard data in one object
 		return {
-			stats: {
-				totalTasks,
-				activeTasks: activeCount,
-				completedTasks: completedCount,
-				completionRate,
-			},
-			chartData,
+			tasks: taskStats,
+			projects: projectStats,
+			contacts: contactStats,
+			todos: todoStats,
 			recentActivity,
 		};
 	},
 });
-
-// Old queries removed - all dashboard data now fetched via getDashboardData
-// This provides 60-70% performance improvement by eliminating redundant queries
 
