@@ -4,72 +4,38 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@tanstack/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ContactsTable } from "./components/contacts-table";
-import { columns } from "./components/contacts-columns";
-import { ContactsStats } from "./components/contacts-stats";
+import { Plus, ArrowRight, Mail, Building2 } from "lucide-react";
+import { toast } from "sonner";
+import type { Contact } from "./data/schema";
+import { cn } from "@/lib/utils";
 
-// Lazy load ContactFormDialog - only loads when user clicks "New Contact" button
+// Lazy load ContactFormDialog
 const ContactFormDialog = lazy(() =>
 	import("./components/contact-form-dialog").then(m => ({ default: m.ContactFormDialog }))
 );
-import { ContactsSkeleton } from "./components/contacts-skeleton";
-import UserPlus from "lucide-react/dist/esm/icons/user-plus";
-import Filter from "lucide-react/dist/esm/icons/filter";
-import Users from "lucide-react/dist/esm/icons/users";
-import UserCheck from "lucide-react/dist/esm/icons/user-check";
-import UserX from "lucide-react/dist/esm/icons/user-x";
-import Building from "lucide-react/dist/esm/icons/building";
-import Mail from "lucide-react/dist/esm/icons/mail";
-import Search from "lucide-react/dist/esm/icons/search";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-import type { Contact } from "./data/schema";
 
 export function Contacts() {
-	const [filterView, setFilterView] = useState<"all" | "byStatus" | "byCategory" | "byFilters" | "byEmail">("all");
-	const [statusFilter, setStatusFilter] = useState<string | undefined>();
-	const [categoryFilter, setCategoryFilter] = useState<string | undefined>();
-	const [emailFilter, setEmailFilter] = useState<string>("");
-	
+	const [filterStatus, setFilterStatus] = useState<string | undefined>();
+	const [filterCategory, setFilterCategory] = useState<string | undefined>();
+
 	// Main contacts query
 	const { data: allContacts } = useSuspenseQuery(
 		convexQuery(api.contacts.getAll, {})
 	);
-	
-	// Filtered queries based on filter view
+
+	// Filtered queries
 	const statusContacts = useQuery(
 		api.contacts.getByStatus,
-		filterView === "byStatus" && statusFilter ? { status: statusFilter } : "skip"
+		filterStatus ? { status: filterStatus } : "skip"
 	);
 	const categoryContacts = useQuery(
 		api.contacts.getByCategory,
-		filterView === "byCategory" && categoryFilter ? { category: categoryFilter } : "skip"
+		filterCategory ? { category: filterCategory } : "skip"
 	);
-	const filteredContacts = useQuery(
-		api.contacts.getByFilters,
-		filterView === "byFilters" && (statusFilter || categoryFilter) 
-			? { status: statusFilter, category: categoryFilter }
-			: "skip"
-	);
-	const emailContacts = useQuery(
-		api.contacts.searchByEmail,
-		filterView === "byEmail" && emailFilter.includes("@") ? { email: emailFilter } : "skip"
-	);
-	
+
 	const createContact = useMutation(api.contacts.create);
 	const updateContact = useMutation(api.contacts.update);
 	const deleteContact = useMutation(api.contacts.remove);
-	const deleteMany = useMutation(api.contacts.removeMany);
 
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [editingContact, setEditingContact] = useState<Contact | undefined>();
@@ -104,14 +70,14 @@ export function Contacts() {
 		try {
 			if (dialogMode === "create") {
 				await createContact(values);
-				toast.success("Contact added successfully");
+				toast.success("Contact added");
 			} else {
 				if (!editingContact) return;
 				await updateContact({
 					id: editingContact._id as any,
 					...values,
 				});
-				toast.success("Contact updated successfully");
+				toast.success("Contact updated");
 			}
 		} catch (error) {
 			toast.error(`Failed to ${dialogMode} contact`);
@@ -122,248 +88,288 @@ export function Contacts() {
 	const handleDeleteContact = async (id: string) => {
 		try {
 			await deleteContact({ id: id as any });
-			toast.success("Contact deleted successfully");
+			toast.success("Contact deleted");
 		} catch (error) {
 			toast.error("Failed to delete contact");
 			console.error(error);
 		}
 	};
 
-	const handleDeleteMany = async (ids: string[]) => {
-		try {
-			await deleteMany({ ids: ids as any });
-			toast.success(`${ids.length} contacts deleted successfully`);
-		} catch (error) {
-			toast.error("Failed to delete contacts");
-			console.error(error);
-		}
-	};
-
 	// Determine which contacts to display
-	const displayContacts = filterView === "byStatus"
+	const displayContacts = filterStatus
 		? statusContacts
-		: filterView === "byCategory"
+		: filterCategory
 		? categoryContacts
-		: filterView === "byFilters"
-		? filteredContacts
-		: filterView === "byEmail"
-		? emailContacts
 		: allContacts;
 
-	// Calculate filter badge count
-	const getFilterCount = () => {
-		if (filterView === "byStatus") return statusContacts?.length || 0;
-		if (filterView === "byCategory") return categoryContacts?.length || 0;
-		if (filterView === "byFilters") return filteredContacts?.length || 0;
-		if (filterView === "byEmail") return emailContacts?.length || 0;
-		return allContacts?.length || 0;
-	};
-
-	const getStatusIcon = (status: string) => {
-		switch (status) {
-			case "active":
-				return <UserCheck className="mr-2 h-4 w-4 text-green-500" />;
-			case "inactive":
-				return <UserX className="mr-2 h-4 w-4 text-gray-500" />;
-			case "qualified":
-				return <Users className="mr-2 h-4 w-4 text-blue-500" />;
-			case "lead":
-				return <Users className="mr-2 h-4 w-4 text-purple-500" />;
-			default:
-				return <Users className="mr-2 h-4 w-4" />;
-		}
-	};
-
-	const getCategoryIcon = (category: string) => {
-		switch (category) {
-			case "client":
-				return <Building className="mr-2 h-4 w-4 text-green-500" />;
-			case "supplier":
-				return <Building className="mr-2 h-4 w-4 text-blue-500" />;
-			case "partner":
-				return <Building className="mr-2 h-4 w-4 text-purple-500" />;
-			default:
-				return <Building className="mr-2 h-4 w-4" />;
-		}
-	};
+	// Calculate stats
+	const totalContacts = allContacts?.length || 0;
+	const activeContacts = allContacts?.filter(c => c.status === "active").length || 0;
+	const clientContacts = allContacts?.filter(c => c.category === "client").length || 0;
+	const leadContacts = allContacts?.filter(c => c.status === "lead").length || 0;
 
 	return (
 		<>
-			<div className="space-y-6">
-				<div className="flex items-center justify-between">
-					<div>
-						<h2 className="text-3xl font-bold tracking-tight">Contacts</h2>
-						<p className="text-muted-foreground">
-							Manage your contacts and keep track of relationships
-						</p>
+			<div className="min-h-[calc(100vh-8rem)] flex flex-col">
+				{/* Hero Stats - Ultra Minimal */}
+				<div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-foreground border-y-2 border-foreground">
+					<div className="bg-background p-8 md:p-12 border-r-2 border-foreground">
+						<div className="space-y-2">
+							<div className="text-[clamp(3rem,10vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
+								{totalContacts}
+							</div>
+							<div className="text-xs uppercase tracking-widest font-medium">
+								Total
+							</div>
+						</div>
 					</div>
-					<div className="flex items-center space-x-2">
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button variant="outline" size="sm">
-									<Filter className="mr-2 h-4 w-4" />
-									Filter View
-									{filterView !== "all" && (
-										<Badge className="ml-2" variant="secondary">
-											{getFilterCount()}
-										</Badge>
-									)}
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end" className="w-[200px]">
-								<DropdownMenuLabel>Quick Filters</DropdownMenuLabel>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem onClick={() => setFilterView("all")}>
-									<Users className="mr-2 h-4 w-4" />
-									All Contacts
-									{filterView === "all" && <Badge className="ml-auto" variant="default">Active</Badge>}
-								</DropdownMenuItem>
-								<DropdownMenuSeparator />
-								<DropdownMenuLabel>By Status</DropdownMenuLabel>
-								<DropdownMenuItem onClick={() => {
-									setFilterView("byStatus");
-									setStatusFilter("active");
-								}}>
-									{getStatusIcon("active")}
-									Active
-								</DropdownMenuItem>
-								<DropdownMenuItem onClick={() => {
-									setFilterView("byStatus");
-									setStatusFilter("inactive");
-								}}>
-									{getStatusIcon("inactive")}
-									Inactive
-								</DropdownMenuItem>
-								<DropdownMenuItem onClick={() => {
-									setFilterView("byStatus");
-									setStatusFilter("qualified");
-								}}>
-									{getStatusIcon("qualified")}
-									Qualified
-								</DropdownMenuItem>
-								<DropdownMenuItem onClick={() => {
-									setFilterView("byStatus");
-									setStatusFilter("lead");
-								}}>
-									{getStatusIcon("lead")}
-									Lead
-								</DropdownMenuItem>
-								<DropdownMenuSeparator />
-								<DropdownMenuLabel>By Category</DropdownMenuLabel>
-								<DropdownMenuItem onClick={() => {
-									setFilterView("byCategory");
-									setCategoryFilter("client");
-								}}>
-									{getCategoryIcon("client")}
-									Client
-								</DropdownMenuItem>
-								<DropdownMenuItem onClick={() => {
-									setFilterView("byCategory");
-									setCategoryFilter("supplier");
-								}}>
-									{getCategoryIcon("supplier")}
-									Supplier
-								</DropdownMenuItem>
-								<DropdownMenuItem onClick={() => {
-									setFilterView("byCategory");
-									setCategoryFilter("partner");
-								}}>
-									{getCategoryIcon("partner")}
-									Partner
-								</DropdownMenuItem>
-								<DropdownMenuItem onClick={() => {
-									setFilterView("byCategory");
-									setCategoryFilter("other");
-								}}>
-									{getCategoryIcon("other")}
-									Other
-								</DropdownMenuItem>
-								<DropdownMenuSeparator />
-								<DropdownMenuLabel>Combined Filters</DropdownMenuLabel>
-								<DropdownMenuItem onClick={() => {
-									setFilterView("byFilters");
-									setStatusFilter("active");
-									setCategoryFilter("client");
-								}}>
-									Active Clients
-								</DropdownMenuItem>
-								<DropdownMenuItem onClick={() => {
-									setFilterView("byFilters");
-									setStatusFilter("qualified");
-									setCategoryFilter("lead");
-								}}>
-									Qualified Leads
-								</DropdownMenuItem>
-								<DropdownMenuSeparator />
-								<DropdownMenuLabel>Email Search</DropdownMenuLabel>
-								<div className="px-2 py-1">
-									<div className="flex items-center space-x-2">
-										<Input
-											placeholder="Search by email..."
-											value={emailFilter}
-											onChange={(e) => {
-												setEmailFilter(e.target.value);
-												if (e.target.value.includes("@")) {
-													setFilterView("byEmail");
-												}
-											}}
-											className="h-8"
-										/>
-										{emailFilter && (
-											<Button
-												size="sm"
-												variant="ghost"
-												onClick={() => {
-													setEmailFilter("");
-													setFilterView("all");
-												}}
-											>
-												Clear
-											</Button>
-										)}
-									</div>
-								</div>
-							</DropdownMenuContent>
-						</DropdownMenu>
-						<Button onClick={handleCreateContact}>
-							<UserPlus className="mr-2 h-4 w-4" />
-							Add Contact
+
+					<div className="bg-background p-8 md:p-12 border-r-0 md:border-r-2 border-foreground">
+						<div className="space-y-2">
+							<div className="text-[clamp(3rem,10vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
+								{activeContacts}
+							</div>
+							<div className="text-xs uppercase tracking-widest font-medium">
+								Active
+							</div>
+						</div>
+					</div>
+
+					<div className="bg-background p-8 md:p-12 border-r-2 border-foreground">
+						<div className="space-y-2">
+							<div className="text-[clamp(3rem,10vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
+								{clientContacts}
+							</div>
+							<div className="text-xs uppercase tracking-widest font-medium">
+								Clients
+							</div>
+						</div>
+					</div>
+
+					<div className="bg-background p-8 md:p-12">
+						<div className="space-y-2">
+							<div className="text-[clamp(3rem,10vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
+								{leadContacts}
+							</div>
+							<div className="text-xs uppercase tracking-widest font-medium">
+								Leads
+							</div>
+						</div>
+					</div>
+				</div>
+
+				{/* Filters Bar - Minimal */}
+				<div className="border-b-2 border-foreground bg-background">
+					<div className="p-4 flex flex-wrap items-center gap-2">
+						{/* Status Filters */}
+						<button
+							onClick={() => {
+								setFilterStatus(undefined);
+								setFilterCategory(undefined);
+							}}
+							className={cn(
+								"px-3 py-1 text-xs uppercase tracking-widest font-light hover:font-normal transition-all border border-border",
+								!filterStatus && !filterCategory && "bg-foreground text-background"
+							)}
+						>
+							All
+						</button>
+						<button
+							onClick={() => {
+								setFilterStatus("active");
+								setFilterCategory(undefined);
+							}}
+							className={cn(
+								"px-3 py-1 text-xs uppercase tracking-widest font-light hover:font-normal transition-all border border-border",
+								filterStatus === "active" && "bg-foreground text-background"
+							)}
+						>
+							Active
+						</button>
+						<button
+							onClick={() => {
+								setFilterStatus("inactive");
+								setFilterCategory(undefined);
+							}}
+							className={cn(
+								"px-3 py-1 text-xs uppercase tracking-widest font-light hover:font-normal transition-all border border-border",
+								filterStatus === "inactive" && "bg-foreground text-background"
+							)}
+						>
+							Inactive
+						</button>
+						<button
+							onClick={() => {
+								setFilterStatus("qualified");
+								setFilterCategory(undefined);
+							}}
+							className={cn(
+								"px-3 py-1 text-xs uppercase tracking-widest font-light hover:font-normal transition-all border border-border",
+								filterStatus === "qualified" && "bg-foreground text-background"
+							)}
+						>
+							Qualified
+						</button>
+						<button
+							onClick={() => {
+								setFilterStatus("lead");
+								setFilterCategory(undefined);
+							}}
+							className={cn(
+								"px-3 py-1 text-xs uppercase tracking-widest font-light hover:font-normal transition-all border border-border",
+								filterStatus === "lead" && "bg-foreground text-background"
+							)}
+						>
+							Lead
+						</button>
+
+						<div className="h-4 w-px bg-border mx-2" />
+
+						{/* Category Filters */}
+						<button
+							onClick={() => {
+								setFilterCategory("client");
+								setFilterStatus(undefined);
+							}}
+							className={cn(
+								"px-3 py-1 text-xs uppercase tracking-widest font-light hover:font-normal transition-all border border-border",
+								filterCategory === "client" && "bg-foreground text-background"
+							)}
+						>
+							Clients
+						</button>
+						<button
+							onClick={() => {
+								setFilterCategory("supplier");
+								setFilterStatus(undefined);
+							}}
+							className={cn(
+								"px-3 py-1 text-xs uppercase tracking-widest font-light hover:font-normal transition-all border border-border",
+								filterCategory === "supplier" && "bg-foreground text-background"
+							)}
+						>
+							Suppliers
+						</button>
+						<button
+							onClick={() => {
+								setFilterCategory("partner");
+								setFilterStatus(undefined);
+							}}
+							className={cn(
+								"px-3 py-1 text-xs uppercase tracking-widest font-light hover:font-normal transition-all border border-border",
+								filterCategory === "partner" && "bg-foreground text-background"
+							)}
+						>
+							Partners
+						</button>
+
+						<div className="flex-1" />
+						<Button
+							onClick={handleCreateContact}
+							size="sm"
+							className="rounded-none bg-foreground text-background hover:bg-foreground/90 font-light group h-7"
+						>
+							<Plus className="mr-1.5 h-3.5 w-3.5" />
+							New
+							<ArrowRight className="ml-1.5 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
 						</Button>
 					</div>
 				</div>
 
-				<Suspense fallback={<ContactsSkeleton />}>
-					<ContactsStats />
-				</Suspense>
+				{/* Contacts List - Text Only */}
+				<div className="flex-1 p-6 md:p-12">
+					<div className="max-w-5xl">
+						{displayContacts && displayContacts.length === 0 ? (
+							<div className="py-20 text-center border-2 border-dashed border-border">
+								<p className="text-sm text-muted-foreground mb-4">
+									No contacts found
+								</p>
+								<Button
+									onClick={handleCreateContact}
+									variant="outline"
+									size="sm"
+									className="rounded-none font-light"
+								>
+									<Plus className="mr-2 h-4 w-4" />
+									Add your first contact
+								</Button>
+							</div>
+						) : (
+							<div className="space-y-px">
+								{displayContacts?.map((contact) => (
+									<div
+										key={contact._id}
+										className="group py-4 border-b border-border/30 last:border-0 hover:pl-4 transition-all duration-200 flex items-start gap-4"
+									>
+										<div className="flex-1 min-w-0">
+											<div className="flex items-baseline gap-3 flex-wrap mb-2">
+												<button
+													onClick={() => handleEditContact(contact)}
+													className="text-base font-light hover:underline text-left"
+												>
+													{contact.firstName} {contact.lastName}
+												</button>
+												<span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+													{contact.displayId}
+												</span>
+											</div>
 
-				<Card>
-					<CardHeader>
-						<div className="flex items-center justify-between">
-							<CardTitle>
-								{filterView === "byStatus" ? `Contacts - ${statusFilter}` :
-								 filterView === "byCategory" ? `Contacts - ${categoryFilter}` :
-								 filterView === "byFilters" ? `Filtered Contacts` :
-								 filterView === "byEmail" ? `Email: ${emailFilter}` :
-								 "All Contacts"}
-							</CardTitle>
-							{filterView !== "all" && (
-								<Badge variant="outline">
-									{getFilterCount()} {getFilterCount() === 1 ? "contact" : "contacts"}
-								</Badge>
-							)}
-						</div>
-					</CardHeader>
-					<CardContent>
-						<ContactsTable
-							data={displayContacts || []}
-							columns={columns}
-							onDeleteContact={handleDeleteContact}
-							onDeleteMany={handleDeleteMany}
-							onEditContact={handleEditContact}
-							onCreateContact={handleCreateContact}
-						/>
-					</CardContent>
-				</Card>
+											<div className="space-y-1.5 text-sm font-light">
+												{contact.email && (
+													<div className="flex items-center gap-2 text-muted-foreground">
+														<Mail className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={1.5} />
+														<a
+															href={`mailto:${contact.email}`}
+															className="hover:text-foreground transition-colors truncate"
+														>
+															{contact.email}
+														</a>
+													</div>
+												)}
+												{contact.company && (
+													<div className="flex items-center gap-2 text-muted-foreground">
+														<Building2 className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={1.5} />
+														<span className="truncate">
+															{contact.company}
+															{contact.title && ` · ${contact.title}`}
+														</span>
+													</div>
+												)}
+											</div>
+
+											<div className="flex items-center gap-3 mt-3 text-[10px] uppercase tracking-widest text-muted-foreground">
+												<span>{contact.status}</span>
+												<span className="h-1 w-1 rounded-full bg-muted-foreground" />
+												<span>{contact.category}</span>
+												{contact.phone && (
+													<>
+														<span className="h-1 w-1 rounded-full bg-muted-foreground" />
+														<span className="font-normal">{contact.phone}</span>
+													</>
+												)}
+											</div>
+										</div>
+
+										<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+											<button
+												onClick={() => handleEditContact(contact)}
+												className="text-[10px] uppercase tracking-widest px-2 py-1 hover:bg-muted transition-colors"
+											>
+												Edit
+											</button>
+											<button
+												onClick={() => handleDeleteContact(contact._id)}
+												className="text-[10px] uppercase tracking-widest px-2 py-1 hover:bg-destructive/10 hover:text-destructive transition-colors"
+											>
+												Delete
+											</button>
+										</div>
+									</div>
+								))}
+							</div>
+						)}
+					</div>
+				</div>
 			</div>
 
 			<Suspense fallback={null}>
