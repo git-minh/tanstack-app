@@ -34,161 +34,140 @@ export function DesignReferenceDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
+      <DialogContent className="max-w-4xl max-h-[90vh] rounded-none border-2 border-foreground">
         <DialogHeader>
           <div className="flex items-start justify-between">
-            <div>
-              <DialogTitle className="text-2xl">
+            <div className="flex-1">
+              <DialogTitle className="text-2xl font-light tracking-tight">
                 {reference.siteName}
               </DialogTitle>
-              <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-                <Globe className="h-4 w-4" />
+              <div className="flex items-center gap-2 mt-3">
                 <a
                   href={reference.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline dark:text-blue-400 flex items-center gap-1"
+                  className="text-xs font-light hover:underline flex items-center gap-1"
                 >
                   {reference.url}
                   <ExternalLink className="h-3 w-3" />
                 </a>
               </div>
-              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                <Calendar className="h-3 w-3" />
-                <span>
-                  Analyzed on {format(new Date(reference.createdAt), "PPP")}
-                </span>
-                <span className="text-muted-foreground/60">|</span>
+              <div className="flex items-center gap-3 mt-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                <span>{format(new Date(reference.createdAt), "PPP")}</span>
+                <span>•</span>
                 <span>{reference.displayId}</span>
               </div>
             </div>
             <div className="flex gap-2">
-              <Badge variant="outline" className="capitalize">
+              <span className="px-2 py-1 border border-foreground text-xs uppercase tracking-widest font-light">
                 {reference.style}
-              </Badge>
+              </span>
               {reference.industry && (
-                <Badge variant="secondary">{reference.industry}</Badge>
+                <span className="px-2 py-1 border border-foreground text-xs uppercase tracking-widest font-light">
+                  {reference.industry}
+                </span>
               )}
             </div>
           </div>
         </DialogHeader>
 
         <ScrollArea className="h-[calc(90vh-180px)] pr-4">
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Tags */}
             {reference.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {reference.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary">
+                  <span key={tag} className="px-2 py-1 border border-foreground text-xs uppercase tracking-widest font-light">
                     {tag}
-                  </Badge>
+                  </span>
                 ))}
               </div>
             )}
 
             {/* Description */}
             {reference.description && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Description</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    {reference.description}
-                  </p>
-                </CardContent>
-              </Card>
+              <div className="border-2 border-foreground p-4">
+                <h3 className="text-[10px] uppercase tracking-widest font-medium mb-3">
+                  Description
+                </h3>
+                <p className="text-sm font-light text-muted-foreground">
+                  {reference.description}
+                </p>
+              </div>
             )}
 
-            <Separator />
+            <div className="h-px bg-border" />
 
             {/* UI Patterns */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Layers className="h-4 w-4" />
-                  UI/UX Patterns
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {reference.analysis.uiPatterns.map((pattern) => (
-                    <Badge key={pattern} variant="outline">
-                      {pattern}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <div className="border-2 border-foreground p-4">
+              <h3 className="text-[10px] uppercase tracking-widest font-medium mb-3">
+                UI/UX Patterns
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {reference.analysis.uiPatterns.map((pattern) => (
+                  <span key={pattern} className="px-2 py-1 border border-border text-xs font-light">
+                    {pattern}
+                  </span>
+                ))}
+              </div>
+            </div>
 
             {/* Color Palette */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Color Palette</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ColorPaletteDisplay
-                  colorPalette={reference.analysis.colorPalette}
-                />
-              </CardContent>
-            </Card>
+            <div className="border-2 border-foreground p-4">
+              <h3 className="text-[10px] uppercase tracking-widest font-medium mb-3">
+                Color Palette
+              </h3>
+              <ColorPaletteDisplay
+                colorPalette={reference.analysis.colorPalette}
+              />
+            </div>
 
             {/* Typography */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Typography</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <TypographySample typography={reference.analysis.typography} />
-              </CardContent>
-            </Card>
+            <div className="border-2 border-foreground p-4">
+              <h3 className="text-[10px] uppercase tracking-widest font-medium mb-3">
+                Typography
+              </h3>
+              <TypographySample typography={reference.analysis.typography} />
+            </div>
 
             {/* Tech Stack */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Code className="h-4 w-4" />
-                  Technology Stack
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {reference.analysis.techStack.map((tech) => (
-                    <Badge key={tech} variant="secondary">
-                      {tech}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <div className="border-2 border-foreground p-4">
+              <h3 className="text-[10px] uppercase tracking-widest font-medium mb-3">
+                Technology Stack
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {reference.analysis.techStack.map((tech) => (
+                  <span key={tech} className="px-2 py-1 border border-border text-xs font-light">
+                    {tech}
+                  </span>
+                ))}
+              </div>
+            </div>
 
             {/* Components */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Layers className="h-4 w-4" />
-                  Component Inventory
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {reference.analysis.components.map((component, index) => (
-                    <div key={index} className="border-l-2 border-muted pl-4">
-                      <h4 className="font-medium text-sm">{component.name}</h4>
-                      <p className="text-xs text-muted-foreground">
-                        {component.description}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <div className="border-2 border-foreground p-4">
+              <h3 className="text-[10px] uppercase tracking-widest font-medium mb-3">
+                Component Inventory
+              </h3>
+              <div className="space-y-3">
+                {reference.analysis.components.map((component, index) => (
+                  <div key={index} className="border-l-2 border-foreground pl-4">
+                    <h4 className="text-sm font-light">{component.name}</h4>
+                    <p className="text-xs text-muted-foreground font-light">
+                      {component.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-            <Separator />
+            <div className="h-px bg-border" />
 
             {/* Clone Prompts */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">Clone Prompts</h3>
+              <h3 className="text-[10px] uppercase tracking-widest font-medium mb-4">
+                Clone Prompts
+              </h3>
               <ClonePromptViewer clonePrompts={reference.clonePrompts} />
             </div>
           </div>
