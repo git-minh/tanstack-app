@@ -9,7 +9,7 @@ type User = {
 type BaseNavItem = {
   title: string
   badge?: string
-  icon?: React.ElementType
+  symbol?: string
 }
 
 type NavLink = BaseNavItem & {
