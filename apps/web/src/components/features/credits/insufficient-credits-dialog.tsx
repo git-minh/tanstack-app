@@ -30,54 +30,60 @@ export function InsufficientCreditsDialog({
 
 	return (
 		<AlertDialog open={open} onOpenChange={onOpenChange}>
-			<AlertDialogContent>
+			<AlertDialogContent className="rounded-none border-2 border-foreground">
 				<AlertDialogHeader>
 					<div className="flex items-center gap-3">
-						<div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
-							<AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+						<div className="flex h-10 w-10 items-center justify-center border-2 border-destructive bg-destructive/10">
+							<AlertCircle className="h-5 w-5 text-destructive" />
 						</div>
-						<AlertDialogTitle>Insufficient Credits</AlertDialogTitle>
+						<AlertDialogTitle className="text-2xl font-light tracking-tight">
+							Insufficient Credits
+						</AlertDialogTitle>
 					</div>
-					<AlertDialogDescription className="space-y-3 pt-4">
-						<p>
+					<div className="space-y-4 pt-4">
+						<p className="text-sm font-light">
 							You don't have enough credits to use {featureName}.
 						</p>
-						<div className="rounded-lg border bg-muted p-3 space-y-2">
+						<div className="border-2 border-foreground bg-foreground/5 p-4 space-y-3">
 							<div className="flex items-center justify-between text-sm">
-								<span className="text-muted-foreground">
-									Credits needed:
+								<span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+									Credits needed
 								</span>
-								<span className="font-semibold">
+								<span className="font-light">
 									{creditsNeeded}
 								</span>
 							</div>
 							<div className="flex items-center justify-between text-sm">
-								<span className="text-muted-foreground">
-									Credits available:
+								<span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+									Credits available
 								</span>
-								<span className="font-semibold text-red-600 dark:text-red-400">
+								<span className="font-light text-destructive">
 									{creditsAvailable}
 								</span>
 							</div>
-							<div className="border-t pt-2 flex items-center justify-between text-sm">
-								<span className="text-muted-foreground">
-									Credits short:
+							<div className="border-t border-border pt-3 flex items-center justify-between text-sm">
+								<span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+									Credits short
 								</span>
-								<span className="font-semibold text-red-600 dark:text-red-400">
+								<span className="font-light text-destructive">
 									{creditsShort}
 								</span>
 							</div>
 						</div>
-						<p className="text-sm">
+						<p className="text-xs font-light text-muted-foreground">
 							Purchase more credits or upgrade to Pro for unlimited access.
 						</p>
-					</AlertDialogDescription>
+					</div>
 				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<AlertDialogCancel>Cancel</AlertDialogCancel>
+				<AlertDialogFooter className="flex gap-2">
+					<AlertDialogCancel className="rounded-none border-foreground font-light">
+						Cancel
+					</AlertDialogCancel>
 					<AlertDialogAction asChild>
-						<Link to="/pricing">
-							<Sparkles className="mr-2 h-4 w-4" />
+						<Link
+							to="/pricing"
+							className="rounded-none bg-foreground text-background hover:bg-foreground/90 font-light inline-flex items-center justify-center"
+						>
 							Buy More Credits
 						</Link>
 					</AlertDialogAction>

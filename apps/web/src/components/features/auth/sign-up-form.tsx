@@ -55,7 +55,7 @@ export default function SignUpForm({
 
 	return (
 		<div className="mx-auto w-full mt-10 max-w-md p-6">
-			<h1 className="mb-6 text-center text-3xl font-bold">Create Account</h1>
+			<h1 className="mb-8 text-center text-3xl font-light tracking-tight">Create Account</h1>
 
 			<form
 				onSubmit={(e) => {
@@ -63,22 +63,25 @@ export default function SignUpForm({
 					e.stopPropagation();
 					form.handleSubmit();
 				}}
-				className="space-y-4"
+				className="space-y-6"
 			>
 				<div>
 					<form.Field name="name">
 						{(field) => (
-							<div className="space-y-2">
-								<Label htmlFor={field.name}>Name</Label>
+							<div className="space-y-1.5">
+								<Label htmlFor={field.name} className="text-[10px] uppercase tracking-widest font-medium">
+									Name
+								</Label>
 								<Input
 									id={field.name}
 									name={field.name}
 									value={field.state.value}
 									onBlur={field.handleBlur}
 									onChange={(e) => field.handleChange(e.target.value)}
+									className="rounded-none border-foreground font-light"
 								/>
 								{field.state.meta.errors.map((error) => (
-									<p key={error?.message} className="text-red-500">
+									<p key={error?.message} className="text-[10px] text-destructive uppercase tracking-widest">
 										{error?.message}
 									</p>
 								))}
@@ -90,8 +93,10 @@ export default function SignUpForm({
 				<div>
 					<form.Field name="email">
 						{(field) => (
-							<div className="space-y-2">
-								<Label htmlFor={field.name}>Email</Label>
+							<div className="space-y-1.5">
+								<Label htmlFor={field.name} className="text-[10px] uppercase tracking-widest font-medium">
+									Email
+								</Label>
 								<Input
 									id={field.name}
 									name={field.name}
@@ -99,9 +104,10 @@ export default function SignUpForm({
 									value={field.state.value}
 									onBlur={field.handleBlur}
 									onChange={(e) => field.handleChange(e.target.value)}
+									className="rounded-none border-foreground font-light"
 								/>
 								{field.state.meta.errors.map((error) => (
-									<p key={error?.message} className="text-red-500">
+									<p key={error?.message} className="text-[10px] text-destructive uppercase tracking-widest">
 										{error?.message}
 									</p>
 								))}
@@ -113,8 +119,10 @@ export default function SignUpForm({
 				<div>
 					<form.Field name="password">
 						{(field) => (
-							<div className="space-y-2">
-								<Label htmlFor={field.name}>Password</Label>
+							<div className="space-y-1.5">
+								<Label htmlFor={field.name} className="text-[10px] uppercase tracking-widest font-medium">
+									Password
+								</Label>
 								<Input
 									id={field.name}
 									name={field.name}
@@ -122,9 +130,10 @@ export default function SignUpForm({
 									value={field.state.value}
 									onBlur={field.handleBlur}
 									onChange={(e) => field.handleChange(e.target.value)}
+									className="rounded-none border-foreground font-light"
 								/>
 								{field.state.meta.errors.map((error) => (
-									<p key={error?.message} className="text-red-500">
+									<p key={error?.message} className="text-[10px] text-destructive uppercase tracking-widest">
 										{error?.message}
 									</p>
 								))}
@@ -137,7 +146,7 @@ export default function SignUpForm({
 					{(state) => (
 						<Button
 							type="submit"
-							className="w-full"
+							className="w-full rounded-none bg-foreground text-background hover:bg-foreground/90 font-light"
 							disabled={!state.canSubmit || state.isSubmitting}
 						>
 							{state.isSubmitting ? "Submitting..." : "Sign Up"}
@@ -146,11 +155,11 @@ export default function SignUpForm({
 				</form.Subscribe>
 			</form>
 
-			<div className="mt-4 text-center">
+			<div className="mt-6 text-center">
 				<Button
 					variant="link"
 					onClick={onSwitchToSignIn}
-					className="text-indigo-600 hover:text-indigo-800"
+					className="text-xs uppercase tracking-widest font-light hover:underline"
 				>
 					Already have an account? Sign In
 				</Button>
