@@ -10,10 +10,12 @@
 	"observability": {
 		"enabled": true
 	},
-	"vars": {
-		"VITE_CONVEX_URL": "https://kindred-peccary-620.convex.cloud",
-		"VITE_CONVEX_SITE_URL": "https://kindred-peccary-620.convex.site"
-	}
+	// Environment variables are passed via CLI during deployment
+	// See .circleci/config.yml deploy-frontend job for runtime values
+	// "vars": {
+	// 	"VITE_CONVEX_URL": "",
+	// 	"VITE_CONVEX_SITE_URL": ""
+	// }
 	// "kv_namespaces": [
 	//   {
 	//     "binding": "CACHE",
