@@ -1,12 +1,19 @@
-import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard'
-import ListTodo from 'lucide-react/dist/esm/icons/list-todo'
-import CheckSquare from 'lucide-react/dist/esm/icons/check-square'
-import Users from 'lucide-react/dist/esm/icons/users'
-import FolderKanban from 'lucide-react/dist/esm/icons/folder-kanban'
-import CreditCard from 'lucide-react/dist/esm/icons/credit-card'
-import MessageSquare from 'lucide-react/dist/esm/icons/message-square'
-import Palette from 'lucide-react/dist/esm/icons/palette'
 import { type SidebarData } from '../types'
+
+/**
+ * Geometric symbols for ultra-minimalist navigation
+ * Pure shapes that match the border-only logo aesthetic
+ */
+const ICONS = {
+  dashboard: '□',
+  projects: '△',
+  tasks: '▢',
+  todos: '·',
+  chat: '○',
+  contacts: '◎',
+  designReferences: '◇',
+  pricing: '▭',
+} as const
 
 /**
  * Get sidebar data with user information
@@ -25,47 +32,57 @@ export function getSidebarData(user: {
     },
     navGroups: [
       {
-        title: 'General',
+        title: 'Workspace',
         items: [
           {
             title: 'Dashboard',
             url: '/dashboard',
-            icon: LayoutDashboard,
-          },
-          {
-            title: 'Chat',
-            url: '/chat',
-            icon: MessageSquare,
+            symbol: ICONS.dashboard,
           },
           {
             title: 'Projects',
             url: '/projects',
-            icon: FolderKanban,
-          },
-          {
-            title: 'Design References',
-            url: '/design-references',
-            icon: Palette,
+            symbol: ICONS.projects,
           },
           {
             title: 'Tasks',
             url: '/tasks',
-            icon: CheckSquare,
-          },
-          {
-            title: 'Contacts',
-            url: '/contacts',
-            icon: Users,
+            symbol: ICONS.tasks,
           },
           {
             title: 'Todos',
             url: '/todos',
-            icon: ListTodo,
+            symbol: ICONS.todos,
           },
+        ],
+      },
+      {
+        title: 'Resources',
+        items: [
+          {
+            title: 'Chat',
+            url: '/chat',
+            symbol: ICONS.chat,
+          },
+          {
+            title: 'Contacts',
+            url: '/contacts',
+            symbol: ICONS.contacts,
+          },
+          {
+            title: 'Design References',
+            url: '/design-references',
+            symbol: ICONS.designReferences,
+          },
+        ],
+      },
+      {
+        title: '',
+        items: [
           {
             title: 'Pricing',
             url: '/pricing',
-            icon: CreditCard,
+            symbol: ICONS.pricing,
           },
         ],
       },
