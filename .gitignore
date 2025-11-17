@@ -84,7 +84,6 @@ playwright/.cache/
 *~
 
 # Emacs
-*~
 \#*\#
 .\#*
 
@@ -137,7 +136,6 @@ tmp/
 temp/
 *.tmp
 *.bak
-*.swp
 
 # Package managers
 .yarn/cache/
@@ -155,22 +153,75 @@ temp/
 *.pid.lock
 
 # =====================================================
-# Documentation & Secrets
+# AI & Development Tools
 # =====================================================
-# CircleCI environment variables guide (contains secrets)
-.circleci/ADD_ENV_VARS.md
-.circleci/ENVIRONMENT_VARIABLES.md
+# Claude Code
+CLAUDE.md
+.claude/
+.mcp.json
 
-# Session documentation (generated files)
+# Task Master AI
+.taskmaster/
+
+# Cursor AI
+.cursor/
+.cursorignore
+.cursorrules
+
+# Copilot
+.copilot/
+
+# =====================================================
+# Development Documentation (Session-specific)
+# =====================================================
+# PRD and planning documents
+*-prd.md
+*-prd.txt
+*_PRD.md
+*_PRD.txt
+AI-PRD.md
+
+# Session summaries and analysis
 *_SUMMARY.md
 *_GUIDE.md
 *_IMPLEMENTATION.md
 *_FIX.md
 *_IMPROVEMENTS.md
+*_ANALYSIS.md
+*_STEPS.md
+*_JOURNEY.md
+SESSION_*.md
+NEXT_STEPS.md
+USER_JOURNEY.md
+
+# Audit and analysis files
+*-audit.md
+*-analysis.md
+*-optimization-summary.md
+*-plan.md
+
+# Hackathon and submission files
+HACKATHON_*.md
+*_SUBMISSION.md
+VIBE_APPS_SUBMISSION.md
 
 # =====================================================
-# Task Master AI (optional - uncomment if needed)
+# CircleCI (Sensitive)
 # =====================================================
-# Uncomment these lines if you don't want to track tasks in git
-# .taskmaster/tasks/tasks.json
-# .taskmaster/tasks/*.md
+.circleci/ADD_ENV_VARS.md
+.circleci/ENVIRONMENT_VARIABLES.md
+
+# =====================================================
+# Security & Secrets
+# =====================================================
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+credentials.json
+service-account.json
+*.secret
+.secrets/
+secrets/
