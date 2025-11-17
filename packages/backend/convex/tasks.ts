@@ -137,6 +137,43 @@ export const update = mutation({
 	},
 });
 
+export const updateStatus = mutation({
+	args: {
+		id: v.id("tasks"),
+		status: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			throw new Error("Unauthorized: Must be logged in to update tasks");
+		}
+		// Verify the task belongs to the current user
+		const task = await ctx.db.get(args.id);
+		if (!task) {
+			throw new Error("Task not found");
+		}
+		if (task.userId !== identity.subject) {
+			throw new Error("Unauthorized: Cannot update another user's task");
+		}
+
+		// Update only the status
+		await ctx.db.patch(args.id, {
+			status: args.status,
+		});
+
+		// STATUS INHERITANCE: If task is marked as done, update all descendants
+		if (args.status === "done" && task.status !== "done") {
+			await updateDescendantsStatus(ctx, args.id, "done");
+		}
+		// If task is marked as canceled, update all descendants
+		else if (args.status === "canceled" && task.status !== "canceled") {
+			await updateDescendantsStatus(ctx, args.id, "canceled");
+		}
+
+		return await ctx.db.get(args.id);
+	},
+});
+
 export const remove = mutation({
 	args: {
 		id: v.id("tasks"),
