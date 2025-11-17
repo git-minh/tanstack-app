@@ -42,8 +42,16 @@ export function NavGroup({ title, items }: NavGroupProps) {
                 asChild
                 isActive={isActive}
                 className={cn(
+                  // Ultra-minimalist base styles
+                  'rounded-none',
                   'text-[11px] uppercase tracking-wider font-light',
-                  'hover:font-normal transition-all',
+
+                  // Hover: pure typography, no background
+                  'hover:bg-transparent hover:font-normal transition-all',
+
+                  // Active state: border + typography only (override shadcn defaults)
+                  'data-[active=true]:bg-transparent',
+                  'data-[active=true]:text-foreground',
                   isActive && 'border-l-2 border-l-foreground font-normal'
                 )}
               >
