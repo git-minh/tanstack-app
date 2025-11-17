@@ -5,53 +5,41 @@ import { api } from "@tanstack/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { useSearch, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ProjectsTable } from "./components/projects-table";
-import { columns } from "./components/projects-columns";
-import { ProjectsStats } from "./components/projects-stats";
+import { Plus, ArrowRight, FolderOpen } from "lucide-react";
+import { toast } from "sonner";
+import type { Project } from "./data/schema";
+import { cn } from "@/lib/utils";
 
-// Lazy load ProjectFormDialog - only loads when user clicks "New Project" button
+// Lazy load ProjectFormDialog
 const ProjectFormDialog = lazy(() =>
 	import("./components/project-form-dialog").then(m => ({ default: m.ProjectFormDialog }))
 );
-import { ProjectsSkeleton } from "./components/projects-skeleton";
-import Plus from "lucide-react/dist/esm/icons/plus";
-import Filter from "lucide-react/dist/esm/icons/filter";
-import { toast } from "sonner";
-import type { Project } from "./data/schema";
 
 export function Projects() {
 	const search = useSearch({ from: "/_authenticated/projects" }) as { editProjectId?: string };
 	const navigate = useNavigate();
-	const [filterView, setFilterView] = useState<"all" | "byStatus">("all");
-	const [statusFilter, setStatusFilter] = useState<string | undefined>();
+	const [filterStatus, setFilterStatus] = useState<string | undefined>();
 
-	// OPTIMIZED: Single query fetches all projects page data
-	// Consolidates getHierarchy + getRootProjects (was 2 queries, now 1)
-	// ~30% performance improvement for projects page initial load
+	// Main projects query
 	const { data: projectsPageData } = useSuspenseQuery(
 		convexQuery(api.projects.getProjectsPageData, {})
 	);
 	const { hierarchicalProjects, rootProjects } = projectsPageData;
 
-	// Additional queries based on filter
+	// Filtered query
 	const statusProjects = useQuery(
 		api.projects.getByStatus,
-		filterView === "byStatus" && statusFilter ? { status: statusFilter } : "skip"
+		filterStatus ? { status: filterStatus } : "skip"
+	);
+
+	// Stats query
+	const { data: stats } = useSuspenseQuery(
+		convexQuery(api.projects.getProjectStats, {})
 	);
 
 	const createProject = useMutation(api.projects.create);
 	const updateProject = useMutation(api.projects.update);
 	const deleteProject = useMutation(api.projects.remove);
-	const deleteMany = useMutation(api.projects.removeMany);
 	const archiveProject = useMutation(api.projects.archive);
 
 	const [dialogOpen, setDialogOpen] = useState(false);
@@ -66,13 +54,6 @@ export function Projects() {
 		setDialogOpen(true);
 	};
 
-	const handleCreateSubproject = (parentId: string) => {
-		setEditingProject(undefined);
-		setParentProjectId(parentId);
-		setDialogMode("create");
-		setDialogOpen(true);
-	};
-
 	const handleEditProject = (project: Project) => {
 		setEditingProject(project);
 		setParentProjectId(undefined);
@@ -83,7 +64,6 @@ export function Projects() {
 	// Handle opening edit dialog from navigation
 	useEffect(() => {
 		if (search.editProjectId && hierarchicalProjects) {
-			// Find the project recursively in the hierarchy
 			const findProject = (projects: Project[]): Project | undefined => {
 				for (const project of projects) {
 					if (project._id === search.editProjectId) {
@@ -100,7 +80,6 @@ export function Projects() {
 			const projectToEdit = findProject(hierarchicalProjects);
 			if (projectToEdit) {
 				handleEditProject(projectToEdit);
-				// Clear the search param after opening dialog
 				navigate({
 					to: "/projects",
 					search: {},
@@ -123,11 +102,7 @@ export function Projects() {
 		try {
 			if (dialogMode === "create") {
 				await createProject(values);
-				toast.success(
-					values.parentProjectId
-						? "Subproject created successfully"
-						: "Project created successfully"
-				);
+				toast.success("Project created");
 			} else if (editingProject) {
 				await updateProject({
 					id: editingProject._id,
@@ -140,13 +115,11 @@ export function Projects() {
 					endDate: values.endDate,
 					parentProjectId: values.parentProjectId,
 				});
-				toast.success("Project updated successfully");
+				toast.success("Project updated");
 			}
 			setDialogOpen(false);
 		} catch (error) {
-			toast.error(
-				`Failed to ${dialogMode === "create" ? "create" : "update"} project`
-			);
+			toast.error(`Failed to ${dialogMode} project`);
 			console.error(error);
 		}
 	};
@@ -154,19 +127,9 @@ export function Projects() {
 	const handleDeleteProject = async (id: string) => {
 		try {
 			await deleteProject({ id });
-			toast.success("Project deleted successfully");
+			toast.success("Project deleted");
 		} catch (error) {
 			toast.error("Failed to delete project");
-			console.error(error);
-		}
-	};
-
-	const handleDeleteMany = async (ids: string[]) => {
-		try {
-			await deleteMany({ ids });
-			toast.success(`${ids.length} projects deleted successfully`);
-		} catch (error) {
-			toast.error("Failed to delete projects");
 			console.error(error);
 		}
 	};
@@ -174,107 +137,248 @@ export function Projects() {
 	const handleArchiveProject = async (id: string) => {
 		try {
 			await archiveProject({ id });
-			toast.success("Project archived successfully");
+			toast.success("Project archived");
 		} catch (error) {
 			toast.error("Failed to archive project");
 			console.error(error);
 		}
 	};
 
-	// Determine which data to show based on filter
-	const displayData =
-		filterView === "byStatus" && statusProjects
-			? statusProjects
-			: hierarchicalProjects;
+	// Determine which projects to display
+	const displayProjects = filterStatus
+		? statusProjects
+		: hierarchicalProjects;
+
+	// Flatten hierarchical projects for display
+	const flattenProjects = (projects: Project[], level = 0): Array<Project & { displayLevel: number }> => {
+		const result: Array<Project & { displayLevel: number }> = [];
+		for (const project of projects) {
+			result.push({ ...project, displayLevel: level });
+			if (project.subRows && project.subRows.length > 0) {
+				result.push(...flattenProjects(project.subRows, level + 1));
+			}
+		}
+		return result;
+	};
+
+	const flatProjects = flattenProjects(displayProjects || []);
 
 	return (
-		<div className="space-y-6">
-			<div className="flex items-center justify-between">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-					<p className="text-muted-foreground">
-						Manage and organize your projects
-					</p>
-				</div>
-				<div className="flex items-center gap-2">
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button variant="outline" size="sm">
-								<Filter className="h-4 w-4 mr-2" />
-								Filter
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end" className="w-48">
-							<DropdownMenuLabel>View</DropdownMenuLabel>
-							<DropdownMenuSeparator />
-							<DropdownMenuItem onClick={() => setFilterView("all")}>
-								All Projects
-							</DropdownMenuItem>
-							<DropdownMenuSeparator />
-							<DropdownMenuLabel>By Status</DropdownMenuLabel>
-							<DropdownMenuItem
-								onClick={() => {
-									setFilterView("byStatus");
-									setStatusFilter("active");
-								}}
-							>
+		<>
+			<div className="min-h-[calc(100vh-8rem)] flex flex-col">
+				{/* Hero Stats - Ultra Minimal */}
+				<div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-foreground border-y-2 border-foreground">
+					<div className="bg-background p-8 md:p-12 border-r-2 border-foreground">
+						<div className="space-y-2">
+							<div className="text-[clamp(3rem,10vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
+								{stats.total}
+							</div>
+							<div className="text-xs uppercase tracking-widest font-medium">
+								Total
+							</div>
+						</div>
+					</div>
+
+					<div className="bg-background p-8 md:p-12 border-r-0 md:border-r-2 border-foreground">
+						<div className="space-y-2">
+							<div className="text-[clamp(3rem,10vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
+								{stats.active}
+							</div>
+							<div className="text-xs uppercase tracking-widest font-medium">
 								Active
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								onClick={() => {
-									setFilterView("byStatus");
-									setStatusFilter("on-hold");
-								}}
-							>
+							</div>
+						</div>
+					</div>
+
+					<div className="bg-background p-8 md:p-12 border-r-2 border-foreground">
+						<div className="space-y-2">
+							<div className="text-[clamp(3rem,10vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
+								{stats.completed}
+							</div>
+							<div className="text-xs uppercase tracking-widest font-medium">
+								Done
+							</div>
+						</div>
+					</div>
+
+					<div className="bg-background p-8 md:p-12">
+						<div className="space-y-2">
+							<div className="text-[clamp(3rem,10vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
+								{stats.onHold}
+							</div>
+							<div className="text-xs uppercase tracking-widest font-medium">
 								On Hold
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								onClick={() => {
-									setFilterView("byStatus");
-									setStatusFilter("completed");
-								}}
-							>
-								Completed
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								onClick={() => {
-									setFilterView("byStatus");
-									setStatusFilter("archived");
-								}}
-							>
-								Archived
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
-					<Button onClick={handleCreateProject}>
-						<Plus className="h-4 w-4 mr-2" />
-						New Project
-					</Button>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				{/* Filters Bar - Minimal */}
+				<div className="border-b-2 border-foreground bg-background">
+					<div className="p-4 flex flex-wrap items-center gap-2">
+						{/* Status Filters */}
+						<button
+							onClick={() => setFilterStatus(undefined)}
+							className={cn(
+								"px-3 py-1 text-xs uppercase tracking-widest font-light hover:font-normal transition-all border border-border",
+								!filterStatus && "bg-foreground text-background"
+							)}
+						>
+							All
+						</button>
+						<button
+							onClick={() => setFilterStatus("active")}
+							className={cn(
+								"px-3 py-1 text-xs uppercase tracking-widest font-light hover:font-normal transition-all border border-border",
+								filterStatus === "active" && "bg-foreground text-background"
+							)}
+						>
+							Active
+						</button>
+						<button
+							onClick={() => setFilterStatus("on-hold")}
+							className={cn(
+								"px-3 py-1 text-xs uppercase tracking-widest font-light hover:font-normal transition-all border border-border",
+								filterStatus === "on-hold" && "bg-foreground text-background"
+							)}
+						>
+							On Hold
+						</button>
+						<button
+							onClick={() => setFilterStatus("completed")}
+							className={cn(
+								"px-3 py-1 text-xs uppercase tracking-widest font-light hover:font-normal transition-all border border-border",
+								filterStatus === "completed" && "bg-foreground text-background"
+							)}
+						>
+							Completed
+						</button>
+						<button
+							onClick={() => setFilterStatus("archived")}
+							className={cn(
+								"px-3 py-1 text-xs uppercase tracking-widest font-light hover:font-normal transition-all border border-border",
+								filterStatus === "archived" && "bg-foreground text-background"
+							)}
+						>
+							Archived
+						</button>
+
+						<div className="flex-1" />
+						<Button
+							onClick={handleCreateProject}
+							size="sm"
+							className="rounded-none bg-foreground text-background hover:bg-foreground/90 font-light group h-7"
+						>
+							<Plus className="mr-1.5 h-3.5 w-3.5" />
+							New
+							<ArrowRight className="ml-1.5 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+						</Button>
+					</div>
+				</div>
+
+				{/* Projects List - Text Only */}
+				<div className="flex-1 p-6 md:p-12">
+					<div className="max-w-5xl">
+						{flatProjects.length === 0 ? (
+							<div className="py-20 text-center border-2 border-dashed border-border">
+								<p className="text-sm text-muted-foreground mb-4">
+									No projects found
+								</p>
+								<Button
+									onClick={handleCreateProject}
+									variant="outline"
+									size="sm"
+									className="rounded-none font-light"
+								>
+									<Plus className="mr-2 h-4 w-4" />
+									Create your first project
+								</Button>
+							</div>
+						) : (
+							<div className="space-y-px">
+								{flatProjects.map((project) => (
+									<div
+										key={project._id}
+										className="group py-4 border-b border-border/30 last:border-0 hover:pl-4 transition-all duration-200 flex items-start gap-4"
+										style={{ paddingLeft: `${project.displayLevel * 2}rem` }}
+									>
+										<div className="flex-1 min-w-0">
+											<div className="flex items-baseline gap-3 flex-wrap mb-2">
+												<button
+													onClick={() => handleEditProject(project)}
+													className="text-base font-light hover:underline text-left"
+												>
+													{project.name}
+												</button>
+												<span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+													{project.displayId}
+												</span>
+											</div>
+
+											{project.description && (
+												<p className="text-sm text-muted-foreground font-light mb-3 line-clamp-2">
+													{project.description}
+												</p>
+											)}
+
+											<div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground">
+												<span>{project.status}</span>
+												<span className="h-1 w-1 rounded-full bg-muted-foreground" />
+												<span>{project.priority}</span>
+												{project.startDate && (
+													<>
+														<span className="h-1 w-1 rounded-full bg-muted-foreground" />
+														<span>
+															Starts {new Date(project.startDate).toLocaleDateString('en-US', {
+																month: 'short',
+																day: 'numeric',
+																year: 'numeric'
+															})}
+														</span>
+													</>
+												)}
+												{project.endDate && (
+													<>
+														<span className="h-1 w-1 rounded-full bg-muted-foreground" />
+														<span>
+															Ends {new Date(project.endDate).toLocaleDateString('en-US', {
+																month: 'short',
+																day: 'numeric',
+																year: 'numeric'
+															})}
+														</span>
+													</>
+												)}
+											</div>
+										</div>
+
+										<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+											<button
+												onClick={() => handleEditProject(project)}
+												className="text-[10px] uppercase tracking-widest px-2 py-1 hover:bg-muted transition-colors"
+											>
+												Edit
+											</button>
+											<button
+												onClick={() => handleArchiveProject(project._id)}
+												className="text-[10px] uppercase tracking-widest px-2 py-1 hover:bg-muted transition-colors"
+											>
+												Archive
+											</button>
+											<button
+												onClick={() => handleDeleteProject(project._id)}
+												className="text-[10px] uppercase tracking-widest px-2 py-1 hover:bg-destructive/10 hover:text-destructive transition-colors"
+											>
+												Delete
+											</button>
+										</div>
+									</div>
+								))}
+							</div>
+						)}
+					</div>
 				</div>
 			</div>
-
-			<Suspense fallback={<ProjectsSkeleton />}>
-				<ProjectsStats />
-			</Suspense>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>All Projects</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<Suspense fallback={<ProjectsSkeleton />}>
-						<ProjectsTable
-							data={displayData || []}
-							columns={columns}
-							onDeleteProject={handleDeleteProject}
-							onDeleteMany={handleDeleteMany}
-							onEditProject={handleEditProject}
-							onArchiveProject={handleArchiveProject}
-							onCreateSubproject={handleCreateSubproject}
-						/>
-					</Suspense>
-				</CardContent>
-			</Card>
 
 			<Suspense fallback={null}>
 				<ProjectFormDialog
@@ -287,6 +391,6 @@ export function Projects() {
 					parentProjectId={parentProjectId}
 				/>
 			</Suspense>
-		</div>
+		</>
 	);
 }
