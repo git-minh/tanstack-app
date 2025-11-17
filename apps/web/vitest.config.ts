@@ -26,13 +26,7 @@ export default defineConfig({
       ],
     },
     include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
-    exclude: [
-      "node_modules",
-      ".output",
-      "dist",
-      // Temporarily skip due to memory issues in CI
-      "src/features/tasks/tasks.test.tsx",
-    ],
+    exclude: ["node_modules", ".output", "dist"],
   },
   resolve: {
     alias: {
