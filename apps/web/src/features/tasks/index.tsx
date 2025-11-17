@@ -42,6 +42,7 @@ export function Tasks() {
 
 	const createTask = useMutation(api.tasks.create);
 	const updateTask = useMutation(api.tasks.update);
+	const updateTaskStatus = useMutation(api.tasks.updateStatus);
 	const deleteTask = useMutation(api.tasks.remove);
 
 	const [dialogOpen, setDialogOpen] = useState(false);
@@ -110,12 +111,13 @@ export function Tasks() {
 	const handleToggleStatus = async (task: Task) => {
 		const newStatus = task.status === "done" ? "todo" : "done";
 		try {
-			await updateTask({
+			await updateTaskStatus({
 				id: task._id as any,
 				status: newStatus,
 			});
 		} catch (error) {
 			toast.error("Failed to update task");
+			console.error(error);
 		}
 	};
 
