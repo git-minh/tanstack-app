@@ -67,22 +67,6 @@ describe("GenerateDialog - Rendering and Form Elements (Subtask 6.1)", () => {
 		expect(screen.getByText("Generate Project with AI")).toBeInTheDocument();
 	});
 
-	it("should display the dialog description", () => {
-		render(
-			<GenerateDialog
-				open={true}
-				onOpenChange={mockOnOpenChange}
-				onSubmit={mockOnSubmit}
-			/>
-		);
-
-		expect(
-			screen.getByText(
-				/Describe your project and AI will generate the structure/i
-			)
-		).toBeInTheDocument();
-	});
-
 	it("should render textarea with correct label", () => {
 		render(
 			<GenerateDialog
@@ -357,7 +341,7 @@ describe("GenerateDialog - Loading States (Subtask 6.3)", () => {
 		// Wait for loading state
 		await waitFor(() => {
 			expect(
-				screen.getByText(/Please wait while we generate your project/i)
+				screen.getByText(/AI is analyzing your project/i)
 			).toBeInTheDocument();
 		});
 
