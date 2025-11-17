@@ -258,47 +258,47 @@ export function GenerateDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col gap-0 p-0">
+			<DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col gap-0 p-0 rounded-none border-2 border-foreground">
 				<DialogHeader className="px-6 pt-6 pb-4">
-					<DialogTitle>Generate Project with AI</DialogTitle>
-					<DialogDescription>
-						{isSubmitting
-							? "Please wait while we generate your project"
-							: "Describe your project and AI will generate the structure, tasks, and initial setup for you."}
-					</DialogDescription>
+					<DialogTitle className="text-2xl font-light tracking-tight">
+						Generate Project with AI
+					</DialogTitle>
 					{credits && !isSubmitting && (
-						<div className="mt-3 p-3 rounded-md bg-muted">
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-2">
-									<Sparkles className="h-4 w-4 text-primary" />
-									<span className="text-sm font-medium">Credits</span>
-								</div>
-								<span className="text-sm text-muted-foreground">
+						<div className="mt-4 p-4 border-2 border-foreground bg-foreground/5">
+							<div className="flex items-center justify-between mb-3">
+								<span className="text-[10px] uppercase tracking-widest font-medium">
+									Credits
+								</span>
+								<span className="text-xs font-light">
 									{credits.isUnlimited
 										? "Unlimited"
 										: `${credits.creditsRemaining} remaining`}
 								</span>
 							</div>
-							<div className="mt-2 pt-2 border-t space-y-1">
-								<div className="flex justify-between text-xs">
-									<span className="text-muted-foreground">AI Generation</span>
-									<span className="font-medium">{GENERATION_COST} credits</span>
+							<div className="space-y-2 pt-3 border-t border-border">
+								<div className="flex justify-between items-center">
+									<span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+										AI Generation
+									</span>
+									<span className="text-sm font-light">{GENERATION_COST} credits</span>
 								</div>
-								<div className="flex justify-between text-xs">
-									<span className="text-muted-foreground">URL Scraping</span>
-									<span className="font-medium">{SCRAPE_COST} credits</span>
+								<div className="flex justify-between items-center">
+									<span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+										URL Scraping
+									</span>
+									<span className="text-sm font-light">{SCRAPE_COST} credits</span>
 								</div>
 							</div>
 							{!credits.isUnlimited && credits.creditsRemaining < GENERATION_COST && (
-								<div className="mt-2 pt-2 border-t">
-									<p className="text-xs text-destructive font-medium mb-2">
-										Insufficient credits. Upgrade to Pro for unlimited credits.
+								<div className="mt-3 pt-3 border-t border-border">
+									<p className="text-[10px] uppercase tracking-widest text-destructive mb-3">
+										Insufficient credits
 									</p>
 									<Button
 										size="sm"
 										variant="default"
 										onClick={handleUpgrade}
-										className="w-full"
+										className="w-full rounded-none bg-foreground text-background hover:bg-foreground/90 font-light"
 									>
 										Upgrade to Pro - $9/month
 									</Button>
@@ -528,6 +528,7 @@ export function GenerateDialog({
 								type="button"
 								variant="outline"
 								onClick={() => onOpenChange(false)}
+								className="rounded-none border-foreground font-light"
 							>
 								Cancel
 							</Button>
@@ -535,6 +536,7 @@ export function GenerateDialog({
 								type="submit"
 								disabled={!hasEnoughForGeneration}
 								title={!hasEnoughForGeneration ? `Requires ${GENERATION_COST} credits` : ""}
+								className="rounded-none bg-foreground text-background hover:bg-foreground/90 font-light"
 							>
 								Generate ({GENERATION_COST} credits)
 							</Button>
