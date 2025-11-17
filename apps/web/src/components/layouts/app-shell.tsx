@@ -1,6 +1,5 @@
 import { Header } from "@/components/layout/header";
 import { Main } from "@/components/layout/main";
-import { GlobalSearch } from "@/components/global-search";
 import { CreditBalance } from "@/components/features/credits/credit-balance";
 
 interface AppShellProps {
@@ -13,7 +12,6 @@ export function AppShell({ children, fixed = false, fluid = false }: AppShellPro
 	return (
 		<>
 			<Header fixed={fixed}>
-				<GlobalSearch />
 				<div className="flex-1" />
 				<CreditBalance />
 			</Header>

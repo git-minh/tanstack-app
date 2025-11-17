@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect, Suspense, lazy } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useAction } from "convex/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@tanstack/backend/convex/_generated/api";
-import { Sparkles, Palette } from "lucide-react";
-import { StatCards } from "@/components/features/dashboard/stat-cards";
+import { Sparkles, ArrowRight, Activity } from "lucide-react";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Button } from "@/components/ui/button";
@@ -14,17 +13,11 @@ import type {
 	GenerateResult,
 } from "@/features/ai-generation";
 
-// Lazy load heavy components for better code splitting
-const ActivityChart = lazy(() => import("@/components/features/dashboard/activity-chart"));
-const RecentActivityTable = lazy(() => import("@/components/features/dashboard/recent-activity-table"));
-const QuickChatCard = lazy(() => import("@/components/features/dashboard/quick-chat-card").then(m => ({ default: m.QuickChatCard })));
-const RecentDesignReferencesCard = lazy(() => import("@/components/features/dashboard/recent-design-references-card").then(m => ({ default: m.RecentDesignReferencesCard })));
-// Lazy load GenerateDialog - only loads when "Generate Project with AI" button is clicked
+// Lazy load dialogs
 const GenerateDialog = lazy(() =>
 	import("@/features/ai-generation").then(m => ({ default: m.GenerateDialog }))
 );
 
-// Lazy load AnalyzeWebsiteDialog
 const AnalyzeWebsiteDialog = lazy(() =>
 	import("@/features/design-references/components/analyze-website-dialog").then(m => ({ default: m.AnalyzeWebsiteDialog }))
 );
@@ -40,7 +33,6 @@ function DashboardRoute() {
 	const navigate = useNavigate();
 	const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-	// Cleanup timeout on unmount
 	useEffect(() => {
 		return () => {
 			if (navigationTimeoutRef.current) {
@@ -55,58 +47,33 @@ function DashboardRoute() {
 		try {
 			const result = await generateProject({ prompt: values.prompt });
 
-			// Navigate to projects page after successful creation
 			if (result.summary.projectId) {
-				// Clear any existing timeout
 				if (navigationTimeoutRef.current) {
 					clearTimeout(navigationTimeoutRef.current);
 				}
-				// Use setTimeout to allow success toast to display before navigation
 				navigationTimeoutRef.current = setTimeout(() => {
 					navigate({ to: "/projects" });
 				}, 1000);
 			}
 
-			// Return counts for success toast
-			// projectsCount is derived from whether a project was created (projectId exists)
 			return {
 				projectsCount: result.summary.projectId ? 1 : 0,
 				tasksCount: result.summary.tasksCreated || 0,
 				contactsCount: result.summary.contactsCreated || 0,
 			};
 		} catch (error) {
-			// Re-throw error for dialog error handling
 			throw error;
 		}
 	};
 
 	return (
 		<ErrorBoundary>
-			<div className="space-y-6">
-				<div className="flex items-center justify-between">
-					<div>
-						<h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-						<p className="text-muted-foreground">
-							Track your tasks and productivity at a glance
-						</p>
-					</div>
-					<div className="flex items-center gap-2">
-						<Button variant="outline" onClick={() => setAnalyzeDialogOpen(true)}>
-							<Palette className="mr-2 h-4 w-4" />
-							Analyze Website
-						</Button>
-						<Button onClick={() => setGenerateDialogOpen(true)}>
-							<Sparkles className="mr-2 h-4 w-4" />
-							Generate Project with AI
-						</Button>
-					</div>
-				</div>
-
-				{/* AuthGuard prevents queries from executing before auth is ready */}
-				<AuthGuard>
-					<DashboardContent />
-				</AuthGuard>
-			</div>
+			<AuthGuard>
+				<DashboardContent
+					onGenerateClick={() => setGenerateDialogOpen(true)}
+					onAnalyzeClick={() => setAnalyzeDialogOpen(true)}
+				/>
+			</AuthGuard>
 
 			<Suspense fallback={null}>
 				<GenerateDialog
@@ -126,104 +93,197 @@ function DashboardRoute() {
 	);
 }
 
-/**
- * Dashboard content with optimized data fetching
- * Uses single consolidated query for all dashboard data
- */
-function DashboardContent() {
-	// OPTIMIZED: Single query fetches all dashboard data at once
-	// Replaces 3 separate queries (60-70% performance improvement)
+interface DashboardContentProps {
+	onGenerateClick: () => void;
+	onAnalyzeClick: () => void;
+}
+
+function DashboardContent({ onGenerateClick, onAnalyzeClick }: DashboardContentProps) {
 	const { data } = useSuspenseQuery(
 		convexQuery(api.dashboard.getDashboardData, {})
 	);
 
+	const activeTasksPercentage = data.stats.totalTasks > 0
+		? Math.round((data.stats.activeTasks / data.stats.totalTasks) * 100)
+		: 0;
+
+	// Get most recent activities (limit to 5)
+	const recentActivities = data.recentActivity.slice(0, 5);
+
 	return (
-		<>
-			{/* Stats load first (fast) */}
-			<StatCards data={data.stats} />
-
-			{/* Quick Chat card - shows recent AI conversations */}
-			<Suspense fallback={<CardSkeleton />}>
-				<QuickChatCard />
-			</Suspense>
-
-			{/* Recent Design References card - shows recent analyzed websites */}
-			<Suspense fallback={<CardSkeleton />}>
-				<RecentDesignReferencesCard />
-			</Suspense>
-
-			{/* Chart loads progressively with lazy loading (saves 1.3MB) */}
-			<Suspense fallback={<ChartSkeleton />}>
-				<ActivityChart data={data.chartData} />
-			</Suspense>
-
-			{/* Recent activity loads progressively */}
-			<Suspense fallback={<TableSkeleton />}>
-				<RecentActivityTable data={data.recentActivity} />
-			</Suspense>
-		</>
-	);
-}
-
-/**
- * Skeleton for activity chart loading state
- */
-function ChartSkeleton() {
-	return (
-		<div className="rounded-lg border bg-card p-6">
-			<div className="mb-4 space-y-2">
-				<div className="h-6 w-32 animate-pulse rounded bg-muted" />
-				<div className="h-4 w-48 animate-pulse rounded bg-muted" />
-			</div>
-			<div className="h-[300px] animate-pulse rounded bg-gradient-to-br from-muted/50 to-muted/20" />
-		</div>
-	);
-}
-
-/**
- * Skeleton for recent activity table loading state
- */
-function TableSkeleton() {
-	return (
-		<div className="rounded-lg border bg-card">
-			<div className="p-6">
-				<div className="mb-4 h-6 w-40 animate-pulse rounded bg-muted" />
-				<div className="space-y-3">
-					{[...Array(5)].map((_, i) => (
-						<div key={i} className="flex items-center gap-4">
-							<div className="h-10 w-10 animate-pulse rounded-full bg-muted" />
-							<div className="flex-1 space-y-2">
-								<div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-								<div className="h-3 w-1/2 animate-pulse rounded bg-muted/60" />
+		<div className="min-h-[calc(100vh-8rem)] flex flex-col">
+			{/* Hero Stats - Ultra Minimal */}
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-foreground border-y-2 border-foreground">
+				{/* Primary Stat - Active Tasks */}
+				<div className="bg-background p-12 md:p-16 border-r-0 md:border-r-2 border-foreground">
+					<div className="space-y-4">
+						<div className="text-[clamp(4rem,15vw,12rem)] font-light leading-none tabular-nums tracking-tighter">
+							{data.stats.activeTasks}
+						</div>
+						<div className="space-y-1">
+							<div className="text-sm uppercase tracking-widest font-medium">
+								Active Tasks
+							</div>
+							<div className="text-xs text-muted-foreground">
+								{activeTasksPercentage}% of total workload
 							</div>
 						</div>
-					))}
+					</div>
 				</div>
-			</div>
-		</div>
-	);
-}
 
-/**
- * Skeleton for card loading state
- */
-function CardSkeleton() {
-	return (
-		<div className="rounded-lg border bg-card">
-			<div className="p-6">
-				<div className="mb-4 h-6 w-32 animate-pulse rounded bg-muted" />
-				<div className="space-y-3">
-					{[...Array(3)].map((_, i) => (
-						<div key={i} className="flex items-start gap-3 rounded-lg border p-3">
-							<div className="h-4 w-4 animate-pulse rounded bg-muted" />
-							<div className="flex-1 space-y-2">
-								<div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
-								<div className="h-3 w-1/3 animate-pulse rounded bg-muted/60" />
+				{/* Secondary Stat - Completed */}
+				<div className="bg-background p-12 md:p-16 border-r-0 md:border-r-2 border-foreground">
+					<div className="space-y-4">
+						<div className="text-[clamp(4rem,15vw,12rem)] font-light leading-none tabular-nums tracking-tighter">
+							{data.stats.completedTasks}
+						</div>
+						<div className="space-y-1">
+							<div className="text-sm uppercase tracking-widest font-medium">
+								Completed
+							</div>
+							<div className="text-xs text-muted-foreground">
+								{data.stats.completionRate}% completion rate
 							</div>
 						</div>
-					))}
+					</div>
+				</div>
+
+				{/* Tertiary Stat - Total */}
+				<div className="bg-background p-12 md:p-16">
+					<div className="space-y-4">
+						<div className="text-[clamp(4rem,15vw,12rem)] font-light leading-none tabular-nums tracking-tighter">
+							{data.stats.totalTasks}
+						</div>
+						<div className="space-y-1">
+							<div className="text-sm uppercase tracking-widest font-medium">
+								Total Tasks
+							</div>
+							<div className="text-xs text-muted-foreground">
+								All items tracked
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
+
+			{/* Actions Bar - Minimal */}
+			<div className="border-b-2 border-foreground bg-background">
+				<div className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+					<div className="space-y-1">
+						<h2 className="text-lg font-medium">Quick Actions</h2>
+						<p className="text-xs text-muted-foreground">
+							Generate projects or analyze designs
+						</p>
+					</div>
+					<div className="flex items-center gap-2">
+						<Button
+							onClick={onAnalyzeClick}
+							variant="outline"
+							size="sm"
+							className="rounded-none font-light"
+						>
+							Analyze
+						</Button>
+						<Button
+							onClick={onGenerateClick}
+							size="sm"
+							className="rounded-none bg-foreground text-background hover:bg-foreground/90 font-light group"
+						>
+							<Sparkles className="mr-2 h-3.5 w-3.5" />
+							Generate
+							<ArrowRight className="ml-2 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+						</Button>
+					</div>
+				</div>
+			</div>
+
+			{/* Recent Activity - Text Only */}
+			<div className="flex-1 p-6 md:p-12">
+				<div className="max-w-4xl">
+					<div className="mb-8 flex items-baseline gap-3">
+						<Activity className="h-5 w-5 mt-1" strokeWidth={1.5} />
+						<h2 className="text-2xl font-light tracking-tight">
+							Recent Activity
+						</h2>
+					</div>
+
+					{recentActivities.length === 0 ? (
+						<div className="py-20 text-center">
+							<p className="text-muted-foreground text-sm">
+								No recent activity. Start by creating a task or project.
+							</p>
+						</div>
+					) : (
+						<div className="space-y-px">
+							{recentActivities.map((activity, index) => (
+								<div
+									key={activity._id}
+									className="group py-4 border-b border-border/50 last:border-0 hover:pl-4 transition-all duration-200"
+								>
+									<div className="flex items-start justify-between gap-4">
+										<div className="flex-1 space-y-1">
+											<div className="flex items-center gap-3">
+												<span className="text-xs font-medium uppercase tracking-wider text-muted-foreground tabular-nums">
+													{new Date(activity._creationTime).toLocaleDateString('en-US', {
+														month: 'short',
+														day: 'numeric',
+													})}
+												</span>
+												<span className="h-1 w-1 rounded-full bg-muted-foreground" />
+												<span className="text-xs uppercase tracking-wider text-muted-foreground">
+													{activity.type}
+												</span>
+											</div>
+											<p className="text-sm leading-relaxed">
+												{activity.description}
+											</p>
+											{activity.taskTitle && (
+												<Link
+													to={activity.taskId ? `/tasks?taskId=${activity.taskId}` : '/tasks'}
+													className="text-xs text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+												>
+													{activity.taskTitle}
+													<ArrowRight className="h-3 w-3" />
+												</Link>
+											)}
+										</div>
+									</div>
+								</div>
+							))}
+						</div>
+					)}
+
+					{recentActivities.length > 0 && (
+						<div className="mt-8 pt-6 border-t border-border/50">
+							<Link
+								to="/tasks"
+								className="text-xs uppercase tracking-widest font-medium hover:text-muted-foreground transition-colors inline-flex items-center gap-2"
+							>
+								View All Tasks
+								<ArrowRight className="h-3.5 w-3.5" />
+							</Link>
+						</div>
+					)}
+				</div>
+			</div>
+
+			{/* Inline Styles for Staggered Animations */}
+			<style>{`
+				@keyframes slideIn {
+					from {
+						opacity: 0;
+						transform: translateX(-10px);
+					}
+					to {
+						opacity: 1;
+						transform: translateX(0);
+					}
+				}
+
+				.group:hover {
+					animation: slideIn 0.2s ease-out;
+				}
+			`}</style>
 		</div>
 	);
 }
