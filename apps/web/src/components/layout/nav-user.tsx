@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import LogOut from 'lucide-react/dist/esm/icons/log-out'
+import { Moon, Sun } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +17,6 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { SignOutDialog } from '@/components/sign-out-dialog'
-import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 type NavUserProps = {
   user: {
@@ -28,6 +29,7 @@ type NavUserProps = {
 export function NavUser({ user }: NavUserProps) {
   const { isMobile } = useSidebar()
   const [open, setOpen] = useState(false)
+  const { theme, setTheme } = useTheme()
 
   const initials = user.name
     .split(' ')
@@ -35,6 +37,10 @@ export function NavUser({ user }: NavUserProps) {
     .join('')
     .toUpperCase()
     .slice(0, 2)
+
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light')
+  }
 
   return (
     <>
@@ -67,9 +73,19 @@ export function NavUser({ user }: NavUserProps) {
                 <div className='text-xs uppercase tracking-widest'>Account</div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className='gap-2 font-light'>
-                <ThemeToggle />
-                <span className='text-xs'>Theme</span>
+              <DropdownMenuItem
+                onClick={toggleTheme}
+                className='gap-2 font-light cursor-pointer'
+              >
+                {theme === 'dark' ? (
+                  <Moon className='h-3.5 w-3.5' strokeWidth={1.5} />
+                ) : (
+                  <Sun className='h-3.5 w-3.5' strokeWidth={1.5} />
+                )}
+                <span className='text-xs flex-1'>Theme</span>
+                <span className='text-[9px] uppercase tracking-wider opacity-60'>
+                  {theme === 'dark' ? 'Dark' : 'Light'}
+                </span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

@@ -9,6 +9,8 @@ import { api } from "@tanstack/backend/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Layers, Zap } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Logo } from "@/components/ui/logo";
 
 export const Route = createFileRoute("/")({
 	component: HomeComponent,
@@ -72,8 +74,13 @@ function HomeComponent() {
 			{/* Navigation */}
 			<nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 backdrop-blur-sm bg-background/80">
 				<div className="container mx-auto px-6 h-16 flex items-center justify-between">
-					<div className="text-sm font-medium tracking-wider">STREAMLINE</div>
 					<div className="flex items-center gap-3">
+						<Logo className="h-7" />
+						<span className="text-sm font-medium tracking-wider uppercase">
+							Streamline
+						</span>
+					</div>
+					<div className="flex items-center gap-4">
 						<div
 							className={`h-1.5 w-1.5 rounded-full transition-colors ${
 								healthCheck.data === "OK"
@@ -83,14 +90,7 @@ function HomeComponent() {
 										: "bg-red-500"
 							}`}
 						/>
-						<Button
-							onClick={() => navigate({ to: isAuthenticated ? "/dashboard" : "/login" })}
-							variant="ghost"
-							size="sm"
-							className="text-xs"
-						>
-							{isAuthenticated ? "Dashboard" : "Sign In"}
-						</Button>
+						<ThemeToggle />
 					</div>
 				</div>
 			</nav>
