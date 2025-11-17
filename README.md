@@ -100,8 +100,6 @@ packages/backend/      # Backend - Convex
   └── convex/          # Database, queries, mutations
 ```
 
-Full architecture details in [CLAUDE.md](CLAUDE.md).
-
 ## Tech Stack
 
 **Frontend:** React 19, TanStack Start (SSR), TailwindCSS v4, shadcn/ui
@@ -121,7 +119,6 @@ Manual deployment: See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
 ## Documentation
 
-- [CLAUDE.md](CLAUDE.md) - Complete development guide
 - [docs/TECH_STACK.md](docs/TECH_STACK.md) - Technology breakdown
 - [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) - Workflows and patterns
 - [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md) - Configuration reference
