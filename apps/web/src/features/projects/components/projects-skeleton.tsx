@@ -1,21 +1,77 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card } from "@/components/ui/card";
 
 export function ProjectsSkeleton() {
 	return (
-		<div className="space-y-4">
-			<div className="grid gap-4 md:grid-cols-4">
+		<div className="min-h-[calc(100vh-8rem)] flex flex-col">
+			{/* Stats Grid - Bloomberg Terminal Style */}
+			<div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-foreground border-y-2 border-foreground">
 				{Array.from({ length: 4 }).map((_, i) => (
-					<Card key={i} className="p-6">
-						<Skeleton className="h-4 w-24 mb-2" />
-						<Skeleton className="h-8 w-16" />
-					</Card>
+					<div
+						key={i}
+						className="bg-background p-8 md:p-12 border-r-2 border-foreground last:border-r-0"
+					>
+						<div className="space-y-2">
+							{/* Giant number placeholder */}
+							<Skeleton className="h-24 md:h-32 w-20 border-4" />
+							{/* Label */}
+							<div className="text-xs uppercase tracking-widest font-medium">
+								<Skeleton className="h-3 w-20" />
+							</div>
+						</div>
+					</div>
 				))}
 			</div>
-			<Card className="p-6">
-				<Skeleton className="h-8 w-full mb-4" />
-				<Skeleton className="h-64 w-full" />
-			</Card>
+
+			{/* Action Bar */}
+			<div className="border-b-2 border-foreground bg-background">
+				<div className="p-4 flex flex-wrap items-center gap-2">
+					<Skeleton className="h-7 w-20" />
+					<Skeleton className="h-7 w-28" />
+					<Skeleton className="h-7 w-24" />
+					<Skeleton className="h-7 w-24" />
+					<div className="flex-1" />
+					<Skeleton className="h-7 w-24 border-4" />
+				</div>
+			</div>
+
+			{/* Projects List */}
+			<div className="flex-1 p-6 md:p-12">
+				<div className="max-w-5xl">
+					<div className="space-y-px">
+						{Array.from({ length: 5 }).map((_, i) => (
+							<div
+								key={i}
+								className="group py-4 border-b border-border/30 last:border-0 flex items-start gap-4"
+							>
+								{/* Expand icon */}
+								<Skeleton className="mt-0.5 h-4 w-4 flex-shrink-0" />
+
+								{/* Content */}
+								<div className="flex-1 min-w-0 space-y-2">
+									{/* Title and ID */}
+									<div className="flex items-baseline gap-3 flex-wrap">
+										<Skeleton className="h-5 w-56" />
+										<Skeleton className="h-3 w-20" />
+									</div>
+
+									{/* Metadata */}
+									<div className="flex items-center gap-3 flex-wrap">
+										<Skeleton className="h-3 w-20" />
+										<Skeleton className="h-3 w-24" />
+										<Skeleton className="h-3 w-28" />
+									</div>
+								</div>
+
+								{/* Actions */}
+								<div className="flex items-center gap-1 opacity-60">
+									<Skeleton className="h-6 w-12" />
+									<Skeleton className="h-6 w-14" />
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
 		</div>
 	);
 }
