@@ -1,33 +1,22 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useMutation } from "convex/react";
 import { api } from "@tanstack/backend/convex/_generated/api";
 import type { Id } from "@tanstack/backend/convex/_generated/dataModel";
-import { Trash2, Edit2, Check, X } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface TodoItemProps {
 	id: Id<"todos">;
 	text: string;
 	completed: boolean;
-	selected?: boolean;
-	onSelect?: (checked: boolean) => void;
-	showSelect?: boolean;
 }
 
-export function TodoItem({ 
-	id, 
-	text, 
-	completed, 
-	selected = false,
-	onSelect,
-	showSelect = false 
-}: TodoItemProps) {
+export function TodoItem({ id, text, completed }: TodoItemProps) {
 	const [isEditing, setIsEditing] = useState(false);
 	const [editText, setEditText] = useState(text);
-	
+
 	const toggleTodo = useMutation(api.todos.toggle);
 	const removeTodo = useMutation(api.todos.deleteTodo);
 	const updateText = useMutation(api.todos.updateText);
@@ -71,87 +60,57 @@ export function TodoItem({
 	};
 
 	return (
-		<li className="flex items-center justify-between rounded-md border p-2 hover:bg-accent/50 transition-colors">
-			<div className="flex items-center space-x-2 flex-grow">
-				{showSelect ? (
-					<Checkbox
-						checked={selected}
-						onCheckedChange={(checked) => onSelect?.(checked as boolean)}
-						aria-label="Select todo"
-					/>
-				) : null}
-				<Checkbox
-					checked={completed}
-					onCheckedChange={handleToggle}
-					id={`todo-${id}`}
-					aria-label="Toggle completion"
+		<div className="group py-3 border-b border-border/30 last:border-0 hover:pl-4 transition-all duration-200 flex items-center gap-4">
+			<Checkbox
+				checked={completed}
+				onCheckedChange={handleToggle}
+				id={`todo-${id}`}
+				className="rounded-none border-foreground flex-shrink-0"
+			/>
+
+			{isEditing ? (
+				<Input
+					value={editText}
+					onChange={(e) => setEditText(e.target.value)}
+					onKeyDown={(e) => {
+						if (e.key === "Enter") handleSaveEdit();
+						if (e.key === "Escape") handleCancelEdit();
+					}}
+					onBlur={handleSaveEdit}
+					className="flex-1 h-7 rounded-none border-foreground"
+					autoFocus
 				/>
-				{isEditing ? (
-					<Input
-						value={editText}
-						onChange={(e) => setEditText(e.target.value)}
-						onKeyDown={(e) => {
-							if (e.key === "Enter") handleSaveEdit();
-							if (e.key === "Escape") handleCancelEdit();
-						}}
-						className="flex-grow h-7"
-						autoFocus
-					/>
-				) : (
-					<label
-						htmlFor={`todo-${id}`}
-						className={`flex-grow cursor-pointer ${
-							completed ? "text-muted-foreground line-through" : ""
-						}`}
-						onDoubleClick={() => !completed && setIsEditing(true)}
+			) : (
+				<label
+					htmlFor={`todo-${id}`}
+					className={cn(
+						"flex-1 cursor-pointer font-light text-sm",
+						completed && "text-muted-foreground line-through"
+					)}
+					onDoubleClick={() => !completed && setIsEditing(true)}
+				>
+					{text}
+				</label>
+			)}
+
+			<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+				{!isEditing && !completed && (
+					<button
+						onClick={() => setIsEditing(true)}
+						className="text-[10px] uppercase tracking-widest px-2 py-1 hover:bg-muted transition-colors"
 					>
-						{text}
-					</label>
+						Edit
+					</button>
+				)}
+				{!isEditing && (
+					<button
+						onClick={handleDelete}
+						className="text-[10px] uppercase tracking-widest px-2 py-1 hover:bg-destructive/10 hover:text-destructive transition-colors"
+					>
+						Delete
+					</button>
 				)}
 			</div>
-			<div className="flex items-center space-x-1">
-				{isEditing ? (
-					<>
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={handleSaveEdit}
-							aria-label="Save edit"
-						>
-							<Check className="h-4 w-4 text-green-600" />
-						</Button>
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={handleCancelEdit}
-							aria-label="Cancel edit"
-						>
-							<X className="h-4 w-4 text-red-600" />
-						</Button>
-					</>
-				) : (
-					<>
-						{!completed && (
-							<Button
-								variant="ghost"
-								size="icon"
-								onClick={() => setIsEditing(true)}
-								aria-label="Edit todo"
-							>
-								<Edit2 className="h-4 w-4" />
-							</Button>
-						)}
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={handleDelete}
-							aria-label="Delete todo"
-						>
-							<Trash2 className="h-4 w-4" />
-						</Button>
-					</>
-				)}
-			</div>
-		</li>
+		</div>
 	);
 }
