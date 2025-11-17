@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Send, Loader2, Sparkles } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { CREDIT_COSTS } from "@tanstack/backend/convex/credits";
 
 interface ChatInputProps {
@@ -27,12 +27,11 @@ export function ChatInput({ sessionId }: ChatInputProps) {
 
 	const sendMessage = useAction(api.chat.sendChatMessage);
 
-	// Auto-resize textarea
 	useEffect(() => {
 		if (textareaRef.current) {
 			textareaRef.current.style.height = "auto";
 			const scrollHeight = textareaRef.current.scrollHeight;
-			const maxHeight = 5 * 24; // 5 lines * 24px line height
+			const maxHeight = 5 * 24;
 			textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
 		}
 	}, [message]);
@@ -40,17 +39,14 @@ export function ChatInput({ sessionId }: ChatInputProps) {
 	const handleSend = async () => {
 		if (!message.trim() || isLoading) return;
 
-		// Check credits
 		if (!credits.isUnlimited && credits.creditsRemaining < CREDIT_COSTS.CHAT_MESSAGE) {
-			alert(
-				`Insufficient credits: You need ${CREDIT_COSTS.CHAT_MESSAGE} credits to send a message. Upgrade to Pro for unlimited credits.`
-			);
+			alert(`Need ${CREDIT_COSTS.CHAT_MESSAGE} credits. Upgrade to Pro for unlimited.`);
 			return;
 		}
 
 		setIsLoading(true);
 		const userMessage = message;
-		setMessage(""); // Clear input immediately for better UX
+		setMessage("");
 
 		try {
 			await sendMessage({
@@ -60,12 +56,6 @@ export function ChatInput({ sessionId }: ChatInputProps) {
 			});
 		} catch (error) {
 			console.error("Failed to send message:", error);
-			alert(
-				`Failed to send message: ${
-					error instanceof Error ? error.message : "An error occurred"
-				}`
-			);
-			// Restore message on error
 			setMessage(userMessage);
 		} finally {
 			setIsLoading(false);
@@ -84,35 +74,19 @@ export function ChatInput({ sessionId }: ChatInputProps) {
 
 	return (
 		<div className="space-y-3">
-			{/* Credit Indicator */}
-			<div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-				<div className="flex items-center gap-2">
-					<Sparkles className="h-3.5 w-3.5" />
-					<span>
-						{credits.isUnlimited
-							? "Unlimited credits"
-							: `${credits.creditsRemaining} credits remaining · ${CREDIT_COSTS.CHAT_MESSAGE} per message`}
-					</span>
-				</div>
-				{!credits.isUnlimited && credits.creditsRemaining < CREDIT_COSTS.CHAT_MESSAGE && (
-					<span className="text-destructive font-medium">
-						Insufficient credits
-					</span>
-				)}
-			</div>
-
 			{/* Context Toggle */}
-			<div className="flex items-center space-x-2 px-1">
+			<div className="flex items-center gap-2">
 				<Checkbox
 					id="include-context"
 					checked={includeContext}
 					onCheckedChange={(checked) => setIncludeContext(checked === true)}
+					className="rounded-none border-foreground"
 				/>
 				<Label
 					htmlFor="include-context"
-					className="text-sm text-muted-foreground cursor-pointer"
+					className="text-[10px] uppercase tracking-widest text-muted-foreground cursor-pointer font-light"
 				>
-					Include my projects and tasks as context
+					Include projects & tasks
 				</Label>
 			</div>
 
@@ -123,29 +97,31 @@ export function ChatInput({ sessionId }: ChatInputProps) {
 					value={message}
 					onChange={(e) => setMessage(e.target.value)}
 					onKeyDown={handleKeyDown}
-					placeholder="Ask me anything..."
-					className="min-h-[44px] max-h-[120px] resize-none"
+					placeholder="Ask anything..."
+					className="min-h-[44px] max-h-[120px] resize-none rounded-none border-foreground font-light"
 					disabled={isLoading}
 				/>
 				<Button
 					onClick={handleSend}
 					disabled={isDisabled}
-					size="icon"
-					className="flex-none h-[44px] w-[44px]"
+					className="flex-none rounded-none bg-foreground text-background hover:bg-foreground/90 font-light group h-[44px] px-4"
 				>
 					{isLoading ? (
 						<Loader2 className="h-4 w-4 animate-spin" />
 					) : (
-						<Send className="h-4 w-4" />
+						<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
 					)}
 				</Button>
 			</div>
 
-			{/* Keyboard Shortcut Hint */}
-			<div className="text-xs text-muted-foreground text-center px-1">
-				Press <kbd className="px-1.5 py-0.5 rounded bg-muted">Enter</kbd> to
-				send, <kbd className="px-1.5 py-0.5 rounded bg-muted">Shift+Enter</kbd>{" "}
-				for new line
+			{/* Credit Info */}
+			<div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+				{credits.isUnlimited
+					? "Unlimited credits"
+					: `${credits.creditsRemaining} credits · ${CREDIT_COSTS.CHAT_MESSAGE} per message`}
+				{!credits.isUnlimited && credits.creditsRemaining < CREDIT_COSTS.CHAT_MESSAGE && (
+					<span className="text-destructive ml-2">· Insufficient</span>
+				)}
 			</div>
 		</div>
 	);
