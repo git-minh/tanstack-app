@@ -54,7 +54,9 @@ export function NavGroup({ title, items }: NavGroupProps) {
                   className='flex items-center gap-2'
                 >
                   {item.symbol && (
-                    <span className='opacity-70 text-sm select-none'>{item.symbol}</span>
+                    <div className='h-4 w-4 border border-foreground flex items-center justify-center flex-shrink-0'>
+                      <span className='text-[8px] font-bold leading-none'>{item.symbol}</span>
+                    </div>
                   )}
                   <span>{item.title}</span>
                 </Link>

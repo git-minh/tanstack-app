@@ -1,18 +1,19 @@
 import { type SidebarData } from '../types'
 
 /**
- * Geometric symbols for ultra-minimalist navigation
- * Pure shapes that match the border-only logo aesthetic
+ * Letter monograms for ultra-minimalist navigation
+ * Matches the border-only logo aesthetic: [S] STREAMLINE
+ * Each icon is a bordered square with a single letter
  */
 const ICONS = {
-  dashboard: '□',
-  projects: '△',
-  tasks: '▢',
-  todos: '·',
-  chat: '○',
-  contacts: '◎',
-  designReferences: '◇',
-  pricing: '▭',
+  dashboard: 'D',
+  projects: 'P',
+  tasks: 'T',
+  todos: 'Q',      // Q for "Quick todos"
+  chat: 'C',
+  contacts: 'O',   // O for "cOntacts" (people circle)
+  designReferences: 'R', // R for "References"
+  pricing: '$',    // $ symbol for pricing
 } as const
 
 /**
