@@ -55,13 +55,32 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 				content: "width=device-width, initial-scale=1",
 			},
 			{
-				title: "My App",
+				title: "Streamline",
 			},
 		],
 		links: [
 			{
 				rel: "stylesheet",
 				href: appCss,
+			},
+			// Theme-aware favicons
+			{
+				rel: "icon",
+				type: "image/png",
+				href: "/favicon-light.png",
+				media: "(prefers-color-scheme: light)",
+			},
+			{
+				rel: "icon",
+				type: "image/png",
+				href: "/favicon-dark.png",
+				media: "(prefers-color-scheme: dark)",
+			},
+			// Fallback for browsers without media query support
+			{
+				rel: "icon",
+				type: "image/png",
+				href: "/favicon-light.png",
 			},
 		],
 	}),

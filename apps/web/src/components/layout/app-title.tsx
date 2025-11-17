@@ -6,6 +6,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { Logo } from '@/components/ui/logo'
 
 export function AppTitle() {
   const { setOpenMobile } = useSidebar()
@@ -20,11 +21,9 @@ export function AppTitle() {
           <Link
             to='/'
             onClick={() => setOpenMobile(false)}
-            className='flex items-center gap-2'
+            className='flex items-center gap-3'
           >
-            <div className='h-8 w-8 border-2 border-foreground flex items-center justify-center'>
-              <span className='text-xs font-bold'>S</span>
-            </div>
+            <Logo />
             <span className='text-sm font-medium uppercase tracking-widest'>
               Streamline
             </span>
