@@ -176,30 +176,26 @@ export function AnalyzeWebsiteDialog({
 	return (
 		<>
 			<Dialog open={open} onOpenChange={onOpenChange}>
-				<DialogContent className="sm:max-w-[600px]">
+				<DialogContent className="sm:max-w-[600px] rounded-none border-2 border-foreground">
 					<DialogHeader>
-						<DialogTitle>Analyze Website</DialogTitle>
-						<DialogDescription>
-							{isAnalyzing
-								? "AI is analyzing the website design..."
-								: "Enter a website URL to analyze its design, extract UI patterns, and generate clone prompts."}
-						</DialogDescription>
+						<DialogTitle className="text-2xl font-light tracking-tight">
+							Analyze Website
+						</DialogTitle>
 						{!isAnalyzing && (
-							<div className="mt-3 p-3 rounded-md bg-muted">
-								<div className="flex items-center justify-between">
-									<div className="flex items-center gap-2">
-										<Sparkles className="h-4 w-4 text-primary" />
-										<span className="text-sm font-medium">Credits</span>
-									</div>
-									<span className="text-sm text-muted-foreground">
+							<div className="mt-4 p-4 border-2 border-foreground bg-foreground/5">
+								<div className="flex items-center justify-between mb-3">
+									<span className="text-[10px] uppercase tracking-widest font-medium">
+										Credits
+									</span>
+									<span className="text-xs font-light">
 										{isUnlimited ? "Unlimited" : `${creditsAvailable} remaining`}
 									</span>
 								</div>
-								<div className="mt-2 pt-2 border-t">
-									<div className="flex justify-between text-xs">
-										<span className="text-muted-foreground">Website Analysis</span>
-										<span className="font-medium">{ANALYSIS_COST} credits</span>
-									</div>
+								<div className="flex justify-between items-center pt-3 border-t border-border">
+									<span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+										Website Analysis
+									</span>
+									<span className="text-sm font-light">{ANALYSIS_COST} credits</span>
 								</div>
 							</div>
 						)}
@@ -207,8 +203,8 @@ export function AnalyzeWebsiteDialog({
 
 					{isAnalyzing ? (
 						<div className="flex flex-col items-center justify-center py-8 gap-6">
-							<Globe className="h-12 w-12 text-primary animate-pulse" />
-							<div className="w-full max-w-md space-y-4">
+							<Globe className="h-12 w-12 text-foreground" />
+							<div className="w-full max-w-md space-y-3">
 								{ANALYSIS_STEPS.map((step) => {
 									const isActive = currentStep === step.id;
 									const isComplete = currentStep !== null && currentStep > step.id;
@@ -216,21 +212,21 @@ export function AnalyzeWebsiteDialog({
 									return (
 										<div
 											key={step.id}
-											className={`flex items-center gap-3 p-3 rounded-lg border ${
+											className={`flex items-center gap-3 p-3 border-2 ${
 												isActive
-													? "border-primary bg-primary/5"
+													? "border-foreground bg-foreground/5"
 													: isComplete
-														? "border-green-500 bg-green-500/5"
-														: "border-muted"
+														? "border-foreground bg-foreground/5"
+														: "border-border"
 											}`}
 										>
 											<div
-												className={`flex h-8 w-8 items-center justify-center rounded-full ${
+												className={`flex h-8 w-8 items-center justify-center border-2 ${
 													isActive
-														? "bg-primary text-primary-foreground"
+														? "border-foreground bg-foreground text-background"
 														: isComplete
-															? "bg-green-500 text-white"
-															: "bg-muted text-muted-foreground"
+															? "border-foreground bg-foreground text-background"
+															: "border-border text-muted-foreground"
 												}`}
 											>
 												{isComplete ? (
@@ -238,12 +234,12 @@ export function AnalyzeWebsiteDialog({
 												) : isActive ? (
 													<Loader2 className="h-4 w-4 animate-spin" />
 												) : (
-													<span className="text-sm font-medium">{step.id}</span>
+													<span className="text-xs font-medium">{step.id}</span>
 												)}
 											</div>
 											<div className="flex-1">
-												<p className="text-sm font-medium">{step.title}</p>
-												<p className="text-xs text-muted-foreground">
+												<p className="text-sm font-light">{step.title}</p>
+												<p className="text-[10px] uppercase tracking-widest text-muted-foreground">
 													{step.duration}
 												</p>
 											</div>
@@ -251,36 +247,33 @@ export function AnalyzeWebsiteDialog({
 									);
 								})}
 							</div>
-							<p className="text-sm text-muted-foreground">
-								This may take up to 60 seconds
+							<p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+								Up to 60 seconds
 							</p>
 						</div>
 					) : (
-						<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-							{/* URL Input */}
-							<div className="space-y-2">
-								<Label htmlFor="url">
-									Website URL <span className="text-destructive">*</span>
+						<form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-4">
+							<div className="grid gap-1.5">
+								<Label htmlFor="url" className="text-[10px] uppercase tracking-widest font-medium">
+									Website URL *
 								</Label>
 								<Input
 									id="url"
 									type="url"
 									placeholder="https://example.com"
 									{...register("url")}
-									className={errors.url ? "border-destructive" : ""}
+									className={`rounded-none border-foreground font-light ${errors.url ? "border-destructive" : ""}`}
 								/>
 								{errors.url && (
-									<p className="text-sm text-destructive">{errors.url.message}</p>
+									<p className="text-[10px] text-destructive uppercase tracking-widest">
+										{errors.url.message}
+									</p>
 								)}
-								<p className="text-xs text-muted-foreground">
-									Enter a valid HTTP or HTTPS URL
-								</p>
 							</div>
 
-							{/* Style Select */}
-							<div className="space-y-2">
-								<Label htmlFor="style">
-									Design Style <span className="text-destructive">*</span>
+							<div className="grid gap-1.5">
+								<Label htmlFor="style" className="text-[10px] uppercase tracking-widest font-medium">
+									Design Style *
 								</Label>
 								<Select
 									value={selectedStyle}
@@ -288,60 +281,55 @@ export function AnalyzeWebsiteDialog({
 										setValue("style", value as "minimal" | "corporate" | "creative")
 									}
 								>
-									<SelectTrigger id="style">
+									<SelectTrigger id="style" className="rounded-none border-foreground font-light">
 										<SelectValue placeholder="Select style" />
 									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="minimal">Minimal</SelectItem>
-										<SelectItem value="corporate">Corporate</SelectItem>
-										<SelectItem value="creative">Creative</SelectItem>
+									<SelectContent className="rounded-none">
+										<SelectItem value="minimal" className="font-light">Minimal</SelectItem>
+										<SelectItem value="corporate" className="font-light">Corporate</SelectItem>
+										<SelectItem value="creative" className="font-light">Creative</SelectItem>
 									</SelectContent>
 								</Select>
-								<p className="text-xs text-muted-foreground">
-									Categorize the website's design aesthetic
-								</p>
 							</div>
 
-							{/* Tags Input */}
-							<div className="space-y-2">
-								<Label htmlFor="tags">Tags (optional)</Label>
+							<div className="grid gap-1.5">
+								<Label htmlFor="tags" className="text-[10px] uppercase tracking-widest font-medium">
+									Tags
+								</Label>
 								<Input
 									id="tags"
 									placeholder="design, portfolio, saas"
 									{...register("tags")}
+									className="rounded-none border-foreground font-light"
 								/>
-								<p className="text-xs text-muted-foreground">
-									Comma-separated tags for categorization
-								</p>
 							</div>
 
-							{/* Industry Input */}
-							<div className="space-y-2">
-								<Label htmlFor="industry">Industry (optional)</Label>
+							<div className="grid gap-1.5">
+								<Label htmlFor="industry" className="text-[10px] uppercase tracking-widest font-medium">
+									Industry
+								</Label>
 								<Input
 									id="industry"
-									placeholder="e.g., SaaS, E-commerce, Portfolio"
+									placeholder="SaaS, E-commerce, Portfolio"
 									{...register("industry")}
+									className="rounded-none border-foreground font-light"
 								/>
-								<p className="text-xs text-muted-foreground">
-									Specify the industry or use case
-								</p>
 							</div>
 
-							{/* Footer */}
 							<div className="flex justify-end gap-2 pt-4">
 								<Button
 									type="button"
 									variant="outline"
 									onClick={() => onOpenChange(false)}
+									className="rounded-none border-foreground font-light"
 								>
 									Cancel
 								</Button>
 								<Button
 									type="submit"
 									disabled={!hasEnoughCredits(ANALYSIS_COST) || isAnalyzing}
+									className="rounded-none bg-foreground text-background hover:bg-foreground/90 font-light"
 								>
-									<Sparkles className="mr-2 h-4 w-4" />
 									Analyze ({ANALYSIS_COST} credits)
 								</Button>
 							</div>
