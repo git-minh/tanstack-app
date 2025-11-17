@@ -1,90 +1,74 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
 
 export function TasksSkeleton() {
 	return (
-		<div className="space-y-4">
-			<div className="flex items-center justify-between">
-				<Skeleton className="h-8 w-[250px]" />
-				<Skeleton className="h-8 w-[100px]" />
+		<div className="min-h-[calc(100vh-8rem)] flex flex-col">
+			{/* Stats Grid - Bloomberg Terminal Style */}
+			<div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-foreground border-y-2 border-foreground">
+				{Array.from({ length: 4 }).map((_, i) => (
+					<div
+						key={i}
+						className="bg-background p-8 md:p-12 border-r-2 border-foreground last:border-r-0"
+					>
+						<div className="space-y-2">
+							{/* Giant number placeholder */}
+							<Skeleton className="h-24 md:h-32 w-20 border-4" />
+							{/* Label */}
+							<div className="text-xs uppercase tracking-widest font-medium">
+								<Skeleton className="h-3 w-16" />
+							</div>
+						</div>
+					</div>
+				))}
 			</div>
 
-			<div className="rounded-md border">
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead className="w-[50px]">
-								<Skeleton className="h-4 w-4" />
-							</TableHead>
-							<TableHead>
-								<Skeleton className="h-4 w-[80px]" />
-							</TableHead>
-							<TableHead>
-								<Skeleton className="h-4 w-[200px]" />
-							</TableHead>
-							<TableHead>
-								<Skeleton className="h-4 w-[100px]" />
-							</TableHead>
-							<TableHead>
-								<Skeleton className="h-4 w-[100px]" />
-							</TableHead>
-							<TableHead>
-								<Skeleton className="h-4 w-[120px]" />
-							</TableHead>
-							<TableHead>
-								<Skeleton className="h-4 w-[150px]" />
-							</TableHead>
-							<TableHead className="w-[50px]" />
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{Array.from({ length: 5 }).map((_, i) => (
-							<TableRow key={i}>
-								<TableCell>
-									<Skeleton className="h-4 w-4" />
-								</TableCell>
-								<TableCell>
-									<Skeleton className="h-4 w-[60px]" />
-								</TableCell>
-								<TableCell>
-									<div className="flex space-x-2">
-										<Skeleton className="h-5 w-[60px]" />
-										<Skeleton className="h-4 w-[150px]" />
+			{/* Action Bar */}
+			<div className="border-b-2 border-foreground bg-background">
+				<div className="p-4 flex flex-wrap items-center gap-2">
+					<Skeleton className="h-7 w-20" />
+					<Skeleton className="h-7 w-24" />
+					<Skeleton className="h-7 w-24" />
+					<Skeleton className="h-7 w-20" />
+					<div className="flex-1" />
+					<Skeleton className="h-7 w-24 border-4" />
+				</div>
+			</div>
+
+			{/* Tasks List */}
+			<div className="flex-1 p-6 md:p-12">
+				<div className="max-w-5xl">
+					<div className="space-y-px">
+						{Array.from({ length: 6 }).map((_, i) => (
+							<div
+								key={i}
+								className="group py-3 border-b border-border/30 last:border-0 flex items-start gap-4"
+							>
+								{/* Toggle icon */}
+								<Skeleton className="mt-0.5 h-4 w-4 flex-shrink-0" />
+
+								{/* Content */}
+								<div className="flex-1 min-w-0 space-y-2">
+									{/* Title and ID */}
+									<div className="flex items-baseline gap-3 flex-wrap">
+										<Skeleton className="h-4 w-48" />
+										<Skeleton className="h-3 w-16" />
 									</div>
-								</TableCell>
-								<TableCell>
-									<Skeleton className="h-4 w-[80px]" />
-								</TableCell>
-								<TableCell>
-									<Skeleton className="h-4 w-[80px]" />
-								</TableCell>
-								<TableCell>
-									<Skeleton className="h-4 w-[100px]" />
-								</TableCell>
-								<TableCell>
-									<Skeleton className="h-4 w-[120px]" />
-								</TableCell>
-								<TableCell>
-									<Skeleton className="h-4 w-8" />
-								</TableCell>
-							</TableRow>
-						))}
-					</TableBody>
-				</Table>
-			</div>
 
-			<div className="flex items-center justify-between">
-				<Skeleton className="h-4 w-[150px]" />
-				<div className="flex space-x-2">
-					<Skeleton className="h-8 w-[80px]" />
-					<Skeleton className="h-8 w-[80px]" />
+									{/* Metadata */}
+									<div className="flex items-center gap-3">
+										<Skeleton className="h-3 w-16" />
+										<Skeleton className="h-3 w-16" />
+									</div>
+								</div>
+
+								{/* Actions */}
+								<div className="flex items-center gap-1 opacity-60">
+									<Skeleton className="h-6 w-12" />
+									<Skeleton className="h-6 w-14" />
+								</div>
+							</div>
+						))}
+					</div>
 				</div>
 			</div>
 		</div>
