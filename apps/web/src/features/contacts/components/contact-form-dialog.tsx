@@ -103,217 +103,233 @@ export function ContactFormDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+			<DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto rounded-none border-2 border-foreground">
 				<DialogHeader>
-					<DialogTitle>
+					<DialogTitle className="text-2xl font-light tracking-tight">
 						{mode === "create" ? "Add Contact" : "Edit Contact"}
 					</DialogTitle>
-					<DialogDescription>
-						{mode === "create"
-							? "Add a new contact to your list"
-							: "Make changes to your contact"}
-					</DialogDescription>
 				</DialogHeader>
 				<form onSubmit={handleSubmit(onFormSubmit)}>
 					<div className="grid gap-6 py-4">
-						{/* Personal Information */}
-						<div className="space-y-4">
-							<h3 className="text-sm font-semibold">Personal Information</h3>
-							<div className="grid grid-cols-2 gap-4">
-								<div className="grid gap-2">
-									<Label htmlFor="firstName">
-										First Name <span className="text-destructive">*</span>
-									</Label>
-									<Input
-										id="firstName"
-										placeholder="John"
-										{...register("firstName")}
-										className={errors.firstName ? "border-destructive" : ""}
-									/>
-									{errors.firstName && (
-										<p className="text-sm text-destructive">
-											{errors.firstName.message}
-										</p>
-									)}
-								</div>
-
-								<div className="grid gap-2">
-									<Label htmlFor="lastName">
-										Last Name <span className="text-destructive">*</span>
-									</Label>
-									<Input
-										id="lastName"
-										placeholder="Doe"
-										{...register("lastName")}
-										className={errors.lastName ? "border-destructive" : ""}
-									/>
-									{errors.lastName && (
-										<p className="text-sm text-destructive">
-											{errors.lastName.message}
-										</p>
-									)}
-								</div>
-							</div>
-
-							<div className="grid gap-2">
-								<Label htmlFor="email">
-									Email <span className="text-destructive">*</span>
+						<div className="grid grid-cols-2 gap-4">
+							<div className="grid gap-1.5">
+								<Label htmlFor="firstName" className="text-[10px] uppercase tracking-widest font-medium">
+									First Name *
 								</Label>
 								<Input
-									id="email"
-									type="email"
-									placeholder="john.doe@example.com"
-									{...register("email")}
-									className={errors.email ? "border-destructive" : ""}
+									id="firstName"
+									placeholder="John"
+									{...register("firstName")}
+									className={`rounded-none border-foreground font-light ${errors.firstName ? "border-destructive" : ""}`}
 								/>
-								{errors.email && (
-									<p className="text-sm text-destructive">
-										{errors.email.message}
+								{errors.firstName && (
+									<p className="text-[10px] text-destructive uppercase tracking-widest">
+										{errors.firstName.message}
 									</p>
 								)}
 							</div>
 
-							<div className="grid gap-2">
-								<Label htmlFor="phone">Phone</Label>
+							<div className="grid gap-1.5">
+								<Label htmlFor="lastName" className="text-[10px] uppercase tracking-widest font-medium">
+									Last Name *
+								</Label>
 								<Input
-									id="phone"
-									type="tel"
-									placeholder="+1 (555) 123-4567"
-									{...register("phone")}
+									id="lastName"
+									placeholder="Doe"
+									{...register("lastName")}
+									className={`rounded-none border-foreground font-light ${errors.lastName ? "border-destructive" : ""}`}
 								/>
-							</div>
-						</div>
-
-						{/* Professional Information */}
-						<div className="space-y-4">
-							<h3 className="text-sm font-semibold">Professional Information</h3>
-							<div className="grid gap-2">
-								<Label htmlFor="company">Company</Label>
-								<Input
-									id="company"
-									placeholder="Acme Corporation"
-									{...register("company")}
-								/>
-							</div>
-
-							<div className="grid grid-cols-2 gap-4">
-								<div className="grid gap-2">
-									<Label htmlFor="title">Job Title</Label>
-									<Input
-										id="title"
-										placeholder="Software Engineer"
-										{...register("title")}
-									/>
-								</div>
-
-								<div className="grid gap-2">
-									<Label htmlFor="department">Department</Label>
-									<Input
-										id="department"
-										placeholder="Engineering"
-										{...register("department")}
-									/>
-								</div>
-							</div>
-
-							<div className="grid gap-2">
-								<Label htmlFor="website">Website</Label>
-								<Input
-									id="website"
-									type="url"
-									placeholder="https://example.com"
-									{...register("website")}
-									className={errors.website ? "border-destructive" : ""}
-								/>
-								{errors.website && (
-									<p className="text-sm text-destructive">
-										{errors.website.message}
+								{errors.lastName && (
+									<p className="text-[10px] text-destructive uppercase tracking-widest">
+										{errors.lastName.message}
 									</p>
 								)}
 							</div>
 						</div>
 
-						{/* Additional Information */}
-						<div className="space-y-4">
-							<h3 className="text-sm font-semibold">Additional Information</h3>
-							<div className="grid grid-cols-2 gap-4">
-								<div className="grid gap-2">
-									<Label htmlFor="status">Status</Label>
-									<Select
-										value={watch("status")}
-										onValueChange={(value) => setValue("status", value)}
-									>
-										<SelectTrigger id="status">
-											<SelectValue placeholder="Select status" />
-										</SelectTrigger>
-										<SelectContent>
-											{statuses.map((status) => (
-												<SelectItem key={status.value} value={status.value}>
-													{status.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
+						<div className="grid gap-1.5">
+							<Label htmlFor="email" className="text-[10px] uppercase tracking-widest font-medium">
+								Email *
+							</Label>
+							<Input
+								id="email"
+								type="email"
+								placeholder="john.doe@example.com"
+								{...register("email")}
+								className={`rounded-none border-foreground font-light ${errors.email ? "border-destructive" : ""}`}
+							/>
+							{errors.email && (
+								<p className="text-[10px] text-destructive uppercase tracking-widest">
+									{errors.email.message}
+								</p>
+							)}
+						</div>
 
-								<div className="grid gap-2">
-									<Label htmlFor="category">Category</Label>
-									<Select
-										value={watch("category")}
-										onValueChange={(value) => setValue("category", value)}
-									>
-										<SelectTrigger id="category">
-											<SelectValue placeholder="Select category" />
-										</SelectTrigger>
-										<SelectContent>
-											{categories.map((category) => (
-												<SelectItem key={category.value} value={category.value}>
-													{category.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-							</div>
+						<div className="grid gap-1.5">
+							<Label htmlFor="phone" className="text-[10px] uppercase tracking-widest font-medium">
+								Phone
+							</Label>
+							<Input
+								id="phone"
+								type="tel"
+								placeholder="+1 (555) 123-4567"
+								{...register("phone")}
+								className="rounded-none border-foreground font-light"
+							/>
+						</div>
 
-							<div className="grid gap-2">
-								<Label htmlFor="address">Address</Label>
-								<Textarea
-									id="address"
-									placeholder="123 Main St, City, State, ZIP"
-									{...register("address")}
-									rows={2}
+						<div className="h-px bg-border" />
+
+						<div className="grid gap-1.5">
+							<Label htmlFor="company" className="text-[10px] uppercase tracking-widest font-medium">
+								Company
+							</Label>
+							<Input
+								id="company"
+								placeholder="Acme Corporation"
+								{...register("company")}
+								className="rounded-none border-foreground font-light"
+							/>
+						</div>
+
+						<div className="grid grid-cols-2 gap-4">
+							<div className="grid gap-1.5">
+								<Label htmlFor="title" className="text-[10px] uppercase tracking-widest font-medium">
+									Job Title
+								</Label>
+								<Input
+									id="title"
+									placeholder="Software Engineer"
+									{...register("title")}
+									className="rounded-none border-foreground font-light"
 								/>
 							</div>
 
-							<div className="grid gap-2">
-								<Label htmlFor="notes">Notes</Label>
-								<Textarea
-									id="notes"
-									placeholder="Additional notes about this contact"
-									{...register("notes")}
-									rows={3}
+							<div className="grid gap-1.5">
+								<Label htmlFor="department" className="text-[10px] uppercase tracking-widest font-medium">
+									Department
+								</Label>
+								<Input
+									id="department"
+									placeholder="Engineering"
+									{...register("department")}
+									className="rounded-none border-foreground font-light"
 								/>
 							</div>
+						</div>
+
+						<div className="grid gap-1.5">
+							<Label htmlFor="website" className="text-[10px] uppercase tracking-widest font-medium">
+								Website
+							</Label>
+							<Input
+								id="website"
+								type="url"
+								placeholder="https://example.com"
+								{...register("website")}
+								className={`rounded-none border-foreground font-light ${errors.website ? "border-destructive" : ""}`}
+							/>
+							{errors.website && (
+								<p className="text-[10px] text-destructive uppercase tracking-widest">
+									{errors.website.message}
+								</p>
+							)}
+						</div>
+
+						<div className="h-px bg-border" />
+
+						<div className="grid grid-cols-2 gap-4">
+							<div className="grid gap-1.5">
+								<Label htmlFor="status" className="text-[10px] uppercase tracking-widest font-medium">
+									Status
+								</Label>
+								<Select
+									value={watch("status")}
+									onValueChange={(value) => setValue("status", value)}
+								>
+									<SelectTrigger id="status" className="rounded-none border-foreground font-light">
+										<SelectValue placeholder="Select status" />
+									</SelectTrigger>
+									<SelectContent className="rounded-none">
+										{statuses.map((status) => (
+											<SelectItem key={status.value} value={status.value} className="font-light">
+												{status.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+
+							<div className="grid gap-1.5">
+								<Label htmlFor="category" className="text-[10px] uppercase tracking-widest font-medium">
+									Category
+								</Label>
+								<Select
+									value={watch("category")}
+									onValueChange={(value) => setValue("category", value)}
+								>
+									<SelectTrigger id="category" className="rounded-none border-foreground font-light">
+										<SelectValue placeholder="Select category" />
+									</SelectTrigger>
+									<SelectContent className="rounded-none">
+										{categories.map((category) => (
+											<SelectItem key={category.value} value={category.value} className="font-light">
+												{category.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+						</div>
+
+						<div className="grid gap-1.5">
+							<Label htmlFor="address" className="text-[10px] uppercase tracking-widest font-medium">
+								Address
+							</Label>
+							<Textarea
+								id="address"
+								placeholder="123 Main St, City, State, ZIP"
+								{...register("address")}
+								rows={2}
+								className="rounded-none border-foreground font-light"
+							/>
+						</div>
+
+						<div className="grid gap-1.5">
+							<Label htmlFor="notes" className="text-[10px] uppercase tracking-widest font-medium">
+								Notes
+							</Label>
+							<Textarea
+								id="notes"
+								placeholder="Additional notes"
+								{...register("notes")}
+								rows={3}
+								className="rounded-none border-foreground font-light"
+							/>
 						</div>
 					</div>
-					<DialogFooter>
+					<DialogFooter className="flex gap-2">
 						<Button
 							type="button"
 							variant="outline"
 							onClick={() => onOpenChange(false)}
 							disabled={isSubmitting}
+							className="rounded-none border-foreground font-light"
 						>
 							Cancel
 						</Button>
-						<Button type="submit" disabled={isSubmitting}>
+						<Button
+							type="submit"
+							disabled={isSubmitting}
+							className="rounded-none bg-foreground text-background hover:bg-foreground/90 font-light"
+						>
 							{isSubmitting
 								? mode === "create"
 									? "Adding..."
 									: "Saving..."
 								: mode === "create"
 									? "Add Contact"
-									: "Save Changes"}
+									: "Save"}
 						</Button>
 					</DialogFooter>
 				</form>

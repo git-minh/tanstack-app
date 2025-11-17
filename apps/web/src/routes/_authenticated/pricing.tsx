@@ -99,7 +99,7 @@ function PricingRoute() {
                 >
                   {/* Credits - Hero Number */}
                   <div className="mb-6">
-                    <div className="text-[clamp(4rem,12vw,12rem)] font-light leading-none tabular-nums tracking-tighter">
+                    <div className="text-[clamp(3rem,8vw,7rem)] font-light leading-none tabular-nums tracking-tighter">
                       {pkg.credits.toLocaleString()}
                     </div>
                     <div className="text-xs uppercase tracking-widest font-medium mt-2">
