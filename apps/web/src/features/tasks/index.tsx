@@ -1,14 +1,15 @@
-import { Suspense, useState, lazy } from "react";
+import { Suspense, useState, lazy, useEffect } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@tanstack/backend/convex/_generated/api";
 import type { Id } from "@tanstack/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { Button } from "@/components/ui/button";
-import { Plus, ArrowRight, Circle, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, ArrowRight, Circle, CheckCircle2, AlertCircle, ChevronsDown, ChevronsUp } from "lucide-react";
 import { toast } from "sonner";
 import type { Task } from "./data/schema";
 import { cn } from "@/lib/utils";
+import { useHotkeys } from "react-hotkeys-hook";
 
 // Lazy load TaskFormDialog
 const TaskFormDialog = lazy(() =>
@@ -18,6 +19,28 @@ const TaskFormDialog = lazy(() =>
 export function Tasks() {
 	const [filterStatus, setFilterStatus] = useState<string | undefined>();
 	const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>();
+
+	// Expansion state with localStorage persistence
+	const [expandedTasks, setExpandedTasks] = useState<Set<string>>(() => {
+		if (typeof window !== "undefined") {
+			const stored = localStorage.getItem("tasks-expanded-state");
+			if (stored) {
+				try {
+					return new Set(JSON.parse(stored));
+				} catch {
+					return new Set();
+				}
+			}
+		}
+		return new Set();
+	});
+
+	// Persist expansion state to localStorage
+	useEffect(() => {
+		if (typeof window !== "undefined") {
+			localStorage.setItem("tasks-expanded-state", JSON.stringify([...expandedTasks]));
+		}
+	}, [expandedTasks]);
 
 	// Fetch all tasks data
 	const { data: tasksPageData } = useSuspenseQuery(
@@ -121,6 +144,50 @@ export function Tasks() {
 		}
 	};
 
+	// Expand/collapse functions
+	const toggleExpand = (taskId: string) => {
+		setExpandedTasks(prev => {
+			const next = new Set(prev);
+			if (next.has(taskId)) {
+				next.delete(taskId);
+			} else {
+				next.add(taskId);
+			}
+			return next;
+		});
+	};
+
+	const expandAll = () => {
+		const allTaskIds = new Set<string>();
+		const collectIds = (tasks: Task[]) => {
+			tasks.forEach(task => {
+				if (task.subRows && task.subRows.length > 0) {
+					allTaskIds.add(task._id);
+					collectIds(task.subRows);
+				}
+			});
+		};
+		collectIds(hierarchicalTasks || []);
+		setExpandedTasks(allTaskIds);
+	};
+
+	const collapseAll = () => {
+		setExpandedTasks(new Set());
+	};
+
+	// Keyboard shortcuts
+	useHotkeys('mod+e', (e) => {
+		e.preventDefault();
+		expandAll();
+		toast.success("Expanded all tasks");
+	}, [hierarchicalTasks]);
+
+	useHotkeys('mod+shift+e', (e) => {
+		e.preventDefault();
+		collapseAll();
+		toast.success("Collapsed all tasks");
+	}, []);
+
 	// Determine which tasks to display
 	const displayTasks = selectedProjectId && projectTasks
 		? projectTasks
@@ -137,13 +204,25 @@ export function Tasks() {
 		return t.dueDate < Date.now() && t.status !== "done";
 	}).length || 0;
 
-	// Flatten hierarchical tasks for display
-	const flattenTasks = (tasks: Task[], level = 0): Array<Task & { displayLevel: number }> => {
-		const result: Array<Task & { displayLevel: number }> = [];
+	// Flatten hierarchical tasks for display, respecting expansion state
+	const flattenTasks = (tasks: Task[], level = 0, parentExpanded = true): Array<Task & { displayLevel: number; hasChildren: boolean; isExpanded: boolean; childCount: number }> => {
+		const result: Array<Task & { displayLevel: number; hasChildren: boolean; isExpanded: boolean; childCount: number }> = [];
 		for (const task of tasks) {
-			result.push({ ...task, displayLevel: level });
-			if (task.subRows && task.subRows.length > 0) {
-				result.push(...flattenTasks(task.subRows, level + 1));
+			const hasChildren = !!(task.subRows && task.subRows.length > 0);
+			const isExpanded = expandedTasks.has(task._id);
+			const childCount = task.subRows?.length || 0;
+
+			result.push({
+				...task,
+				displayLevel: level,
+				hasChildren,
+				isExpanded,
+				childCount
+			});
+
+			// Only show children if parent is expanded
+			if (hasChildren && isExpanded && parentExpanded) {
+				result.push(...flattenTasks(task.subRows!, level + 1, true));
 			}
 		}
 		return result;
@@ -283,6 +362,25 @@ export function Tasks() {
 						)}
 
 						<div className="flex-1" />
+
+						{/* Expand/Collapse Controls */}
+						<div className="flex items-center gap-1 border-l border-border pl-2">
+							<button
+								onClick={expandAll}
+								className="px-2 py-1 text-[10px] uppercase tracking-widest font-light hover:bg-accent transition-colors"
+								title="Expand All (⌘+E)"
+							>
+								Expand All
+							</button>
+							<button
+								onClick={collapseAll}
+								className="px-2 py-1 text-[10px] uppercase tracking-widest font-light hover:bg-accent transition-colors"
+								title="Collapse All (⌘+⇧+E)"
+							>
+								Collapse All
+							</button>
+						</div>
+
 						<Button
 							onClick={handleCreateTask}
 							size="sm"
@@ -331,9 +429,33 @@ export function Tasks() {
 									return (
 										<div
 											key={task._id}
-											className="group py-3 border-b border-border/30 last:border-0 hover:pl-4 transition-all duration-200 flex items-start gap-4"
-											style={{ paddingLeft: `${task.displayLevel * 2}rem` }}
+											className={cn(
+												"group py-3 border-b border-border/30 last:border-0 hover:bg-accent/5 transition-all duration-200 flex items-start gap-3",
+												// Visual hierarchy based on level
+												task.displayLevel === 0 && "border-l-2 border-l-foreground/20",
+												task.displayLevel === 1 && "border-l border-l-foreground/10 opacity-95",
+												task.displayLevel >= 2 && "opacity-90",
+												// Parent tasks get stronger styling
+												task.hasChildren && task.displayLevel === 0 && "bg-accent/[0.02]"
+											)}
+											style={{ paddingLeft: `${task.displayLevel * 2.5 + 1}rem` }}
 										>
+											{/* Expansion indicator */}
+											{task.hasChildren ? (
+												<button
+													onClick={() => toggleExpand(task._id)}
+													className="mt-0.5 flex-shrink-0 hover:bg-accent rounded transition-all w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground"
+													aria-label={task.isExpanded ? "Collapse" : "Expand"}
+												>
+													<span className="text-sm font-light select-none">
+														{task.isExpanded ? "−" : "+"}
+													</span>
+												</button>
+											) : (
+												<div className="w-5 flex-shrink-0" />
+											)}
+
+											{/* Status checkbox */}
 											<button
 												onClick={() => handleToggleStatus(task)}
 												className="mt-0.5 flex-shrink-0 hover:scale-110 transition-transform"
@@ -351,13 +473,24 @@ export function Tasks() {
 												<div className="flex items-baseline gap-3 flex-wrap">
 													<h3
 														className={cn(
-															"text-sm font-light",
+															"text-sm transition-all",
+															// Font weight hierarchy
+															task.displayLevel === 0 && task.hasChildren && "font-medium",
+															task.displayLevel === 0 && !task.hasChildren && "font-normal",
+															task.displayLevel === 1 && "font-light",
+															task.displayLevel >= 2 && "font-light text-sm",
 															task.status === "done" && "line-through text-muted-foreground"
 														)}
 													>
 														{task.title}
+														{/* Show subtask count when collapsed */}
+														{task.hasChildren && !task.isExpanded && (
+															<span className="ml-2 text-[10px] uppercase tracking-widest text-muted-foreground font-light">
+																({task.childCount})
+															</span>
+														)}
 													</h3>
-													<span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+													<span className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
 														{task.displayId}
 													</span>
 													{isOverdue && (
@@ -369,7 +502,7 @@ export function Tasks() {
 												</div>
 
 												{task.description && (
-													<p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+													<p className="text-xs text-muted-foreground mt-1 line-clamp-1 font-light">
 														{task.description}
 													</p>
 												)}
@@ -395,13 +528,13 @@ export function Tasks() {
 											<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
 												<button
 													onClick={() => handleEditTask(task)}
-													className="text-[10px] uppercase tracking-widest px-2 py-1 hover:bg-muted transition-colors"
+													className="text-[10px] uppercase tracking-widest px-2 py-1 hover:bg-muted transition-colors font-light"
 												>
 													Edit
 												</button>
 												<button
 													onClick={() => handleDeleteTask(task._id)}
-													className="text-[10px] uppercase tracking-widest px-2 py-1 hover:bg-destructive/10 hover:text-destructive transition-colors"
+													className="text-[10px] uppercase tracking-widest px-2 py-1 hover:bg-destructive/10 hover:text-destructive transition-colors font-light"
 												>
 													Delete
 												</button>
