@@ -195,14 +195,32 @@ export function Tasks() {
 		? statusTasks
 		: hierarchicalTasks;
 
-	// Calculate stats
-	const totalTasks = hierarchicalTasks?.length || 0;
-	const doneTasks = hierarchicalTasks?.filter(t => t.status === "done").length || 0;
-	const inProgressTasks = hierarchicalTasks?.filter(t => t.status === "in progress").length || 0;
-	const overdueTasks = hierarchicalTasks?.filter(t => {
+	// Check if filters are active
+	const isFiltered = !!(filterStatus || selectedProjectId);
+
+	// Calculate global stats (always from all tasks)
+	const globalTotalTasks = hierarchicalTasks?.length || 0;
+	const globalDoneTasks = hierarchicalTasks?.filter(t => t.status === "done").length || 0;
+	const globalInProgressTasks = hierarchicalTasks?.filter(t => t.status === "in progress").length || 0;
+	const globalOverdueTasks = hierarchicalTasks?.filter(t => {
 		if (!t.dueDate) return false;
 		return t.dueDate < Date.now() && t.status !== "done";
 	}).length || 0;
+
+	// Calculate filtered stats (from displayTasks when filtered)
+	const filteredTotalTasks = displayTasks?.length || 0;
+	const filteredDoneTasks = displayTasks?.filter(t => t.status === "done").length || 0;
+	const filteredInProgressTasks = displayTasks?.filter(t => t.status === "in progress").length || 0;
+	const filteredOverdueTasks = displayTasks?.filter(t => {
+		if (!t.dueDate) return false;
+		return t.dueDate < Date.now() && t.status !== "done";
+	}).length || 0;
+
+	// Display stats: show filtered/total when filtered, otherwise just total
+	const totalTasks = isFiltered ? filteredTotalTasks : globalTotalTasks;
+	const doneTasks = isFiltered ? filteredDoneTasks : globalDoneTasks;
+	const inProgressTasks = isFiltered ? filteredInProgressTasks : globalInProgressTasks;
+	const overdueTasks = isFiltered ? filteredOverdueTasks : globalOverdueTasks;
 
 	// Flatten hierarchical tasks for display, respecting expansion state
 	const flattenTasks = (tasks: Task[], level = 0, parentExpanded = true): Array<Task & { displayLevel: number; hasChildren: boolean; isExpanded: boolean; childCount: number }> => {
@@ -243,7 +261,15 @@ export function Tasks() {
 					<div className="bg-background p-8 md:p-12 border-r-2 border-foreground">
 						<div className="space-y-2">
 							<div className="text-[clamp(3rem,10vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
-								{totalTasks}
+								{isFiltered ? (
+									<>
+										<span className="font-medium">{totalTasks}</span>
+										<span className="text-border">/</span>
+										<span className="text-muted-foreground">{globalTotalTasks}</span>
+									</>
+								) : (
+									totalTasks
+								)}
 							</div>
 							<div className="text-xs uppercase tracking-widest font-medium">
 								Total
@@ -254,7 +280,15 @@ export function Tasks() {
 					<div className="bg-background p-8 md:p-12 border-r-0 md:border-r-2 border-foreground">
 						<div className="space-y-2">
 							<div className="text-[clamp(3rem,10vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
-								{inProgressTasks}
+								{isFiltered ? (
+									<>
+										<span className="font-medium">{inProgressTasks}</span>
+										<span className="text-border">/</span>
+										<span className="text-muted-foreground">{globalInProgressTasks}</span>
+									</>
+								) : (
+									inProgressTasks
+								)}
 							</div>
 							<div className="text-xs uppercase tracking-widest font-medium">
 								Active
@@ -265,7 +299,15 @@ export function Tasks() {
 					<div className="bg-background p-8 md:p-12 border-r-2 border-foreground">
 						<div className="space-y-2">
 							<div className="text-[clamp(3rem,10vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
-								{doneTasks}
+								{isFiltered ? (
+									<>
+										<span className="font-medium">{doneTasks}</span>
+										<span className="text-border">/</span>
+										<span className="text-muted-foreground">{globalDoneTasks}</span>
+									</>
+								) : (
+									doneTasks
+								)}
 							</div>
 							<div className="text-xs uppercase tracking-widest font-medium">
 								Done
@@ -279,7 +321,15 @@ export function Tasks() {
 								"text-[clamp(3rem,10vw,8rem)] font-light leading-none tabular-nums tracking-tighter",
 								overdueTasks > 0 && "text-red-500"
 							)}>
-								{overdueTasks}
+								{isFiltered ? (
+									<>
+										<span className="font-medium">{overdueTasks}</span>
+										<span className="text-border">/</span>
+										<span className="text-muted-foreground">{globalOverdueTasks}</span>
+									</>
+								) : (
+									overdueTasks
+								)}
 							</div>
 							<div className="text-xs uppercase tracking-widest font-medium">
 								Overdue
