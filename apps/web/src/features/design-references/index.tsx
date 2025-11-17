@@ -5,17 +5,10 @@ import { api } from "@tanstack/backend/convex/_generated/api";
 import type { Id } from "@tanstack/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { DesignReferencesTable } from "./components/design-references-table";
-import { columns } from "./components/design-references-columns";
-import Sparkles from "lucide-react/dist/esm/icons/sparkles";
-import Palette from "lucide-react/dist/esm/icons/palette";
+import { Plus, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import type { DesignReference } from "./data/schema";
-
-// Type for the query result (matches backend return type)
-type DesignReferenceData = DesignReference;
+import { cn } from "@/lib/utils";
 
 // Lazy load dialogs
 const DesignReferenceDetailDialog = lazy(() =>
@@ -31,16 +24,13 @@ const AnalyzeWebsiteDialog = lazy(() =>
 );
 
 export function DesignReferences() {
-  // Main query - get all design references
   const { data: references } = useSuspenseQuery(
     convexQuery(api.designReferences.getDesignReferences, {})
   );
 
   const deleteReference = useMutation(api.designReferences.deleteDesignReference);
-  const deleteMany = useMutation(api.designReferences.deleteMany);
 
-  const [selectedReference, setSelectedReference] =
-    useState<DesignReference | null>(null);
+  const [selectedReference, setSelectedReference] = useState<DesignReference | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [analyzeDialogOpen, setAnalyzeDialogOpen] = useState(false);
 
@@ -52,32 +42,22 @@ export function DesignReferences() {
   const handleDeleteReference = async (id: string) => {
     try {
       await deleteReference({ id: id as Id<"designReferences"> });
-      toast.success("Design reference deleted successfully");
+      toast.success("Design reference deleted");
     } catch (error) {
       toast.error("Failed to delete design reference");
       console.error(error);
     }
   };
 
-  const handleDeleteMany = async (ids: string[]) => {
-    try {
-      await deleteMany({ ids: ids as Id<"designReferences">[] });
-      toast.success(`${ids.length} design references deleted successfully`);
-    } catch (error) {
-      toast.error("Failed to delete design references");
-      console.error(error);
-    }
-  };
-
   const handleCopyPrompt = async (prompt: string) => {
     if (!navigator.clipboard) {
-      toast.error("Clipboard API not supported in this browser");
+      toast.error("Clipboard not supported");
       return;
     }
 
     try {
       await navigator.clipboard.writeText(prompt);
-      toast.success("Prompt copied to clipboard");
+      toast.success("Prompt copied");
     } catch {
       toast.error("Failed to copy prompt");
     }
@@ -87,90 +67,173 @@ export function DesignReferences() {
     setAnalyzeDialogOpen(true);
   };
 
+  // Calculate stats
+  const totalReferences = references.length;
+  const minimalCount = references.filter((r) => r.style === "minimal").length;
+  const corporateCount = references.filter((r) => r.style === "corporate").length;
+  const creativeCount = references.filter((r) => r.style === "creative").length;
+
   return (
     <>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">
-              Design References
-            </h2>
-            <p className="text-muted-foreground">
-              Analyzed websites with UI/UX patterns and clone prompts
-            </p>
+      <div className="min-h-[calc(100vh-8rem)] flex flex-col">
+        {/* Hero Stats - Ultra Minimal */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-foreground border-y-2 border-foreground">
+          <div className="bg-background p-8 md:p-12 border-r-2 border-foreground">
+            <div className="space-y-2">
+              <div className="text-[clamp(3rem,10vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
+                {totalReferences}
+              </div>
+              <div className="text-xs uppercase tracking-widest font-medium">
+                Total
+              </div>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button onClick={handleAnalyzeWebsite}>
-              <Sparkles className="mr-2 h-4 w-4" />
-              Analyze Website
+
+          <div className="bg-background p-8 md:p-12 border-r-0 md:border-r-2 border-foreground">
+            <div className="space-y-2">
+              <div className="text-[clamp(3rem,10vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
+                {minimalCount}
+              </div>
+              <div className="text-xs uppercase tracking-widest font-medium">
+                Minimal
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-background p-8 md:p-12 border-r-2 border-foreground">
+            <div className="space-y-2">
+              <div className="text-[clamp(3rem,10vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
+                {corporateCount}
+              </div>
+              <div className="text-xs uppercase tracking-widest font-medium">
+                Corporate
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-background p-8 md:p-12">
+            <div className="space-y-2">
+              <div className="text-[clamp(3rem,10vw,8rem)] font-light leading-none tabular-nums tracking-tighter">
+                {creativeCount}
+              </div>
+              <div className="text-xs uppercase tracking-widest font-medium">
+                Creative
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Bar */}
+        <div className="border-b-2 border-foreground bg-background">
+          <div className="p-4 flex items-center justify-end">
+            <Button
+              onClick={handleAnalyzeWebsite}
+              size="sm"
+              className="rounded-none bg-foreground text-background hover:bg-foreground/90 font-light group h-7"
+            >
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
+              Analyze
+              <ArrowRight className="ml-1.5 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </Button>
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total References
-              </CardTitle>
-              <Palette className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{references.length}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Minimal</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {references.filter((r: DesignReferenceData) => r.style === "minimal").length}
+        {/* References List - Text Only */}
+        <div className="flex-1 p-6 md:p-12">
+          <div className="max-w-5xl">
+            {references.length === 0 ? (
+              <div className="py-20 text-center border-2 border-dashed border-border">
+                <p className="text-sm text-muted-foreground mb-4">
+                  No design references yet
+                </p>
+                <Button
+                  onClick={handleAnalyzeWebsite}
+                  variant="outline"
+                  size="sm"
+                  className="rounded-none font-light"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Analyze your first website
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Corporate</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {references.filter((r: DesignReferenceData) => r.style === "corporate").length}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Creative</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {references.filter((r: DesignReferenceData) => r.style === "creative").length}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            ) : (
+              <div className="space-y-px">
+                {references.map((reference) => (
+                  <div
+                    key={reference._id}
+                    className="group py-4 border-b border-border/30 last:border-0 hover:pl-4 transition-all duration-200 flex items-start gap-4"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-3 flex-wrap mb-2">
+                        <button
+                          onClick={() => handleViewReference(reference)}
+                          className="text-base font-light hover:underline text-left"
+                        >
+                          {reference.url}
+                        </button>
+                      </div>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>All Design References</CardTitle>
-              <Badge variant="outline">{references.length} references</Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <DesignReferencesTable
-              data={references}
-              columns={columns}
-              onViewReference={handleViewReference}
-              onDeleteReference={handleDeleteReference}
-              onDeleteMany={handleDeleteMany}
-              onAnalyzeWebsite={handleAnalyzeWebsite}
-              onCopyPrompt={handleCopyPrompt}
-            />
-          </CardContent>
-        </Card>
+                      {reference.summary && (
+                        <p className="text-sm text-muted-foreground font-light mb-3 line-clamp-2">
+                          {reference.summary}
+                        </p>
+                      )}
+
+                      <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground">
+                        <span>{reference.style}</span>
+                        {reference.primaryColors && reference.primaryColors.length > 0 && (
+                          <>
+                            <span className="h-1 w-1 rounded-full bg-muted-foreground" />
+                            <div className="flex items-center gap-1">
+                              {reference.primaryColors.slice(0, 5).map((color, idx) => (
+                                <div
+                                  key={idx}
+                                  className="h-3 w-3 border border-border"
+                                  style={{ backgroundColor: color }}
+                                />
+                              ))}
+                            </div>
+                          </>
+                        )}
+                        <span className="h-1 w-1 rounded-full bg-muted-foreground" />
+                        <span>
+                          {new Date(reference._creationTime).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleViewReference(reference)}
+                        className="text-[10px] uppercase tracking-widest px-2 py-1 hover:bg-muted transition-colors"
+                      >
+                        View
+                      </button>
+                      {reference.clonePrompt && (
+                        <button
+                          onClick={() => handleCopyPrompt(reference.clonePrompt!)}
+                          className="text-[10px] uppercase tracking-widest px-2 py-1 hover:bg-muted transition-colors"
+                        >
+                          Copy Prompt
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDeleteReference(reference._id)}
+                        className="text-[10px] uppercase tracking-widest px-2 py-1 hover:bg-destructive/10 hover:text-destructive transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <Suspense fallback={null}>
