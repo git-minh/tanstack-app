@@ -67,7 +67,7 @@ export function PurchaseCreditsDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="sm:max-w-md rounded-none border-2 border-foreground">
+			<DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto rounded-none border-2 border-foreground">
 				<DialogHeader>
 					<DialogTitle className="text-[10px] uppercase tracking-widest font-medium">
 						Purchase {pkg.credits.toLocaleString()} Credits
