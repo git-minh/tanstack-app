@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { logger } from "./lib/logger";
 import { mutation, query } from "./_generated/server";
 import type { QueryCtx, MutationCtx } from "./_generated/server";
 
@@ -219,7 +220,7 @@ export const deductCredits = mutation({
 			creditsRemaining: newBalance,
 		});
 
-		console.log(
+		logger.debug(
 			`Credits deducted: ${amount} (${reason || "no reason"}). New balance: ${newBalance}`
 		);
 
@@ -263,7 +264,7 @@ export const addCredits = mutation({
 			creditsRemaining: newBalance,
 		});
 
-		console.log(
+		logger.debug(
 			`Credits added: ${amount} (${reason || "no reason"}). New balance: ${newBalance}`
 		);
 

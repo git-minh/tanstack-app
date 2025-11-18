@@ -6,6 +6,7 @@ import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { parseAIResponse } from "./ai_schema";
 import { CREDIT_COSTS } from "./credits";
+import { logger, safeStringify } from "./lib/logger";
 import type {
   CrawledPage,
   ProcessedPage,
@@ -383,11 +384,11 @@ async function callAzureOpenAI(
     const data = await response.json() as AzureOpenAIResponse;
 
     // Debug: Log the full response structure
-    console.log("Azure OpenAI full response:", JSON.stringify(data, null, 2));
+    logger.debug("Azure OpenAI full response:", safeStringify(data));
 
     // Validate response structure
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      console.error("Response structure:", JSON.stringify(data, null, 2));
+      logger.error("Response structure:", safeStringify(data));
       throw new Error(
         "Invalid response structure from Azure OpenAI: missing choices"
       );
@@ -476,7 +477,7 @@ export const scrapeUrl = action({
       // Initialize Firecrawl client
       const firecrawl = new FirecrawlApp({ apiKey: FIRECRAWL_API_KEY });
 
-      console.log('Scraping URL:', args.url);
+      logger.debug('Scraping URL:', args.url);
 
       // Scrape the URL with markdown format and extended timeout
       const result = await firecrawl.scrape(args.url, {
@@ -492,7 +493,7 @@ export const scrapeUrl = action({
         ? markdown.substring(0, 20000) + '\n\n[Content truncated to 20,000 characters]'
         : markdown;
 
-      console.log('Scrape successful:', {
+      logger.debug('Scrape successful:', {
         url: args.url,
         contentLength: markdown.length,
         truncated: markdown.length > 20000,
@@ -512,7 +513,7 @@ export const scrapeUrl = action({
         truncated: markdown.length > 20000,
       };
     } catch (error) {
-      console.error('URL scraping failed:', error);
+      logger.error('URL scraping failed:', error);
 
       // Provide helpful error messages based on error type
       let errorMessage = 'Unknown error occurred while scraping URL';
@@ -591,7 +592,7 @@ export const generateProject = action({
       }
 
       // Log the prompt for debugging
-      console.log("Generating project from prompt:", args.prompt.substring(0, 100) + "...");
+      logger.debug("Generating project from prompt:", args.prompt.substring(0, 100) + "...");
 
       // Validate prompt length
       if (args.prompt.length < 20) {
@@ -620,7 +621,7 @@ export const generateProject = action({
           ];
 
       // Call Azure OpenAI API (Subtask 1.2 ✓)
-      console.log("Calling Azure OpenAI API...");
+      logger.debug("Calling Azure OpenAI API...");
       let aiResponse: AzureOpenAIResponse;
       try {
         aiResponse = await callAzureOpenAI(messages, {
@@ -630,7 +631,7 @@ export const generateProject = action({
           useO1Model,
         });
       } catch (error) {
-        console.error("Azure OpenAI API call failed:", error);
+        logger.error("Azure OpenAI API call failed:", error);
         throw new Error(
           `AI service unavailable: ${error instanceof Error ? error.message : "Unknown error"}. Please try again later.`
         );
@@ -639,38 +640,38 @@ export const generateProject = action({
       // Extract the generated content
       const firstChoice = aiResponse.choices[0];
       if (!firstChoice || !firstChoice.message) {
-        console.error("First choice structure:", JSON.stringify(firstChoice, null, 2));
+        logger.error("First choice structure:", safeStringify(firstChoice));
         throw new Error("AI response missing expected content structure");
       }
       const generatedContent = firstChoice.message.content;
-      console.log("AI Response received, length:", generatedContent?.length ?? 0);
-      console.log("Content preview:", generatedContent?.substring(0, 200) ?? "null/empty");
+      logger.debug("AI Response received, length:", generatedContent?.length ?? 0);
+      logger.debug("Content preview:", generatedContent?.substring(0, 200) ?? "null/empty");
 
       if (!generatedContent) {
-        console.error("AI returned null or empty content");
+        logger.error("AI returned null or empty content");
         throw new Error("AI response missing content");
       }
 
       // Parse and validate AI response (Subtask 1.4 ✓, Subtask 1.8 ✓)
-      console.log("Parsing and validating AI response...");
+      logger.debug("Parsing and validating AI response...");
       let validatedData;
       try {
         validatedData = parseAIResponse(generatedContent);
       } catch (error) {
-        console.error("AI response validation failed:", error);
+        logger.error("AI response validation failed:", error);
         throw new Error(
           `AI generated invalid response: ${error instanceof Error ? error.message : "Unknown error"}. Please try again.`
         );
       }
 
-      console.log("Validation successful:", {
+      logger.debug("Validation successful:", {
         project: validatedData.project.name,
         tasksCount: validatedData.tasks.length,
         contactsCount: validatedData.contacts.length,
       });
 
       // Batch creation with hierarchy handling (Subtask 1.5 ✓)
-      console.log("Creating project, tasks, and contacts...");
+      logger.debug("Creating project, tasks, and contacts...");
 
       // Step 1: Create the main project
       let project;
@@ -691,9 +692,9 @@ export const generateProject = action({
         }
 
         createdIds.projectId = project._id;
-        console.log("Project created:", project._id);
+        logger.debug("Project created:", project._id);
       } catch (error) {
-        console.error("Failed to create project:", error);
+        logger.error("Failed to create project:", error);
         throw new Error(
           `Failed to create project: ${error instanceof Error ? error.message : "Unknown error"}`
         );
@@ -708,7 +709,7 @@ export const generateProject = action({
           const taskData = validatedData.tasks[i];
 
           if (!taskData) {
-            console.warn(`Skipping undefined task at index ${i}`);
+            logger.warn(`Skipping undefined task at index ${i}`);
             continue;
           }
 
@@ -756,9 +757,9 @@ export const generateProject = action({
           }
         }
 
-        console.log("Tasks created:", totalTasksCreated);
+        logger.debug("Tasks created:", totalTasksCreated);
       } catch (error) {
-        console.error("Failed to create tasks:", error);
+        logger.error("Failed to create tasks:", error);
         throw new Error(
           `Failed to create tasks (${totalTasksCreated} created): ${error instanceof Error ? error.message : "Unknown error"}`
         );
@@ -794,9 +795,9 @@ export const generateProject = action({
           totalContactsCreated++;
         }
 
-        console.log("Contacts created:", totalContactsCreated);
+        logger.debug("Contacts created:", totalContactsCreated);
       } catch (error) {
-        console.error("Failed to create contacts:", error);
+        logger.error("Failed to create contacts:", error);
         throw new Error(
           `Failed to create contacts (${totalContactsCreated} created): ${error instanceof Error ? error.message : "Unknown error"}`
         );
@@ -824,7 +825,7 @@ export const generateProject = action({
       } as SuccessResponse;
     } catch (error) {
       // Top-level error handler with rollback (Subtask 1.7 ✓, Subtask 1.9 ✓)
-      console.error("AI project generation failed:", error);
+      logger.error("AI project generation failed:", error);
 
       // Track partial creation counts for error response
       const partialCounts = {
@@ -833,28 +834,28 @@ export const generateProject = action({
       };
 
       // Cleanup partially created items
-      console.log("Rolling back partially created items...");
+      logger.debug("Rolling back partially created items...");
       let rollbackSucceeded = true;
       try {
         // Delete contacts first (no dependencies)
         for (const contactId of createdIds.contactIds) {
           await ctx.runMutation(api.contacts.remove, { id: contactId });
         }
-        console.log(`Rolled back ${createdIds.contactIds.length} contacts`);
+        logger.debug(`Rolled back ${createdIds.contactIds.length} contacts`);
 
         // Delete tasks (may have parent-child relationships)
         for (const taskId of createdIds.taskIds) {
           await ctx.runMutation(api.tasks.remove, { id: taskId });
         }
-        console.log(`Rolled back ${createdIds.taskIds.length} tasks`);
+        logger.debug(`Rolled back ${createdIds.taskIds.length} tasks`);
 
         // Delete project last (parent of tasks)
         if (createdIds.projectId) {
           await ctx.runMutation(api.projects.remove, { id: createdIds.projectId });
-          console.log("Rolled back project");
+          logger.debug("Rolled back project");
         }
       } catch (rollbackError) {
-        console.error("Rollback failed (manual cleanup may be required):", rollbackError);
+        logger.error("Rollback failed (manual cleanup may be required):", rollbackError);
         rollbackSucceeded = false;
         // If rollback failed, create specific error response
         return {
@@ -960,7 +961,7 @@ export const crawlWebsite = action({
       const { default: FirecrawlApp } = await import('firecrawl');
       const firecrawl = new FirecrawlApp({ apiKey: FIRECRAWL_API_KEY });
 
-      console.log('Crawling website:', args.url, 'with limit:', args.limit || 10);
+      logger.debug('Crawling website:', args.url, 'with limit:', args.limit || 10);
 
       // 7. Crawl the website
       const limit = Math.min(args.limit || 10, 20); // Cap at 20 pages
@@ -975,7 +976,7 @@ export const crawlWebsite = action({
       const pages = result.data || [];
       const filteredPages = filterPages(pages, limit);
 
-      console.log('Crawl successful:', {
+      logger.debug('Crawl successful:', {
         url: args.url,
         totalPages: pages.length,
         filteredPages: filteredPages.length,
@@ -996,7 +997,7 @@ export const crawlWebsite = action({
         crawlTime: Date.now() - startTime,
       };
     } catch (error) {
-      console.error('Website crawling failed:', error);
+      logger.error('Website crawling failed:', error);
 
       // Provide helpful error messages
       let errorMessage = 'Unknown error occurred while crawling website';
@@ -1173,7 +1174,7 @@ export const analyzeWebsite = action({
         };
       }
 
-      console.log('Starting website analysis:', args.url);
+      logger.debug('Starting website analysis:', args.url);
 
       // 3. Crawl the website to get pages
       const crawlResult = await ctx.runAction(api.ai.crawlWebsite, {
@@ -1190,7 +1191,7 @@ export const analyzeWebsite = action({
       }
 
       const pages = crawlResult.pages;
-      console.log(`Crawled ${pages.length} pages, preparing for analysis`);
+      logger.debug(`Crawled ${pages.length} pages, preparing for analysis`);
 
       // 4. Prepare content for AI analysis
       // Combine markdown from all pages, limit to 15,000 chars total
@@ -1205,7 +1206,7 @@ export const analyzeWebsite = action({
         combinedContent = combinedContent.substring(0, 15000) + '\n\n[Content truncated to 15,000 characters]';
       }
 
-      console.log('Content prepared, calling Azure OpenAI for analysis');
+      logger.debug('Content prepared, calling Azure OpenAI for analysis');
 
       // 5. Call Azure OpenAI for analysis
       const analysisResult = await callAzureOpenAIForAnalysis(combinedContent);
@@ -1215,22 +1216,22 @@ export const analyzeWebsite = action({
       try {
         analysis = analysisResponseSchema.parse(analysisResult);
       } catch (error) {
-        console.error('Failed to parse analysis response:', error);
+        logger.error('Failed to parse analysis response:', error);
         throw new Error(`AI returned invalid response format: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
 
-      console.log('Analysis validated, generating clone prompts');
+      logger.debug('Analysis validated, generating clone prompts');
 
       // 7. Generate clone prompts from analysis
       const clonePrompts = await generateClonePrompts(analysis);
 
-      console.log('Clone prompts generated:', {
+      logger.debug('Clone prompts generated:', {
         fullPageLength: clonePrompts.fullPage.length,
         componentsCount: clonePrompts.components.length,
         designSystemLength: clonePrompts.designSystem.length,
       });
 
-      console.log('Analysis complete, deducting credits');
+      logger.debug('Analysis complete, deducting credits');
 
       // 8. Deduct credits after successful analysis
       await ctx.runMutation(api.credits.deductCredits, {
@@ -1240,7 +1241,7 @@ export const analyzeWebsite = action({
 
       const analysisTime = Date.now() - startTime;
 
-      console.log('Website analysis successful:', {
+      logger.debug('Website analysis successful:', {
         url: args.url,
         pagesAnalyzed: pages.length,
         analysisTime,
@@ -1258,7 +1259,7 @@ export const analyzeWebsite = action({
         analysisTime,
       };
     } catch (error) {
-      console.error('Website analysis failed:', error);
+      logger.error('Website analysis failed:', error);
 
       let errorMessage = 'Unknown error occurred while analyzing website';
       let errorCode: AnalyzeWebsiteErrorResponse['code'] = undefined;
@@ -1298,8 +1299,8 @@ async function callAzureOpenAIForAnalysis(content: string): Promise<any> {
 
   const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2025-01-01-preview`;
 
-  console.log('Calling Azure OpenAI for website analysis...');
-  console.log('Request URL:', url);
+  logger.debug('Calling Azure OpenAI for website analysis...');
+  logger.debug('Request URL:', url);
 
   const response = await fetch(url, {
     method: 'POST',
@@ -1318,24 +1319,24 @@ async function callAzureOpenAIForAnalysis(content: string): Promise<any> {
     }),
   });
 
-  console.log('Response status:', response.status, response.statusText);
+  logger.debug('Response status:', response.status, response.statusText);
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Error response:', errorText);
+    logger.error('Error response:', errorText);
     throw new Error(`Azure OpenAI API error (${response.status}): ${errorText}`);
   }
 
-  console.log('Parsing response JSON...');
+  logger.debug('Parsing response JSON...');
   const data = await response.json() as AzureOpenAIResponse;
-  console.log('Response parsed successfully');
+  logger.debug('Response parsed successfully');
 
   // Debug: Log the full response structure
-  console.log('Azure OpenAI analysis response:', JSON.stringify(data, null, 2));
+  logger.debug('Azure OpenAI analysis response:', safeStringify(data));
 
   // Validate response structure
   if (!data.choices || data.choices.length === 0) {
-    console.error('No choices in response:', JSON.stringify(data, null, 2));
+    logger.error('No choices in response:', safeStringify(data));
     throw new Error('Invalid response from Azure OpenAI: no choices returned');
   }
 
@@ -1344,18 +1345,18 @@ async function callAzureOpenAIForAnalysis(content: string): Promise<any> {
     throw new Error('Invalid response from Azure OpenAI: first choice is undefined');
   }
 
-  console.log('Choice finish_reason:', choice.finish_reason);
-  console.log('Choice message role:', choice.message?.role);
+  logger.debug('Choice finish_reason:', choice.finish_reason);
+  logger.debug('Choice message role:', choice.message?.role);
 
   // Check for refusal
   if (choice.message?.refusal) {
-    console.error('AI refused to respond:', choice.message.refusal);
+    logger.error('AI refused to respond:', choice.message.refusal);
     throw new Error(`Azure OpenAI refused: ${choice.message.refusal}`);
   }
 
   // Check for content
   if (!choice.message?.content) {
-    console.error('No content in message. Full choice:', JSON.stringify(choice, null, 2));
+    logger.error('No content in message. Full choice:', safeStringify(choice));
 
     // Special handling for length finish_reason (o1 models)
     if (choice.finish_reason === 'length') {
@@ -1366,13 +1367,13 @@ async function callAzureOpenAIForAnalysis(content: string): Promise<any> {
   }
 
   const responseContent = choice.message.content;
-  console.log('Content length:', responseContent.length);
-  console.log('Content preview:', responseContent.substring(0, 500));
+  logger.debug('Content length:', responseContent.length);
+  logger.debug('Content preview:', responseContent.substring(0, 500));
 
   try {
     return JSON.parse(responseContent);
   } catch (error) {
-    console.error('Failed to parse content:', responseContent);
+    logger.error('Failed to parse content:', responseContent);
     throw new Error(`Failed to parse Azure OpenAI response as JSON: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -1432,24 +1433,24 @@ ${analysis.components.map(c => `- ${c.name}: ${c.description}`).join('\n')}
     }),
   });
 
-  console.log('Clone prompts response status:', response.status, response.statusText);
+  logger.debug('Clone prompts response status:', response.status, response.statusText);
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Error response for clone prompts:', errorText);
+    logger.error('Error response for clone prompts:', errorText);
     throw new Error(`Azure OpenAI API error for clone prompts (${response.status}): ${errorText}`);
   }
 
-  console.log('Parsing clone prompts response JSON...');
+  logger.debug('Parsing clone prompts response JSON...');
   const data = await response.json() as AzureOpenAIResponse;
-  console.log('Clone prompts response parsed successfully');
+  logger.debug('Clone prompts response parsed successfully');
 
   // Debug: Log the full response structure
-  console.log('Azure OpenAI clone prompts response:', JSON.stringify(data, null, 2));
+  logger.debug('Azure OpenAI clone prompts response:', safeStringify(data));
 
   // Validate response structure
   if (!data.choices || data.choices.length === 0) {
-    console.error('No choices in clone prompts response:', JSON.stringify(data, null, 2));
+    logger.error('No choices in clone prompts response:', safeStringify(data));
     throw new Error('Invalid response from Azure OpenAI: no choices returned for clone prompts');
   }
 
@@ -1458,18 +1459,18 @@ ${analysis.components.map(c => `- ${c.name}: ${c.description}`).join('\n')}
     throw new Error('Invalid response from Azure OpenAI: first choice is undefined for clone prompts');
   }
 
-  console.log('Clone prompts choice finish_reason:', choice.finish_reason);
-  console.log('Clone prompts choice message role:', choice.message?.role);
+  logger.debug('Clone prompts choice finish_reason:', choice.finish_reason);
+  logger.debug('Clone prompts choice message role:', choice.message?.role);
 
   // Check for refusal
   if (choice.message?.refusal) {
-    console.error('AI refused to generate clone prompts:', choice.message.refusal);
+    logger.error('AI refused to generate clone prompts:', choice.message.refusal);
     throw new Error(`Azure OpenAI refused clone prompts: ${choice.message.refusal}`);
   }
 
   // Check for content
   if (!choice.message?.content) {
-    console.error('No content in clone prompts message. Full choice:', JSON.stringify(choice, null, 2));
+    logger.error('No content in clone prompts message. Full choice:', safeStringify(choice));
 
     // Special handling for length finish_reason (o1 models)
     if (choice.finish_reason === 'length') {
@@ -1480,8 +1481,8 @@ ${analysis.components.map(c => `- ${c.name}: ${c.description}`).join('\n')}
   }
 
   const responseContent = choice.message.content;
-  console.log('Clone prompts content length:', responseContent.length);
-  console.log('Clone prompts content preview:', responseContent.substring(0, 500));
+  logger.debug('Clone prompts content length:', responseContent.length);
+  logger.debug('Clone prompts content preview:', responseContent.substring(0, 500));
 
   try {
     const parsedResponse = JSON.parse(responseContent);
@@ -1491,7 +1492,7 @@ ${analysis.components.map(c => `- ${c.name}: ${c.description}`).join('\n')}
 
     return validatedPrompts;
   } catch (error) {
-    console.error('Failed to parse clone prompts content:', responseContent);
+    logger.error('Failed to parse clone prompts content:', responseContent);
     throw new Error(`Failed to parse or validate clone prompts response: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

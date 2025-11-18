@@ -2,6 +2,7 @@ import { httpAction } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
+import { logger, safeStringify } from "../lib/logger";
 
 interface AutumnWebhookPayload {
 	type?: string;
@@ -26,14 +27,14 @@ export const handleAutumnWebhook = httpAction(async (ctx, request) => {
 	try {
 		const body = (await request.json()) as AutumnWebhookPayload;
 
-		console.log("Autumn webhook received:", JSON.stringify(body, null, 2));
+		logger.debug("Autumn webhook received:", safeStringify(body));
 
 		// Verify webhook signature (implement based on Autumn's webhook security)
 		const signature = request.headers.get("x-autumn-signature");
 		const isValid = await verifyAutumnSignature(body, signature);
 
 		if (!isValid) {
-			console.error("Invalid webhook signature");
+			logger.error("Invalid webhook signature");
 			return new Response("Unauthorized", { status: 401 });
 		}
 
@@ -62,7 +63,7 @@ export const handleAutumnWebhook = httpAction(async (ctx, request) => {
 				break;
 
 			default:
-				console.log(`Unhandled webhook event type: ${eventType}`);
+				logger.debug(`Unhandled webhook event type: ${eventType}`);
 		}
 
 		return new Response(JSON.stringify({ received: true }), {
@@ -70,7 +71,7 @@ export const handleAutumnWebhook = httpAction(async (ctx, request) => {
 			headers: { "Content-Type": "application/json" },
 		});
 	} catch (error) {
-		console.error("Webhook processing error:", error);
+		logger.error("Webhook processing error:", error);
 		return new Response(
 			JSON.stringify({
 				error: error instanceof Error ? error.message : "Internal server error",
@@ -95,7 +96,7 @@ async function verifyAutumnSignature(
 	const webhookSecret = process.env.AUTUMN_WEBHOOK_SECRET;
 
 	if (!webhookSecret) {
-		console.warn("AUTUMN_WEBHOOK_SECRET not configured, skipping verification");
+		logger.warn("AUTUMN_WEBHOOK_SECRET not configured, skipping verification");
 		return true; // Allow in development, but log warning
 	}
 
@@ -138,7 +139,7 @@ async function handlePaymentSuccess(ctx: any, body: AutumnWebhookPayload) {
 			reason: `Credit purchase: ${metadata.packageId || "unknown package"}`,
 		});
 
-		console.log(
+		logger.debug(
 			`Added ${credits} credits to user ${customerId} from payment ${body.id || "unknown"}`
 		);
 	}
@@ -150,7 +151,7 @@ async function handlePaymentSuccess(ctx: any, body: AutumnWebhookPayload) {
 async function handlePaymentFailure(_ctx: any, body: AutumnWebhookPayload) {
 	const { customer_id: customerId, error } = body;
 
-	console.error(
+	logger.error(
 		`Payment failed for customer ${customerId}:`,
 		error || "Unknown error"
 	);
@@ -184,7 +185,7 @@ async function handleSubscriptionUpdate(ctx: any, body: AutumnWebhookPayload) {
 	}
 
 	if (!productId) {
-		console.warn("Subscription update missing product_id, skipping");
+		logger.warn("Subscription update missing product_id, skipping");
 		return;
 	}
 
@@ -198,9 +199,9 @@ async function handleSubscriptionUpdate(ctx: any, body: AutumnWebhookPayload) {
 			userId: customerId,
 		});
 
-		console.log(`Upgraded user ${customerId} to Pro plan (product: ${productId})`);
+		logger.debug(`Upgraded user ${customerId} to Pro plan (product: ${productId})`);
 	} else if (!isProPlan) {
-		console.log(
+		logger.debug(
 			`Subscription update for non-Pro product ${productId}, no action taken`
 		);
 	}
@@ -220,7 +221,7 @@ async function handleSubscriptionCancellation(ctx: any, body: AutumnWebhookPaylo
 		userId: customerId,
 	});
 
-	console.log(`Downgraded user ${customerId} to Free plan`);
+	logger.debug(`Downgraded user ${customerId} to Free plan`);
 }
 
 /**
@@ -247,7 +248,7 @@ export const addCreditsInternal = internalMutation({
 				creditsRemaining: newBalance,
 			});
 
-			console.log(
+			logger.debug(
 				`Credits added to existing user: ${amount} (${reason || "no reason"}). New balance: ${newBalance}`
 			);
 		} else {
@@ -262,7 +263,7 @@ export const addCreditsInternal = internalMutation({
 				lastCreditReset: Date.now(),
 			});
 
-			console.log(
+			logger.debug(
 				`Credits added to new user: ${amount} (${reason || "no reason"})`
 			);
 		}
