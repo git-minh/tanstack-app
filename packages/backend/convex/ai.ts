@@ -591,8 +591,11 @@ export const generateProject = action({
         );
       }
 
-      // Log the prompt for debugging
-      logger.debug("Generating project from prompt:", args.prompt.substring(0, 100) + "...");
+      // Log only metadata to avoid storing sensitive prompt content
+      logger.debug("Generating project:", {
+        promptLength: args.prompt.length,
+        hasContext: !!args.additionalContext,
+      });
 
       // Validate prompt length
       if (args.prompt.length < 20) {
