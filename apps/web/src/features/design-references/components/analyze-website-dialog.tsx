@@ -176,7 +176,7 @@ export function AnalyzeWebsiteDialog({
 	return (
 		<>
 			<Dialog open={open} onOpenChange={onOpenChange}>
-				<DialogContent className="sm:max-w-[600px] rounded-none border-2 border-foreground">
+				<DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto rounded-none border-2 border-foreground">
 					<DialogHeader>
 						<DialogTitle className="text-2xl font-light tracking-tight">
 							Analyze Website
