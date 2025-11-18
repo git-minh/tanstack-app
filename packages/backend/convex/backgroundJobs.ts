@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { logger } from "./lib/logger";
 import { mutation, query, internalMutation, internalQuery, internalAction } from "./_generated/server";
 import type { ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
@@ -140,7 +141,7 @@ export const processJob = internalMutation({
 
 		// Race condition check: only process if job is pending
 		if (job.status !== "pending") {
-			console.log(
+			logger.debug(
 				`Job ${args.jobId} is already in status ${job.status}, skipping processing`
 			);
 			return;
@@ -318,13 +319,17 @@ async function handleGenerateAIContent(
 ) {
 	const { prompt, context } = input;
 
-	// For now, use a simple text generation approach
-	// In production, this would call Azure OpenAI or similar
-	// You can integrate with existing chat.ts logic here
+	// TODO: Replace with actual AI generation implementation
+	// This is a temporary stub that returns a hardcoded placeholder string.
+	// To implement:
+	// 1. Integrate with Azure OpenAI API (see ai.ts callAzureOpenAI)
+	// 2. Or use existing chat.sendChatMessage / api.ai functions
+	// 3. Handle streaming responses if needed
+	// 4. Track actual token usage from API response
+	// 5. Expected return shape: { type, generated, tokensUsed }
 
 	try {
-		// Example: Generate simple response
-		// In production, integrate with api.ai functions or chat.sendChatMessage
+		// PLACEHOLDER: Generate simple response
 		const generated = `AI Response to: ${prompt}\n\n${context ? `Context: ${context}\n\n` : ""}This is a placeholder response. Integrate with Azure OpenAI for actual generation.`;
 
 		return {
