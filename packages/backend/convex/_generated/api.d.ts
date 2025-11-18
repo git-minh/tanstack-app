@@ -13,6 +13,7 @@ import type * as ai_schema from "../ai_schema.js";
 import type * as analysis_schema from "../analysis_schema.js";
 import type * as auth from "../auth.js";
 import type * as autumn from "../autumn.js";
+import type * as backgroundJobs from "../backgroundJobs.js";
 import type * as chat from "../chat.js";
 import type * as chatContext from "../chatContext.js";
 import type * as chatMessages from "../chatMessages.js";
@@ -56,6 +57,7 @@ declare const fullApi: ApiFromModules<{
   analysis_schema: typeof analysis_schema;
   auth: typeof auth;
   autumn: typeof autumn;
+  backgroundJobs: typeof backgroundJobs;
   chat: typeof chat;
   chatContext: typeof chatContext;
   chatMessages: typeof chatMessages;
