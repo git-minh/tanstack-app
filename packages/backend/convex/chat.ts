@@ -1,4 +1,5 @@
 "use node";
+import { logger } from "./lib/logger";
 
 import { action } from "./_generated/server";
 import { v } from "convex/values";
@@ -121,7 +122,7 @@ async function callAzureOpenAIStreaming(
 							totalTokensEstimate += Math.ceil(content.length / 4);
 						}
 					} catch (parseError) {
-						console.error("Failed to parse streaming chunk:", parseError);
+						logger.error("Failed to parse streaming chunk:", parseError);
 						// Continue processing other chunks
 					}
 				}
@@ -268,7 +269,7 @@ Be concise, helpful, and professional. When referencing specific items, use thei
 				}
 			);
 
-			console.log(
+			logger.debug(
 				"Started streaming message:",
 				assistantMessageId,
 				"for session:",
@@ -293,7 +294,7 @@ Be concise, helpful, and professional. When referencing specific items, use thei
 			};
 
 			// 10. Call Azure OpenAI with streaming (Task #37.2 step 2)
-			console.log("Calling Azure OpenAI with streaming...");
+			logger.debug("Calling Azure OpenAI with streaming...");
 			const result = await callAzureOpenAIStreaming(
 				messages,
 				async (chunk: string) => {
@@ -319,7 +320,7 @@ Be concise, helpful, and professional. When referencing specific items, use thei
 			// 11. Flush any remaining content
 			await flushBatch();
 
-			console.log("Streaming complete. Total tokens:", result.totalTokens);
+			logger.debug("Streaming complete. Total tokens:", result.totalTokens);
 
 			// 12. Finalize the streaming message (Task #37.2 step 5)
 			await ctx.runMutation(internal.chatStreaming.finalizeStreamMessage, {
@@ -346,7 +347,7 @@ Be concise, helpful, and professional. When referencing specific items, use thei
 				sessionId: args.sessionId,
 			};
 		} catch (error) {
-			console.error("Chat message failed:", error);
+			logger.error("Chat message failed:", error);
 
 			// Cleanup: If we created a streaming message, mark it as failed
 			if (assistantMessageId) {
@@ -357,7 +358,7 @@ Be concise, helpful, and professional. When referencing specific items, use thei
 						creditsUsed: 0,
 					});
 				} catch (cleanupError) {
-					console.error("Failed to cleanup streaming message:", cleanupError);
+					logger.error("Failed to cleanup streaming message:", cleanupError);
 				}
 			}
 
