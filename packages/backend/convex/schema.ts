@@ -170,4 +170,83 @@ export default defineSchema({
 		.index("by_userId", ["userId"])
 		.index("by_displayId", ["displayId"])
 		.index("by_userId_and_style", ["userId", "style"]),
+	backgroundJobs: defineTable({
+		userId: v.string(),
+		type: v.union(
+			v.literal("scrape_design_reference"),
+			v.literal("generate_ai_content"),
+			v.literal("process_bulk_import")
+		),
+		status: v.union(
+			v.literal("pending"),
+			v.literal("processing"),
+			v.literal("completed"),
+			v.literal("failed")
+		),
+		// Type-safe discriminated union for job inputs
+		input: v.union(
+			// scrape_design_reference: Scrape a design reference URL
+			v.object({
+				type: v.literal("scrape_design_reference"),
+				url: v.string(),
+				limit: v.optional(v.number()),
+			}),
+			// generate_ai_content: Generate content using AI
+			v.object({
+				type: v.literal("generate_ai_content"),
+				prompt: v.string(),
+				context: v.optional(v.string()),
+			}),
+			// process_bulk_import: Import bulk data
+			v.object({
+				type: v.literal("process_bulk_import"),
+				// Structured import data - specific record shapes
+				data: v.array(
+					v.object({
+						// Generic record structure for bulk import
+						// Can be extended with discriminated unions for specific import types
+						id: v.optional(v.string()),
+						data: v.any(), // Actual record data
+					})
+				),
+				importType: v.string(),
+			})
+		),
+		// Type-safe discriminated union for job results
+		result: v.optional(
+			v.union(
+				// scrape_design_reference result
+				v.object({
+					type: v.literal("scrape_design_reference"),
+					pages: v.array(
+						v.object({
+							url: v.string(),
+							markdown: v.string(),
+							html: v.optional(v.string()),
+						})
+					),
+					pagesScraped: v.number(),
+				}),
+				// generate_ai_content result
+				v.object({
+					type: v.literal("generate_ai_content"),
+					generated: v.string(),
+					tokensUsed: v.optional(v.number()),
+				}),
+				// process_bulk_import result
+				v.object({
+					type: v.literal("process_bulk_import"),
+					created: v.number(),
+					failed: v.number(),
+					errors: v.optional(v.array(v.string())),
+				})
+			)
+		),
+		error: v.optional(v.string()),
+		progress: v.optional(v.number()), // 0-100
+		createdAt: v.number(),
+		completedAt: v.optional(v.number()),
+	})
+		.index("by_userId", ["userId"])
+		.index("by_status", ["status"]),
 });
