@@ -163,6 +163,9 @@ CLAUDE.md
 # Task Master AI
 .taskmaster/
 
+# Backlog.md MCP (task management)
+backlog/
+
 # Cursor AI
 .cursor/
 .cursorignore
